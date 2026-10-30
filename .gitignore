@@ -1,0 +1,25 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables & local secrets
+.env
+
+# Logs
+*.log
+
+# Word specification documents
+*.docx
+*.doc
+
+# OS / IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

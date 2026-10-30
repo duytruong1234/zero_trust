@@ -1,0 +1,11 @@
+fastapi==0.109.0
+uvicorn==0.27.0
+psycopg2-binary==2.9.10
+bcrypt==5.0.0
+PyOTP==2.10.0
+qrcode==8.2
+pillow==12.2.0
+cryptography==46.0.3
+python-dotenv==1.0.0
+Unidecode==1.4.0
+pydantic==2.12.5
