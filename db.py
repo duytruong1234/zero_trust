@@ -97,23 +97,23 @@ def _seed_du_lieu_de_on_tap_va_de_thi(conn):
             # Danh sách đề ôn tập mẫu cho 4 môn: Toán (1), Ngữ văn (2), Tiếng Anh (3), Vật lý (5)
             mau_on_tap = [
                 # Toán học (ma_mon_hoc = 1) - theo đúng hình mẫu trong CN_DeOnTap.docx
-                ("Ôn tập Toán giữa kỳ I", 1, 10, "Giữa kỳ I", "GV1000458", "GV1324570", "De_Toan_10_GiuaKy1.pdf", "On tap Toan giua ky I", "Toan hoc", "2026-10-28 14:30:00+07", "2026-10-28 15:10:00+07", False),
+                ("Ôn tập Toán giữa kỳ I", 1, 10, "Giữa kỳ I", "GV1000458", "GV1000458", "De_Toan_10_GiuaKy1.pdf", "On tap Toan giua ky I", "Toan hoc", "2026-10-28 14:30:00+07", "2026-10-28 15:10:00+07", False),
                 ("Ôn tập Toán cuối kỳ I", 1, 10, "Cuối kỳ I", "GV1000458", "GV1000458", "De_Toan_10_CuoiKy1.pdf", "On tap Toan cuoi ky I", "Toan hoc", "2026-10-27 16:20:00+07", "2026-10-27 16:45:00+07", False),
                 ("Ôn tập Toán giữa kỳ II", 1, 11, "Giữa kỳ II", "GV1324570", "GV1324570", "De_Toan_11_GiuaKy2.pdf", "On tap Toan giua ky II", "Toan hoc", "2026-10-26 09:15:00+07", "2026-10-26 10:05:00+07", False),
                 ("Ôn tập Toán cuối kỳ II", 1, 12, "Cuối kỳ II", "GV1780839", "GV1780839", "De_Toan_12_CuoiKy2.pdf", "On tap Toan cuoi ky II", "Toan hoc", "2026-10-25 11:05:00+07", "2026-10-25 11:40:00+07", False),
-                ("Đề ôn tập chương Hàm số", 1, 12, "Giữa kỳ II", "GV1000458", "GV1780839", "De_Toan_12_HamSo.pdf", "De on tap chuong Ham so", "Toan hoc", "2026-10-22 13:40:00+07", "2026-10-22 14:10:00+07", False),
+                ("Đề ôn tập chương Hàm số", 1, 12, "Giữa kỳ II", "GV1000458", "GV1000458", "De_Toan_12_HamSo.pdf", "De on tap chuong Ham so", "Toan hoc", "2026-10-22 13:40:00+07", "2026-10-22 14:10:00+07", False),
                 ("Đề ôn tập Hình học không gian", 1, 11, "Cuối kỳ I", "GV1324570", "GV1324570", "De_Toan_11_HinhHoc.pdf", "De on tap Hinh hoc khong gian", "Toan hoc", "2026-10-20 08:30:00+07", "2026-10-20 09:00:00+07", False),
 
                 # Ngữ văn (ma_mon_hoc = 2)
                 ("Ôn tập Ngữ văn giữa kỳ I", 2, 10, "Giữa kỳ I", "GV1428003", "GV1428003", "De_Van_10_GiuaKy1.pdf", "On tap Ngu van giua ky I", "Ngu van", "2026-10-28 14:30:00+07", "2026-10-28 15:10:00+07", False),
                 ("Ôn tập Ngữ văn cuối kỳ I", 2, 10, "Cuối kỳ I", "GV1456278", "GV1456278", "De_Van_10_CuoiKy1.pdf", "On tap Ngu van cuoi ky I", "Ngu van", "2026-10-27 16:20:00+07", "2026-10-27 16:45:00+07", False),
-                ("Ôn tập Ngữ văn giữa kỳ II", 2, 11, "Giữa kỳ II", "GV1428003", "GV1456278", "De_Van_11_GiuaKy2.pdf", "On tap Ngu van giua ky II", "Ngu van", "2026-10-26 09:15:00+07", "2026-10-26 10:05:00+07", False),
+                ("Ôn tập Ngữ văn giữa kỳ II", 2, 11, "Giữa kỳ II", "GV1428003", "GV1428003", "De_Van_11_GiuaKy2.pdf", "On tap Ngu van giua ky II", "Ngu van", "2026-10-26 09:15:00+07", "2026-10-26 10:05:00+07", False),
                 ("Ôn tập Nghị luận văn học lớp 12", 2, 12, "Cuối kỳ II", "GV1456278", "GV1456278", "De_Van_12_CuoiKy2.pdf", "On tap Nghi luan van hoc 12", "Ngu van", "2026-10-25 11:05:00+07", "2026-10-25 11:40:00+07", False),
 
                 # Tiếng Anh (ma_mon_hoc = 3)
                 ("Ôn tập Tiếng Anh giữa kỳ I", 3, 10, "Giữa kỳ I", "GV7869077", "GV7869077", "De_Anh_10_GiuaKy1.pdf", "On tap Tieng Anh giua ky I", "Tieng Anh", "2026-10-28 14:30:00+07", "2026-10-28 15:10:00+07", False),
                 ("Ôn tập Tiếng Anh cuối kỳ I", 3, 11, "Cuối kỳ I", "GV7802740", "GV7802740", "De_Anh_11_CuoiKy1.pdf", "On tap Tieng Anh cuoi ky I", "Tieng Anh", "2026-10-27 16:20:00+07", "2026-10-27 16:45:00+07", False),
-                ("Ôn tập Tiếng Anh giữa kỳ II", 3, 12, "Giữa kỳ II", "GV7802740", "GV7869077", "De_Anh_12_GiuaKy2.pdf", "On tap Tieng Anh giua ky II", "Tieng Anh", "2026-10-26 09:15:00+07", "2026-10-26 10:05:00+07", False),
+                ("Ôn tập Tiếng Anh giữa kỳ II", 3, 12, "Giữa kỳ II", "GV7802740", "GV7802740", "De_Anh_12_GiuaKy2.pdf", "On tap Tieng Anh giua ky II", "Tieng Anh", "2026-10-26 09:15:00+07", "2026-10-26 10:05:00+07", False),
 
                 # Vật lý (ma_mon_hoc = 5)
                 ("Ôn tập Vật lý giữa kỳ I", 5, 10, "Giữa kỳ I", "GV1562839", "GV1562839", "De_Ly_10_GiuaKy1.pdf", "On tap Vat ly giua ky I", "Vat ly", "2026-10-28 14:30:00+07", "2026-10-28 15:10:00+07", False),
@@ -155,11 +155,11 @@ def _seed_du_lieu_de_on_tap_va_de_thi(conn):
         if (cur.fetchone() or {}).get("cnt", 0) == 0:
             admin_id = tk_map.get("AD1568920") or next(iter(tk_map.values()))
             mau_de_thi = [
-                (1, 10, "Kiểm tra giữa kỳ I", "Giữa kỳ I", "2026 - 2027", "2026-11-15 07:30:00+07", "2026-11-15 09:00:00+07", "Đề kiểm tra giữa kỳ I - Toán 10", "CHINH_THUC", True, "GV1780839", "de_kiem_tra_giua_ky_1_toan_10.pdf", "De kiem tra giua ky I - Toan 10", "Toan hoc"),
-                (1, 12, "Kiểm tra cuối kỳ I", "Cuối kỳ I", "2026 - 2027", "2026-12-20 07:30:00+07", "2026-12-20 09:00:00+07", "Đề thi chính thức Cuối kỳ I - Toán 12 (Đề mồi bảo vệ)", "DE_MOI", True, "GV1780839", "De_ChinhThuc_Toan12_CK1_Mat.pdf", "De thi chinh thuc Toan 12", "Toan hoc"),
-                (2, 10, "Kiểm tra giữa kỳ I", "Giữa kỳ I", "2026 - 2027", "2026-11-16 07:30:00+07", "2026-11-16 09:00:00+07", "Đề kiểm tra giữa kỳ I - Ngữ văn 10", "CHINH_THUC", True, "GV1456278", "de_kiem_tra_giua_ky_1_van_10.pdf", "De kiem tra giua ky I - Ngu van 10", "Ngu van"),
-                (3, 11, "Kiểm tra giữa kỳ I", "Giữa kỳ I", "2026 - 2027", "2026-11-17 07:30:00+07", "2026-11-17 08:30:00+07", "Đề kiểm tra giữa kỳ I - Tiếng Anh 11", "CHINH_THUC", True, "GV7802740", "de_kiem_tra_giua_ky_1_anh_11.pdf", "De kiem tra giua ky I - Tieng Anh 11", "Tieng Anh"),
-                (5, 12, "Kiểm tra giữa kỳ I", "Giữa kỳ I", "2026 - 2027", "2026-11-18 07:30:00+07", "2026-11-18 08:30:00+07", "Đề kiểm tra giữa kỳ I - Vật lý 12", "CHINH_THUC", True, "GV6790839", "de_kiem_tra_giua_ky_1_ly_12.pdf", "De kiem tra giua ky I - Vat ly 12", "Vat ly"),
+                (1, 10, "Kiểm tra giữa kỳ I", "Giữa kỳ I", "2026 - 2027", "2026-11-15 07:30:00+07", "2026-11-15 09:00:00+07", "Đề kiểm tra giữa kỳ I - Toán 10", "CHINH_THUC", False, "GV1780839", "de_kiem_tra_giua_ky_1_toan_10.pdf", "De kiem tra giua ky I - Toan 10", "Toan hoc"),
+                (1, 12, "Kiểm tra cuối kỳ I", "Cuối kỳ I", "2026 - 2027", "2026-12-20 07:30:00+07", "2026-12-20 09:00:00+07", "Đề thi chính thức Cuối kỳ I - Toán 12 (Đề mồi bảo vệ)", "DE_MOI", False, "GV1780839", "De_ChinhThuc_Toan12_CK1_Mat.pdf", "De thi chinh thuc Toan 12", "Toan hoc"),
+                (2, 10, "Kiểm tra giữa kỳ I", "Giữa kỳ I", "2026 - 2027", "2026-11-16 07:30:00+07", "2026-11-16 09:00:00+07", "Đề kiểm tra giữa kỳ I - Ngữ văn 10", "CHINH_THUC", False, "GV1456278", "de_kiem_tra_giua_ky_1_van_10.pdf", "De kiem tra giua ky I - Ngu van 10", "Ngu van"),
+                (3, 11, "Kiểm tra giữa kỳ I", "Giữa kỳ I", "2026 - 2027", "2026-11-17 07:30:00+07", "2026-11-17 08:30:00+07", "Đề kiểm tra giữa kỳ I - Tiếng Anh 11", "CHINH_THUC", False, "GV7802740", "de_kiem_tra_giua_ky_1_anh_11.pdf", "De kiem tra giua ky I - Tieng Anh 11", "Tieng Anh"),
+                (5, 12, "Kiểm tra giữa kỳ I", "Giữa kỳ I", "2026 - 2027", "2026-11-18 07:30:00+07", "2026-11-18 08:30:00+07", "Đề kiểm tra giữa kỳ I - Vật lý 12", "CHINH_THUC", False, "GV6790839", "de_kiem_tra_giua_ky_1_ly_12.pdf", "De kiem tra giua ky I - Vat ly 12", "Vat ly"),
             ]
             for ma_mon, ma_khoi, ten_ky, loai_ky, nam_hoc, tg_bd, tg_kt, ten_de, loai_de, nem_phong, cb_ra, ten_goc, ascii_title, ascii_mon in mau_de_thi:
                 nguoi_ra = tk_map.get(cb_ra) or admin_id
@@ -266,6 +266,14 @@ def init_db_schema():
         conn.commit()
 
 
+_KET_QUA_NHAT_KY_HOP_LE = {"Thành công", "Thất bại", "Cảnh báo", "Báo động"}
+_CHUAN_HOA_KET_QUA = {
+    "Từ chối": "Thất bại",
+    "Yêu cầu kích hoạt 2FA": "Thành công",
+    "Yêu cầu xác thực bước 2 (OTP)": "Cảnh báo",
+}
+
+
 def ghi_nhat_ky(
     ma_tai_khoan,
     hanh_dong: str,
@@ -278,9 +286,14 @@ def ghi_nhat_ky(
 ):
     """
     Ghi bản ghi nhật ký thực tế vào bảng NhatKyLog trên PostgreSQL.
-    Trigger trg_nhat_ky_log_noi_chuoi trong PostgreSQL tự động tính toán
-    ma_bam_truoc và ma_bam_nhat_ky (SHA-256 Hash-Chain).
+    Chỉ chấp nhận 4 giá trị ket_qua: 'Thành công', 'Thất bại', 'Cảnh báo', 'Báo động'.
+    Trigger trg_nhat_ky_log_noi_chuoi tự động tính toán ma_bam_truoc và ma_bam_nhat_ky (SHA-256 Hash-Chain).
     """
+    kq = _CHUAN_HOA_KET_QUA.get((ket_qua or "").strip(), (ket_qua or "").strip())
+    if kq not in _KET_QUA_NHAT_KY_HOP_LE:
+        kq = "Cảnh báo"
+    hd = (hanh_dong or "Thao tác hệ thống").strip()[:50]
+
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -294,10 +307,10 @@ def ghi_nhat_ky(
                 """,
                 (
                     ma_tai_khoan,
-                    hanh_dong,
+                    hd,
                     ip_thiet_bi,
                     ipv4,
-                    ket_qua,
+                    kq,
                     chi_tiet,
                     thong_tin_thiet_bi,
                     tai_lieu_thao_tac,

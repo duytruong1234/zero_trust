@@ -40,6 +40,44 @@
       color: #1e293b;
       overflow-x: hidden;
     }
+    /* Thanh cuộn (scrollbar) tinh tế, hiện đại, bo tròn tự nhiên */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .table-scroll-wrap {
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f8fafc;
+    }
+    .table-scroll-wrap::-webkit-scrollbar {
+      height: 6px;
+    }
+    .table-scroll-wrap::-webkit-scrollbar-track {
+      background: #f8fafc;
+      border-radius: 9999px;
+    }
+    .table-scroll-wrap::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .table-scroll-wrap::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
     .font-mono-code {
       font-family: "Times New Roman", Times, serif !important;
       letter-spacing: 0.02em;
@@ -331,10 +369,9 @@
     .t-ok { color: var(--ok-fg); }
 
     .ad-pill {
-      display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.12rem 0.55rem; border-radius: 999px; font-size: 0.8rem;
+      display: inline-flex; align-items: center; justify-content: center; padding: 0.16rem 0.62rem; border-radius: 999px; font-size: 0.8rem;
       font-weight: 600; white-space: nowrap; border: 1px solid transparent;
     }
-    .ad-pill::before { content: ""; width: 0.42rem; height: 0.42rem; border-radius: 999px; background: currentColor; flex-shrink: 0; }
     .ad-pill.ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-bd); }
     .ad-pill.bad { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-bd); }
     .ad-pill.warn { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-bd); }
@@ -438,9 +475,17 @@
     }
     .pq-check-label input[type="checkbox"]:disabled { cursor: not-allowed; }
 
-    #viewDashboard .ad-note { padding: 0.7rem 0.9rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid; margin-bottom: 1rem; display: flex; gap: 0.6rem; align-items: flex-start; }
+    #viewDashboard .ad-note { padding: 0.7rem 0.9rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid; margin-bottom: 1rem; display: flex; gap: 0.65rem; align-items: center; }
+    #viewDashboard .ad-note.hidden { display: none; }
     #viewDashboard .ad-note.ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-bd); }
     #viewDashboard .ad-note.bad { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-bd); }
+    #viewDashboard .ad-note-close {
+      margin-left: auto; width: 1.75rem; height: 1.75rem; border-radius: 6px;
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      color: currentColor; opacity: 0.7; transition: opacity .15s, background-color .15s; cursor: pointer;
+    }
+    #viewDashboard .ad-note-close:hover { opacity: 1; background: rgba(255, 255, 255, 0.12); }
+    html[data-theme="light"] #viewDashboard .ad-note-close:hover { background: rgba(15, 23, 42, 0.08); }
 
     #viewDashboard .ad-iconbtn {
       width: 2rem; height: 2rem; display: inline-grid; place-items: center; border-radius: 7px; color: var(--muted);
@@ -456,8 +501,10 @@
       box-shadow: var(--shadow); padding: 0.35rem; color: var(--text);
     }
     .ad-menu button { width: 100%; text-align: left; display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.65rem; border-radius: 6px; font-size: 0.92rem; }
-    .ad-menu button:hover { background: var(--surface-3); }
+    .ad-menu button:hover:not(:disabled) { background: var(--surface-3); }
+    .ad-menu button:disabled { opacity: 0.45; cursor: not-allowed; }
     .ad-menu button.danger { color: var(--bad-fg); }
+    .ad-menu button.warn { color: var(--warn-fg); }
     .ad-menu button.success { color: var(--ok-fg); }
     .ad-menu hr { border: 0; border-top: 1px solid var(--line); margin: 0.3rem 0; }
     .ad-menu .ad-menu-title { padding: 0.45rem 0.65rem 0.35rem; font-size: 0.78rem; color: var(--muted); }
@@ -485,13 +532,21 @@
     .ad-msg.ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-bd); }
 
     #adDialog { z-index: 80; }
-    #adToasts { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 90; display: flex; flex-direction: column; gap: 0.5rem; max-width: 26rem; }
+    #adToasts { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 110; display: flex; flex-direction: column; gap: 0.5rem; max-width: 26rem; }
+    .ad-table tbody tr.is-tampered-row td { background: rgba(239, 68, 68, 0.10); }
+    [data-theme="light"] .ad-table tbody tr.is-tampered-row td { background: #fef2f2; }
     .ad-toast {
-      display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.7rem 0.9rem; border-radius: 9px; font-size: 0.92rem;
+      display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.7rem 0.85rem; border-radius: 9px; font-size: 0.92rem;
       background: var(--surface); color: var(--strong); border: 1px solid var(--line-2); border-left-width: 3px; box-shadow: var(--shadow);
       animation: adToastIn .18s ease-out;
     }
-    .ad-toast .ad-toast-icon { margin-top: 0.1rem; }
+    .ad-toast .ad-toast-icon { margin-top: 0.15rem; }
+    .ad-toast-close {
+      margin-left: auto; width: 1.45rem; height: 1.45rem; border-radius: 5px;
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      color: var(--muted); transition: color .15s, background-color .15s; cursor: pointer;
+    }
+    .ad-toast-close:hover { color: var(--strong); background: var(--surface-3); }
     .ad-toast.ok { border-left-color: var(--ok-fg); } .ad-toast.ok .ad-toast-icon { color: var(--ok-fg); }
     .ad-toast.bad { border-left-color: var(--bad-fg); } .ad-toast.bad .ad-toast-icon { color: var(--bad-fg); }
     .ad-toast.warn { border-left-color: var(--warn-fg); } .ad-toast.warn .ad-toast-icon { color: var(--warn-fg); }
@@ -499,6 +554,104 @@
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
+
+  <!-- ===================================================================== -->
+  <!-- MÀN HÌNH 0: CỔNG TƯỜNG LỬA CHẶN TOÀN BỘ THIẾT BỊ THEO ĐỊA CHỈ IP      -->
+  <!-- ===================================================================== -->
+  <div id="viewIpBlocked" class="hidden flex-1 flex items-center justify-center p-4 sm:p-6 2xl:p-8 bg-slate-950 text-slate-100">
+    <div class="w-full max-w-[620px] bg-slate-900 border border-rose-500/40 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.65)] overflow-hidden">
+      <div class="bg-gradient-to-r from-rose-900 via-rose-800 to-red-900 px-6 py-6 sm:px-8 border-b border-rose-500/30 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-rose-200 shrink-0">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path stroke-linecap="round" d="M5.6 5.6l12.8 12.8"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-widest text-rose-200/90">Tường lửa an ninh Zero-Trust · THPT Hoàng Văn Thụ</div>
+          <h1 class="text-xl sm:text-2xl font-bold text-white mt-0.5">Thiết Bị Đã Bị Chặn Truy Cập Theo Địa Chỉ IP</h1>
+        </div>
+      </div>
+
+      <div class="px-6 py-6 sm:px-8 sm:py-7 space-y-5">
+        <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+          Địa chỉ mạng của máy tính này hiện đang nằm trong danh sách chặn an ninh của hệ thống. Khác với khóa từng tài khoản cá nhân, <b class="text-white">toàn bộ truy cập và đăng nhập từ mọi tài khoản giáo viên trên thiết bị này đều bị ngắt hoàn toàn</b> cho đến khi Quản trị viên IT gỡ chặn.
+        </p>
+
+        <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-sm">
+          <div>
+            <div class="text-xs text-slate-400">IP máy trạm nội bộ</div>
+            <div id="ipBlkMay" class="font-bold text-slate-100 mt-0.5">—</div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400">Địa chỉ IPv4 đường truyền</div>
+            <div id="ipBlkIpv4" class="font-bold text-slate-100 mt-0.5">—</div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400">Địa chỉ đang bị khóa</div>
+            <div id="ipBlkTarget" class="font-bold text-rose-400 mt-0.5">—</div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400">Thời điểm khóa</div>
+            <div id="ipBlkTime" class="font-bold text-slate-100 mt-0.5">—</div>
+          </div>
+          <div class="sm:col-span-2 pt-2 border-t border-slate-800/90">
+            <div class="text-xs text-slate-400">Lý do khóa an ninh</div>
+            <div id="ipBlkReason" class="font-semibold text-amber-300 mt-0.5">—</div>
+          </div>
+        </div>
+
+        <div id="ipBlkStatusMsg" class="hidden p-3 rounded-xl text-sm font-medium border"></div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <button
+            type="button"
+            onclick="recheckIpBlockStatus(true)"
+            class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm transition"
+          >
+            Kiểm tra lại quyền truy cập
+          </button>
+          <button
+            type="button"
+            onclick="toggleIpBlockedAdminBox()"
+            class="text-xs sm:text-sm text-slate-400 hover:text-white underline underline-offset-4 transition"
+          >
+            Đăng nhập Quản trị viên IT để gỡ chặn
+          </button>
+        </div>
+
+        <form id="ipBlkAdminForm" onsubmit="handleIpBlockedAdminLogin(event)" class="hidden pt-4 border-t border-slate-800 space-y-3.5">
+          <div class="text-xs font-bold uppercase tracking-wider text-blue-300">
+            Cổng xác thực khẩn cấp dành riêng cho Quản trị viên IT
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              id="ipBlkAdminUser"
+              type="text"
+              required
+              placeholder="Tên đăng nhập hoặc email Quản trị viên"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            />
+            <input
+              id="ipBlkAdminPass"
+              type="password"
+              required
+              placeholder="Mật khẩu Quản trị viên"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div class="flex justify-end">
+            <button
+              type="submit"
+              class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition"
+            >
+              Xác thực Quản trị viên
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <!-- ===================================================================== -->
   <!-- MÀN HÌNH 1: GIAO DIỆN ĐĂNG NHẬP CHUẨN DESKTOP & LAPTOP (image1.png)   -->
@@ -621,11 +774,11 @@
       </div>
     </header>
 
-    <!-- Thanh tiến trình 3 bước -->
+    <!-- Thanh tiến trình 4 bước -->
     <div class="w-full pt-6 pb-4 px-4">
-      <div class="max-w-3xl mx-auto flex items-center justify-center gap-3 sm:gap-5 select-none">
+      <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 select-none">
         <!-- Chỉ báo Bước 1 -->
-        <div class="flex items-center gap-2.5 cursor-pointer shrink-0" onclick="if (ftCurrentStep > 1) goToFirstTimeStep(1)">
+        <div class="flex items-center gap-2 cursor-pointer shrink-0" onclick="if (ftCurrentStep > 1) goToFirstTimeStep(1)">
           <div id="ftStepCircle1" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all shrink-0">1</div>
           <div class="leading-tight whitespace-nowrap">
             <div id="ftStepTitle1" class="text-xs sm:text-sm font-bold whitespace-nowrap">Liên kết ứng dụng</div>
@@ -633,23 +786,33 @@
           </div>
         </div>
 
-        <div id="ftStepLine12" class="w-10 sm:w-16 h-[2px] bg-slate-300/80 rounded-full shrink-0"></div>
+        <div id="ftStepLine12" class="w-8 sm:w-12 h-[2px] bg-slate-300/80 rounded-full shrink-0"></div>
 
         <!-- Chỉ báo Bước 2 -->
-        <div class="flex items-center gap-2.5 shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
           <div id="ftStepCircle2" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all shrink-0">2</div>
           <div class="leading-tight whitespace-nowrap">
             <div id="ftStepTitle2" class="text-xs sm:text-sm font-bold whitespace-nowrap">Xác nhận mã OTP</div>
           </div>
         </div>
 
-        <div id="ftStepLine23" class="w-10 sm:w-16 h-[2px] bg-slate-300/80 rounded-full shrink-0"></div>
+        <div id="ftStepLine23" class="w-8 sm:w-12 h-[2px] bg-slate-300/80 rounded-full shrink-0"></div>
 
         <!-- Chỉ báo Bước 3 -->
-        <div class="flex items-center gap-2.5 shrink-0">
+        <div class="flex items-center gap-2 cursor-pointer shrink-0" onclick="if (ftCurrentStep === 4) goToFirstTimeStep(3)">
           <div id="ftStepCircle3" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all shrink-0">3</div>
           <div class="leading-tight whitespace-nowrap">
             <div id="ftStepTitle3" class="text-xs sm:text-sm font-bold whitespace-nowrap">Đổi mật khẩu lần đầu</div>
+          </div>
+        </div>
+
+        <div id="ftStepLine34" class="w-8 sm:w-12 h-[2px] bg-slate-300/80 rounded-full shrink-0"></div>
+
+        <!-- Chỉ báo Bước 4 -->
+        <div class="flex items-center gap-2 shrink-0">
+          <div id="ftStepCircle4" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all shrink-0">4</div>
+          <div class="leading-tight whitespace-nowrap">
+            <div id="ftStepTitle4" class="text-xs sm:text-sm font-bold whitespace-nowrap">Đặt mã PIN (6 số)</div>
           </div>
         </div>
       </div>
@@ -893,7 +1056,7 @@
           </div>
           <div>
             <span class="inline-block bg-[#eef5ff] text-[#155eef] font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-blue-200/70">
-              BƯỚC CUỐI CÙNG
+              BƯỚC 3 / 4
             </span>
             <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">Đổi mật khẩu khởi tạo</h2>
             <p class="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
@@ -903,7 +1066,7 @@
         </div>
 
         <!-- Form Đổi mật khẩu lần đầu -->
-        <form id="firstTimeForm" onsubmit="handleFirstTimeSubmit(event)" class="mt-5 space-y-4">
+        <form id="firstTimeForm" onsubmit="handleFirstTimeStep3Continue(event)" class="mt-5 space-y-4">
           <div>
             <label class="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">Mật khẩu tạm thời (*):</label>
             <div class="relative">
@@ -1012,7 +1175,103 @@
               id="ftSubmitStep3Btn"
               class="w-full ft-btn-primary font-bold text-xs sm:text-sm py-3.5 px-5 rounded-xl shadow-md"
             >
-              Lưu mật khẩu &amp; Vào trang làm việc &rarr;
+              Tiếp tục sang Đặt mã PIN 6 số &rarr;
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- =============================================================== -->
+      <!-- BƯỚC 4: ĐẶT MÃ PIN BẢO MẬT (6 SỐ)                               -->
+      <!-- =============================================================== -->
+      <section id="ftStep4Panel" class="hidden w-full max-w-[540px] bg-white rounded-[24px] shadow-[0_14px_44px_rgba(15,23,42,0.07)] border border-slate-100 p-6 sm:p-8">
+        <div class="flex items-start gap-4 pb-5 border-b border-slate-100">
+          <div class="w-12 h-12 rounded-2xl bg-[#eef5ff] border border-blue-100 flex items-center justify-center text-[#155eef] shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="11" width="16" height="10" rx="2"></rect>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"></path>
+            </svg>
+          </div>
+          <div>
+            <span class="inline-block bg-[#eef5ff] text-[#155eef] font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-blue-200/70">
+              BƯỚC CUỐI CÙNG
+            </span>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">Thiết lập mã PIN bảo mật (6 số)</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+              Mã PIN 6 chữ số được dùng để xác minh danh tính mỗi khi giáo viên tải lên, tải xuống hoặc niêm phong đề ôn tập và đề thi.
+            </p>
+          </div>
+        </div>
+
+        <form id="firstTimePinForm" onsubmit="handleFirstTimeSubmit(event)" class="mt-5 space-y-4">
+          <div>
+            <label class="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">Mã PIN xác minh 6 chữ số (*):</label>
+            <div class="relative">
+              <input
+                id="ftPinInput"
+                type="password"
+                inputmode="numeric"
+                maxlength="6"
+                required
+                oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+                placeholder="Nhập đúng 6 chữ số (0-9)..."
+                class="w-full pl-4 pr-11 py-2.5 rounded-xl border border-slate-200 text-base font-mono tracking-[0.28em] focus:outline-none focus:border-[#155eef] focus:ring-2 focus:ring-[#155eef]/15"
+              />
+              <button
+                type="button"
+                onclick="toggleInputType('ftPinInput')"
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                aria-label="Hiện/Ẩn mã PIN"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">Xác nhận lại mã PIN 6 chữ số (*):</label>
+            <div class="relative">
+              <input
+                id="ftPinConfirmInput"
+                type="password"
+                inputmode="numeric"
+                maxlength="6"
+                required
+                oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+                placeholder="Nhập lại 6 chữ số mã PIN..."
+                class="w-full pl-4 pr-11 py-2.5 rounded-xl border border-slate-200 text-base font-mono tracking-[0.28em] focus:outline-none focus:border-[#155eef] focus:ring-2 focus:ring-[#155eef]/15"
+              />
+              <button
+                type="button"
+                onclick="toggleInputType('ftPinConfirmInput')"
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                aria-label="Hiện/Ẩn xác nhận mã PIN"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onclick="goToFirstTimeStep(3)"
+              class="w-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm py-3 px-4 rounded-xl transition"
+            >
+              &larr; Quay lại mật khẩu
+            </button>
+            <button
+              type="submit"
+              id="ftSubmitStep4Btn"
+              class="w-full ft-btn-primary font-bold text-xs sm:text-sm py-3 px-4 rounded-xl shadow-md"
+            >
+              Lưu mã PIN &amp; Vào làm việc &rarr;
             </button>
           </div>
         </form>
@@ -1136,14 +1395,16 @@
           <div class="my-3 border-t border-white/10"></div>
 
           <button
+            id="adNavPinManage"
             type="button"
-            onclick="openTeacherPortal('ON_TAP')"
-            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-[0.92rem] text-amber-300/90 hover:bg-white/10 transition"
+            onclick="openPinManageModal()"
+            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-[0.93rem] text-blue-100/85 hover:bg-white/10 hover:text-white transition"
           >
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              <rect x="4" y="11" width="16" height="10" rx="2"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
             </svg>
-            <span>Kho đề ôn tập &amp; Đề thi</span>
+            <span>Mã PIN bảo mật (6 số)</span>
           </button>
 
           <button
@@ -1341,7 +1602,6 @@
             <select id="accRoleFilter" class="ad-input" style="width: auto" onchange="renderAccounts()">
               <option value="">Tất cả vai trò</option>
               <option value="GIAO_VIEN">Giáo viên</option>
-              <option value="BAN_GIAM_HIEU">Ban Giám hiệu</option>
               <option value="QUAN_TRI">Quản trị viên IT</option>
             </select>
             <div id="accChips" class="ad-chips"></div>
@@ -1353,7 +1613,7 @@
                   <th>Cán bộ</th>
                   <th>Tên đăng nhập</th>
                   <th>Vai trò</th>
-                  <th>Phân quyền khối &amp; môn</th>
+                  <th>Phân công chuyên môn</th>
                   <th>Bảo mật 2FA</th>
                   <th>Trạng thái</th>
                   <th>Truy cập gần nhất</th>
@@ -1439,7 +1699,6 @@
               <label for="caVaiTro">Vai trò <span class="t-bad">(*)</span></label>
               <select id="caVaiTro" class="ad-input" onchange="handleVaiTroChange()">
                 <option value="GIAO_VIEN">Giáo viên</option>
-                <option value="BAN_GIAM_HIEU">Ban Giám hiệu (Hiệu trưởng / Phó HT)</option>
                 <option value="QUAN_TRI">Quản trị viên IT</option>
               </select>
             </div>
@@ -1478,12 +1737,12 @@
                   <button type="button" class="ad-link" onclick="copyText(document.getElementById('caMatKhau').value)">Sao chép</button>
                 </span>
               </label>
-              <input id="caMatKhau" type="text" class="ad-input" readonly style="letter-spacing: 0.06em" />
-              <div class="ad-hint">Mật khẩu khởi tạo sẽ được gửi trực tiếp đến hộp thư email nội bộ của cán bộ ngay sau khi hoàn tất.</div>
+              <input id="caMatKhau" type="text" class="ad-input" placeholder="Nhập hoặc bấm Sinh lại mật khẩu khởi tạo" oninput="window._userEditedPassword = true" autocomplete="off" style="letter-spacing: 0.06em" />
+              <div class="ad-hint">Có thể chỉnh sửa trực tiếp hoặc bấm Sinh lại. Mật khẩu khởi tạo sẽ được gửi đến hộp thư email nội bộ của cán bộ ngay sau khi hoàn tất.</div>
             </div>
           </div>
 
-          <!-- Cấu hình Phân quyền truy cập theo khối và môn cho Giáo viên -->
+          <!-- Cấu hình Phân công chuyên môn cho Giáo viên -->
           <div id="caPhanQuyenSection" class="pq-box">
             <div class="pq-box-head">
               <div class="flex items-center gap-2">
@@ -1491,44 +1750,35 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
                 <div>
-                  <div class="t-strong text-[0.94rem]">Phân quyền truy cập theo khối và môn</div>
-                  <div class="t-muted t-xs">Thiết lập môn học, khối lớp được phép truy cập và phạm vi thao tác trên kho đề</div>
+                  <div class="t-strong text-[0.94rem]">Phân công chuyên môn</div>
+                  <div class="t-muted t-xs">Thiết lập môn học phụ trách, khối lớp giảng dạy và quyền ra đề thi</div>
                 </div>
               </div>
             </div>
 
             <div class="ad-field mb-3">
-              <label for="caMaMonHoc">Môn học được phép truy cập <span class="t-bad">(*)</span></label>
+              <label for="caMaMonHoc">Môn học phụ trách <span class="t-bad">(*)</span></label>
               <select id="caMaMonHoc" class="ad-input"></select>
             </div>
 
+            <div class="ad-field mb-3">
+              <label>Khối lớp giảng dạy <span class="t-bad">(*)</span></label>
+              <div id="caKhoiList" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5"></div>
+            </div>
+
             <div class="ad-field">
-              <label>Khối lớp và phạm vi quyền truy cập kho đề <span class="t-bad">(*)</span></label>
-              <div class="pq-table-wrap">
-                <table class="pq-matrix">
-                  <thead>
-                    <tr>
-                      <th>Khối lớp truy cập</th>
-                      <th>
-                        <div class="flex items-center justify-between gap-2">
-                          <span>Mục đề chung (Kho đề ôn tập)</span>
-                          <button type="button" class="ad-link t-xs font-normal" onclick="toggleAllMatrixCol('ca', 'chung')">Đảo chọn</button>
-                        </div>
-                      </th>
-                      <th>
-                        <div class="flex items-center justify-between gap-2">
-                          <span>Đề thi chính thức (Ra đề &amp; nộp đề)</span>
-                          <button type="button" class="ad-link t-xs font-normal" onclick="toggleAllMatrixCol('ca', 'chinh_thuc')">Đảo chọn</button>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody id="caKhoiMatrixBody"></tbody>
-                </table>
-              </div>
-              <div id="caNguoiCapQuyenHint" class="ad-hint">
-                Mục đề chung cho phép xem, tải và đóng góp đề ôn tập; Đề thi chính thức cho phép xem, tải và nộp đề thi theo lịch thi.
-              </div>
+              <label>Quyền ra đề thi</label>
+              <label
+                for="caDuocPhepRaDe"
+                class="flex items-start gap-3 p-3 rounded-xl cursor-pointer transition"
+                style="background: var(--surface-2); border: 1px solid var(--border);"
+              >
+                <input id="caDuocPhepRaDe" type="checkbox" class="mt-0.5 w-4 h-4 accent-[#2563eb] shrink-0" />
+                <div class="min-w-0">
+                  <div class="t-strong text-[0.92rem]">Được phép ra đề thi</div>
+                  <div class="t-muted t-xs mt-0.5">Khi được tích chọn, giáo viên sẽ được quyền thêm đề thi và đáp án lên hệ thống.</div>
+                </div>
+              </label>
             </div>
           </div>
 
@@ -1537,13 +1787,13 @@
               <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--info-fg)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
               </svg>
-              <span>Tài khoản thuộc nhóm <b>Ban Giám hiệu</b> hoặc <b>Quản trị viên IT</b> mặc định có quyền quản lý và giám sát trên toàn hệ thống nên không giới hạn theo từng khối hoặc bộ môn.</span>
+              <span>Tài khoản thuộc nhóm <b>Quản trị viên IT</b> phụ trách quản lý tài khoản, phân công chuyên môn, giám sát phiên đăng nhập và nhật ký hoạt động (không truy cập Kho đề ôn tập và Kho đề thi).</span>
             </div>
           </div>
 
           <label class="flex items-start gap-2.5 mt-4 text-[0.88rem] t-label">
             <input id="caBatBuocDoiMk" type="checkbox" checked disabled class="mt-1" />
-            <span>Giáo viên bắt buộc phải quét mã QR liên kết Google Authenticator và đổi mật khẩu mới ở lần đăng nhập đầu tiên mới được cấp quyền làm việc.</span>
+            <span>Giáo viên bắt buộc phải quét mã QR liên kết Google Authenticator, đổi mật khẩu mới và thiết lập mã PIN 6 số ở lần đăng nhập đầu tiên mới được cấp quyền làm việc.</span>
           </label>
         </div>
         <div class="ad-dialog-foot">
@@ -1564,11 +1814,11 @@
               <div class="t-label text-[0.92rem] mt-1" id="hoMessage"></div>
             </div>
           </div>
-          <div class="mt-4 grid grid-cols-[9rem_1fr] gap-y-2 text-[0.92rem]">
+          <div class="mt-4 grid grid-cols-[9.5rem_1fr] gap-y-2 text-[0.92rem]">
             <span class="t-muted">Tên đăng nhập</span><span id="hoTenDangNhap" class="t-text"></span>
             <span class="t-muted">Email</span><span id="hoEmail" class="t-text"></span>
-            <span id="hoMonKhoiLabel" class="t-muted hidden">Khối &amp; môn học</span><span id="hoMonKhoi" class="t-strong hidden"></span>
-            <span id="hoPhamViLabel" class="t-muted hidden">Phạm vi kho đề</span><span id="hoPhamViQuyen" class="hidden"></span>
+            <span id="hoMonKhoiLabel" class="t-muted hidden">Phân công chuyên môn</span><span id="hoMonKhoi" class="t-strong hidden"></span>
+            <span id="hoPhamViLabel" class="t-muted hidden">Quyền ra đề thi</span><span id="hoPhamViQuyen" class="hidden"></span>
           </div>
           <div id="hoMatKhauWrap" class="mt-4 hidden">
             <div class="text-[0.86rem] t-label mb-1.5 font-semibold">Mật khẩu khởi tạo (chỉ hiện lần này)</div>
@@ -1587,13 +1837,13 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- HỘP THOẠI PHÂN QUYỀN TRUY CẬP THEO KHỐI VÀ MÔN CHO GIÁO VIÊN          -->
+  <!-- HỘP THOẠI PHÂN CÔNG CHUYÊN MÔN CHO GIÁO VIÊN                          -->
   <!-- ===================================================================== -->
   <div id="permModal" class="ad-overlay hidden" onmousedown="if (event.target === this) closePermModal()">
-    <div class="ad-dialog" style="max-width: 46rem">
+    <div class="ad-dialog" style="max-width: 42rem">
       <div class="ad-dialog-head">
         <div>
-          <h3>Phân quyền truy cập theo khối và môn</h3>
+          <h3>Phân công chuyên môn</h3>
           <div id="pmTeacherSubtitle" class="t-muted t-xs mt-0.5"></div>
         </div>
         <button type="button" onclick="closePermModal()" class="ad-close" aria-label="Đóng">
@@ -1607,41 +1857,35 @@
           <input id="pmMaTaiKhoan" type="hidden" />
 
           <div class="ad-field">
-            <label for="pmMaMonHoc">Môn học được phép truy cập <span class="t-bad">(*)</span></label>
+            <label for="pmMaMonHoc">Môn học phụ trách <span class="t-bad">(*)</span></label>
             <select id="pmMaMonHoc" class="ad-input"></select>
           </div>
 
           <div class="ad-field">
-            <label>Khối lớp và phạm vi quyền truy cập kho đề <span class="t-bad">(*)</span></label>
-            <div class="pq-table-wrap">
-              <table class="pq-matrix">
-                <thead>
-                  <tr>
-                    <th>Khối lớp truy cập</th>
-                    <th>
-                      <div class="flex items-center justify-between gap-2">
-                        <span>Mục đề chung (Kho đề ôn tập)</span>
-                        <button type="button" class="ad-link t-xs font-normal" onclick="toggleAllMatrixCol('pm', 'chung')">Đảo chọn</button>
-                      </div>
-                    </th>
-                    <th>
-                      <div class="flex items-center justify-between gap-2">
-                        <span>Đề thi chính thức (Ra đề &amp; nộp đề)</span>
-                        <button type="button" class="ad-link t-xs font-normal" onclick="toggleAllMatrixCol('pm', 'chinh_thuc')">Đảo chọn</button>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody id="pmKhoiMatrixBody"></tbody>
-              </table>
-            </div>
-            <div id="pmAuditMeta" class="ad-hint"></div>
+            <label>Khối lớp giảng dạy <span class="t-bad">(*)</span></label>
+            <div id="pmKhoiList" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5"></div>
+          </div>
+
+          <div class="ad-field">
+            <label>Quyền ra đề thi</label>
+            <label
+              for="pmDuocPhepRaDe"
+              class="flex items-start gap-3 p-3 rounded-xl cursor-pointer transition"
+              style="background: var(--surface-2); border: 1px solid var(--border);"
+            >
+              <input id="pmDuocPhepRaDe" type="checkbox" class="mt-0.5 w-4 h-4 accent-[#2563eb] shrink-0" />
+              <div class="min-w-0">
+                <div class="t-strong text-[0.92rem]">Được phép ra đề thi</div>
+                <div class="t-muted t-xs mt-0.5">Khi được tích chọn, giáo viên sẽ được quyền thêm đề thi và đáp án lên hệ thống.</div>
+              </div>
+            </label>
+            <div id="pmAuditMeta" class="ad-hint mt-2"></div>
           </div>
         </div>
 
         <div class="ad-dialog-foot">
           <button type="button" class="ad-btn-ghost" onclick="closePermModal()">Hủy bỏ</button>
-          <button id="pmSubmitBtn" type="submit" class="ad-btn">Lưu phân quyền</button>
+          <button id="pmSubmitBtn" type="submit" class="ad-btn">Lưu phân công</button>
         </div>
       </form>
     </div>
@@ -1833,16 +2077,16 @@
           <div class="my-3 border-t border-white/10"></div>
 
           <button
-            id="tpNavAdminBack"
+            id="tpNavPinManage"
             type="button"
-            onclick="showScreen('DASHBOARD'); switchDashboardTab('ACCOUNTS');"
-            class="hidden w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-[0.92rem] text-amber-300/90 hover:bg-white/10 transition"
+            onclick="openPinManageModal()"
+            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-[0.93rem] text-blue-100/85 hover:bg-white/10 hover:text-white transition"
           >
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-              <circle cx="12" cy="12" r="3"/>
+              <rect x="4" y="11" width="16" height="10" rx="2"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
             </svg>
-            <span>Trang Quản trị</span>
+            <span>Mã PIN bảo mật (6 số)</span>
           </button>
 
           <button
@@ -1949,8 +2193,8 @@
           </div>
 
           <!-- Bảng đề ôn tập -->
-          <div class="overflow-x-auto rounded-xl border border-slate-100">
-            <table class="w-full text-left border-collapse">
+          <div class="table-scroll-wrap rounded-xl border border-slate-100">
+            <table class="w-full text-left border-collapse min-w-[920px]">
               <thead>
                 <tr class="bg-[#f8fafc] border-b border-slate-200/80 text-slate-600 text-[0.86rem] font-bold">
                   <th class="py-3.5 px-4 w-16 text-center">STT</th>
@@ -2000,9 +2244,9 @@
             </button>
           </div>
 
-          <!-- Thanh tìm kiếm & bộ lọc 4 cột theo chuẩn thiết kế -->
+          <!-- Thanh tìm kiếm & bộ lọc 5 cột -->
           <div class="bg-white rounded-2xl shadow-[0_2px_16px_rgba(15,23,42,0.04)] border border-slate-200/80 p-4 sm:p-5 mb-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label for="dtSearchInput" class="block text-[0.72rem] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">
                   Tìm kiếm tên kỳ thi / đề
@@ -2019,6 +2263,21 @@
                     class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-[#f8fafc] focus:bg-white text-[0.92rem] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 transition"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label for="dtPhanLoaiFilter" class="block text-[0.72rem] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Phân loại tài liệu
+                </label>
+                <select
+                  id="dtPhanLoaiFilter"
+                  onchange="onFilterDeThi()"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-[#f8fafc] focus:bg-white text-[0.92rem] font-medium text-slate-700 focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 cursor-pointer transition"
+                >
+                  <option value="">Tất cả phân loại</option>
+                  <option value="Đề thi">Đề thi</option>
+                  <option value="Đáp án">Đáp án</option>
+                </select>
               </div>
 
               <div>
@@ -2072,19 +2331,22 @@
             </div>
           </div>
 
-          <!-- Bảng hiển thị 5 mục chính: Tên kỳ thi, Khối lớp, Loại kỳ thi, Năm học, Thời gian thi -->
+          <!-- Bảng danh sách kỳ thi, phân loại (Đề thi / Đáp án) và trạng thái niêm phong -->
           <div class="bg-white rounded-2xl shadow-[0_4px_24px_rgba(15,23,42,0.05)] border border-slate-200/80 p-5">
-            <div class="overflow-x-auto rounded-xl border border-slate-100">
-              <table class="w-full text-left border-collapse">
+            <div class="table-scroll-wrap rounded-xl border border-slate-100">
+              <table class="w-full text-left border-collapse min-w-[1050px]">
                 <thead>
                   <tr class="bg-[#f8fafc] border-b border-slate-200/80 text-slate-600 text-[0.86rem] font-bold">
-                    <th class="py-3.5 px-4 w-16 text-center">STT</th>
-                    <th class="py-3.5 px-4">Tên kỳ thi</th>
-                    <th class="py-3.5 px-4 w-32 text-center">Khối lớp</th>
-                    <th class="py-3.5 px-4 w-36 text-center">Loại kỳ thi</th>
-                    <th class="py-3.5 px-4 w-36 text-center">Năm học</th>
-                    <th class="py-3.5 px-4 w-56">Thời gian thi</th>
-                    <th class="py-3.5 px-4 w-36 text-center">Thao tác</th>
+                    <th class="py-3.5 px-3.5 w-14 text-center">STT</th>
+                    <th class="py-3.5 px-4">Tên kỳ thi &amp; Tài liệu</th>
+                    <th class="py-3.5 px-3.5 w-44">Người ra đề</th>
+                    <th class="py-3.5 px-3 w-28 text-center">Phân loại</th>
+                    <th class="py-3.5 px-3 w-28 text-center">Khối lớp</th>
+                    <th class="py-3.5 px-3 w-32 text-center">Loại kỳ thi</th>
+                    <th class="py-3.5 px-3 w-32 text-center">Năm học</th>
+                    <th class="py-3.5 px-3.5 w-48">Thời gian thi</th>
+                    <th class="py-3.5 px-3.5 w-40 text-center">Niêm phong</th>
+                    <th class="py-3.5 px-3.5 w-40 text-center">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="deThiTableBody" class="divide-y divide-slate-100 text-[0.95rem]"></tbody>
@@ -2278,15 +2540,30 @@
                 </div>
               </div>
 
-              <!-- PHẦN 3: THÔNG TIN ĐỀ THI -->
+              <!-- PHẦN 3: THÔNG TIN ĐỀ THI / ĐÁP ÁN -->
               <div class="space-y-4 pt-1">
                 <div class="text-[0.92rem] font-extrabold text-slate-800 uppercase tracking-wide pb-2 border-b border-slate-100">
-                  THÔNG TIN ĐỀ THI
+                  THÔNG TIN TÀI LIỆU THI
                 </div>
 
                 <div>
                   <label class="block text-sm font-medium text-slate-700 mb-1.5">
-                    Tên đề thi <span class="text-rose-500">*</span>
+                    Phân loại tài liệu <span class="text-rose-500">*</span>
+                  </label>
+                  <select
+                    id="dtNewLoaiTaiLieu"
+                    required
+                    onchange="autoSuggestTenDeThi()"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-[0.96rem] text-slate-800 bg-white focus:outline-none focus:border-[#2563eb]"
+                  >
+                    <option value="Đề thi">Đề thi</option>
+                    <option value="Đáp án">Đáp án</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Tên tài liệu (Đề thi / Đáp án) <span class="text-rose-500">*</span>
                   </label>
                   <input
                     id="dtNewTenDe"
@@ -2324,6 +2601,16 @@
                       class="hidden"
                       onchange="updateSelectedDeThiFile()"
                     />
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-2.5 bg-amber-50/90 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-900 leading-relaxed">
+                  <svg class="w-4 h-4 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
+                  </svg>
+                  <div>
+                    <b>Cơ chế niêm phong bảo mật:</b> Tài liệu tự động khóa trước giờ bắt đầu thi 24 giờ hoặc ngay khi giáo viên bấm <b>Niêm phong</b>.
+                    <b>Đề thi</b> tự động mở khi đến giờ bắt đầu thi; <b>Đáp án</b> tự động mở khi kết thúc giờ thi. Trong thời gian niêm phong, kể cả Quản trị viên hay người ra đề đều không thể can thiệp.
                   </div>
                 </div>
               </div>
@@ -2687,21 +2974,25 @@
       <div class="p-6 space-y-5">
         <!-- Thanh tiêu đề tóm tắt -->
         <div class="bg-[#f4f8ff] border border-blue-100/80 rounded-xl px-4 py-3.5 flex items-center justify-between gap-3">
-          <div class="flex items-center gap-3 min-w-0">
+          <div class="flex items-center gap-2.5 min-w-0 flex-wrap">
             <span class="text-[#2563eb] shrink-0">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
             </span>
             <span id="dtDetailHeaderTitle" class="font-extrabold text-[1.06rem] text-slate-900 truncate"></span>
+            <span id="dtDetailPhanLoaiBadge"></span>
             <span id="dtDetailHeaderBadge"></span>
           </div>
           <span id="dtDetailHeaderMon" class="font-extrabold text-[#2563eb] text-[0.96rem] shrink-0"></span>
         </div>
 
-        <!-- Lưới 2 cột hiển thị đúng 11 mục xem chi tiết -->
+        <!-- Thông báo trạng thái niêm phong -->
+        <div id="dtDetailSealBanner" class="rounded-xl px-4 py-3 border text-xs leading-relaxed"></div>
+
+        <!-- Lưới 2 cột hiển thị đầy đủ các mục xem chi tiết -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 border border-slate-100 rounded-xl p-4 bg-white">
-          <!-- Cột trái: 1. Tên kỳ thi, 2. Khối lớp, 3. Loại kỳ thi, 4. Năm học, 5. Thời gian thi, 6. Tên môn học -->
+          <!-- Cột trái -->
           <div class="space-y-3.5 sm:border-r sm:border-slate-100 sm:pr-4">
             <div class="flex items-start gap-3">
               <span class="text-slate-400 mt-1">
@@ -2710,6 +3001,16 @@
               <div>
                 <div class="text-xs text-slate-400">Tên kỳ thi</div>
                 <div id="dtDetailTenKyThi" class="font-bold text-sm text-slate-800 mt-0.5">—</div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <span class="text-slate-400 mt-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+              </span>
+              <div>
+                <div class="text-xs text-slate-400">Phân loại tài liệu</div>
+                <div id="dtDetailPhanLoai" class="font-bold text-sm text-slate-800 mt-0.5">—</div>
               </div>
             </div>
 
@@ -2764,15 +3065,25 @@
             </div>
           </div>
 
-          <!-- Cột phải: 7. Tên đề thi, 8. Người ra đề, 9. Thời điểm tạo, 10. Thời điểm cập nhật, 11. Người cập nhật -->
+          <!-- Cột phải -->
           <div class="space-y-3.5">
             <div class="flex items-start gap-3">
               <span class="text-slate-400 mt-1">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               </span>
               <div class="min-w-0">
-                <div class="text-xs text-slate-400">Tên đề thi</div>
+                <div class="text-xs text-slate-400">Tên tài liệu</div>
                 <div id="dtDetailTenDe" class="font-bold text-sm text-slate-800 mt-0.5 break-words">—</div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <span class="text-slate-400 mt-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/></svg>
+              </span>
+              <div>
+                <div class="text-xs text-slate-400">Trạng thái niêm phong</div>
+                <div id="dtDetailTrangThaiNiemPhong" class="mt-0.5">—</div>
               </div>
             </div>
 
@@ -2818,8 +3129,8 @@
           </div>
         </div>
 
-        <!-- Khung Xem đề thi & Tải xuống -->
-        <div class="bg-[#f8fbff] border border-blue-100 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <!-- Khung Xem đề thi & Tải xuống (ẩn khi đang niêm phong) -->
+        <div id="dtDetailFileAccessBox" class="bg-[#f8fbff] border border-blue-100 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
             <span class="text-[#2563eb]">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -2827,8 +3138,8 @@
               </svg>
             </span>
             <div>
-              <div class="font-bold text-sm text-slate-800">Xem trước đề thi</div>
-              <div class="text-xs text-slate-500">Bạn có thể xem trực tiếp nội dung đề thi hoặc tải về máy.</div>
+              <div class="font-bold text-sm text-slate-800">Truy cập tệp tài liệu</div>
+              <div class="text-xs text-slate-500">Xem trực tiếp nội dung hoặc xác minh mã PIN 6 số để tải xuống máy.</div>
             </div>
           </div>
           <div class="flex items-center gap-2.5">
@@ -2841,7 +3152,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
-              <span>Xem đề</span>
+              <span>Xem trực tiếp</span>
             </button>
             <button
               id="dtDetailDownloadBtn"
@@ -2855,20 +3166,45 @@
             </button>
           </div>
         </div>
+
+        <!-- Khung khóa niêm phong bất khả xâm phạm -->
+        <div id="dtDetailFileLockedBox" class="hidden bg-rose-50/90 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
+          <span class="text-rose-600 mt-0.5 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
+            </svg>
+          </span>
+          <div class="text-xs text-rose-900 leading-relaxed">
+            <div class="font-extrabold text-sm text-rose-800">Tài liệu đang trong thời gian niêm phong tuyệt đối</div>
+            <div id="dtDetailFileLockedDesc" class="mt-0.5">Kể cả Quản trị viên hay giáo viên tạo đề đều không có quyền xem, tải xuống, chỉnh sửa hoặc xóa cho đến thời điểm mở tự động theo lịch thi.</div>
+          </div>
+        </div>
       </div>
 
       <!-- Footer -->
-      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
-        <button
-          id="dtDetailEditBtn"
-          type="button"
-          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-[#2563eb] font-bold text-sm transition"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-          </svg>
-          <span>Chỉnh sửa / Cập nhật đề</span>
-        </button>
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            id="dtDetailSealBtn"
+            type="button"
+            class="hidden inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-sm transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
+            </svg>
+            <span>Niêm phong ngay</span>
+          </button>
+          <button
+            id="dtDetailEditBtn"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-[#2563eb] font-bold text-sm transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            <span>Chỉnh sửa / Cập nhật đề</span>
+          </button>
+        </div>
         <button
           type="button"
           onclick="closeDeThiDetailModal()"
@@ -2876,6 +3212,243 @@
         >
           Đóng
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 4: XÁC MINH / THIẾT LẬP / QUÊN MÃ PIN BẢO MẬT (6 CHỮ SỐ)        -->
+  <!-- ===================================================================== -->
+  <div id="pinModal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-[2px] z-[95] hidden flex items-center justify-center p-4" onmousedown="if (event.target === this) closePinModal(null)">
+    <div class="bg-white w-full max-w-[460px] rounded-2xl shadow-2xl border border-slate-100 overflow-hidden text-slate-800">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-[#fafbfd]">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-blue-50 text-[#2563eb] border border-blue-100 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
+            </svg>
+          </span>
+          <div>
+            <h3 id="pinModalTitle" class="text-[1.05rem] font-extrabold text-slate-900">Xác minh mã PIN 6 số</h3>
+            <p id="pinModalSubtitle" class="text-xs text-slate-500">Xác thực bảo mật cho thao tác quan trọng trên hệ thống</p>
+          </div>
+        </div>
+        <button type="button" onclick="closePinModal(null)" class="text-slate-400 hover:text-slate-700 p-1" aria-label="Đóng">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-6">
+        <div id="pinModalAlert" class="hidden mb-4 p-3 rounded-xl text-sm font-medium border"></div>
+
+        <!-- PANEL 1: NHẬP MÃ PIN 6 SỐ ĐỂ XÁC MINH THAO TÁC -->
+        <form id="pinVerifyPanel" onsubmit="handlePinVerifySubmit(event)" class="space-y-4">
+          <div class="bg-[#f4f8ff] border border-blue-100 rounded-xl px-4 py-3 text-xs text-slate-700">
+            <div class="text-slate-500 font-semibold">Thao tác yêu cầu xác minh:</div>
+            <div id="pinActionDesc" class="font-extrabold text-sm text-[#1e40af] mt-0.5">Tải tài liệu</div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="pinVerifyInput" class="block text-sm font-bold text-slate-700">
+                Nhập mã PIN (6 chữ số) <span class="text-rose-600">*</span>
+              </label>
+              <button
+                type="button"
+                onclick="switchPinModalMode('FORGOT')"
+                class="text-xs font-bold text-[#2563eb] hover:underline"
+              >
+                Quên mã PIN?
+              </button>
+            </div>
+            <input
+              id="pinVerifyInput"
+              type="password"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="off"
+              placeholder="••••••"
+              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+              class="w-full px-4 py-3 rounded-xl border border-slate-300 text-center font-mono text-xl tracking-[0.55em] text-slate-900 focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15"
+            />
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100">
+            <button
+              type="button"
+              onclick="closePinModal(null)"
+              class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-sm transition"
+            >
+              Hủy
+            </button>
+            <button
+              id="pinVerifySubmitBtn"
+              type="submit"
+              class="px-5 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-sm shadow-sm transition"
+            >
+              Xác nhận mã PIN
+            </button>
+          </div>
+        </form>
+
+        <!-- PANEL 2: THIẾT LẬP MÃ PIN 6 SỐ LẦN ĐẦU (CHO TÀI KHOẢN CŨ CHƯA CÓ PIN) -->
+        <form id="pinSetupPanel" onsubmit="handlePinSetupSubmit(event)" class="hidden space-y-4">
+          <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-900 leading-relaxed">
+            Tài khoản của bạn chưa thiết lập <b>mã PIN 6 số</b>. Vui lòng tạo mã PIN bảo mật ngay bây giờ để tiếp tục thực hiện thao tác tải hoặc niêm phong tài liệu.
+          </div>
+
+          <div>
+            <label for="pinSetupNew" class="block text-sm font-bold text-slate-700 mb-1.5">
+              Mã PIN mới (6 chữ số) <span class="text-rose-600">*</span>
+            </label>
+            <input
+              id="pinSetupNew"
+              type="password"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="off"
+              placeholder="••••••"
+              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+              class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-lg tracking-[0.45em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
+            />
+          </div>
+
+          <div>
+            <label for="pinSetupConfirm" class="block text-sm font-bold text-slate-700 mb-1.5">
+              Xác nhận lại mã PIN <span class="text-rose-600">*</span>
+            </label>
+            <input
+              id="pinSetupConfirm"
+              type="password"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="off"
+              placeholder="••••••"
+              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+              class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-lg tracking-[0.45em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
+            />
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100">
+            <button
+              type="button"
+              onclick="closePinModal(null)"
+              class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-sm transition"
+            >
+              Hủy
+            </button>
+            <button
+              id="pinSetupSubmitBtn"
+              type="submit"
+              class="px-5 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-sm shadow-sm transition"
+            >
+              Thiết lập mã PIN
+            </button>
+          </div>
+        </form>
+
+        <!-- PANEL 3: QUÊN MÃ PIN - GỬI MÃ XÁC NHẬN VỀ EMAIL ĐỂ ĐỔI MÃ PIN -->
+        <form id="pinForgotPanel" onsubmit="handlePinResetSubmit(event)" class="hidden space-y-4">
+          <div class="bg-[#f8fafc] border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 space-y-2.5">
+            <div>
+              Hệ thống sẽ gửi mã xác nhận gồm <b>6 chữ số</b> (hiệu lực 10 phút) tới hộp thư nội bộ:
+              <div id="pinForgotEmailText" class="font-bold text-slate-900 mt-0.5">—</div>
+            </div>
+            <button
+              id="btnSendPinResetCode"
+              type="button"
+              onclick="handleSendPinForgotEmail()"
+              class="w-full py-2 px-3.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#1d4ed8] border border-blue-200 font-bold text-xs transition"
+            >
+              Gửi mã xác nhận về Email
+            </button>
+          </div>
+
+          <!-- Hộp mã xác nhận dự phòng khi máy chủ chưa cấu hình SMTP -->
+          <div id="pinForgotFallbackWrap" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900">
+            <div class="font-bold mb-1">Mã xác nhận khôi phục PIN (hiệu lực 10 phút):</div>
+            <div class="flex items-center justify-between bg-white border border-amber-200 rounded-lg px-3 py-2">
+              <span id="pinForgotFallbackCode" class="font-mono font-extrabold text-base tracking-[0.25em] text-slate-900"></span>
+              <button
+                type="button"
+                onclick="copyText(document.getElementById('pinForgotFallbackCode').textContent)"
+                class="text-xs font-bold text-[#2563eb] hover:underline"
+              >
+                Sao chép
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label for="pinResetCode" class="block text-sm font-bold text-slate-700 mb-1">
+              Mã xác nhận từ Email (6 số) <span class="text-rose-600">*</span>
+            </label>
+            <input
+              id="pinResetCode"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="off"
+              placeholder="Nhập 6 chữ số xác nhận"
+              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-[0.35em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="pinResetNew" class="block text-sm font-bold text-slate-700 mb-1">
+                Mã PIN mới (6 số) <span class="text-rose-600">*</span>
+              </label>
+              <input
+                id="pinResetNew"
+                type="password"
+                inputmode="numeric"
+                maxlength="6"
+                autocomplete="off"
+                placeholder="••••••"
+                oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+                class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-[0.35em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
+              />
+            </div>
+            <div>
+              <label for="pinResetConfirm" class="block text-sm font-bold text-slate-700 mb-1">
+                Nhập lại PIN mới <span class="text-rose-600">*</span>
+              </label>
+              <input
+                id="pinResetConfirm"
+                type="password"
+                inputmode="numeric"
+                maxlength="6"
+                autocomplete="off"
+                placeholder="••••••"
+                oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+                class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-[0.35em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
+              />
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center justify-between gap-2.5 border-t border-slate-100">
+            <button
+              id="pinForgotBackBtn"
+              type="button"
+              onclick="switchPinModalMode('VERIFY')"
+              class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-sm transition"
+            >
+              Quay lại
+            </button>
+            <button
+              id="pinResetSubmitBtn"
+              type="submit"
+              class="px-5 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-sm shadow-sm transition"
+            >
+              Đổi mã PIN
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -2945,12 +3518,118 @@
       });
     }
 
+    let _currentActiveScreen = "LOGIN";
+
     function showScreen(screenName) {
+      _currentActiveScreen = screenName;
+      document.getElementById("viewIpBlocked")?.classList.toggle("hidden", screenName !== "IP_BLOCKED");
       document.getElementById("viewLogin").classList.toggle("hidden", screenName !== "LOGIN");
       document.getElementById("viewFirstTime2FA").classList.toggle("hidden", screenName !== "FIRST_TIME_2FA");
       document.getElementById("viewVerifyOtp").classList.toggle("hidden", screenName !== "VERIFY_OTP");
       document.getElementById("viewDashboard").classList.toggle("hidden", screenName !== "DASHBOARD");
       document.getElementById("viewTeacherPortal")?.classList.toggle("hidden", screenName !== "TEACHER_PORTAL");
+    }
+
+    function renderAndShowIpBlockedScreen(info = {}) {
+      window.currentUser = null;
+      document.getElementById("ipBlkMay").textContent = info.ip_may || "—";
+      document.getElementById("ipBlkIpv4").textContent = info.dia_chi_ipv4 || info.blocked_ip || "—";
+      document.getElementById("ipBlkTarget").textContent = info.blocked_ip || info.dia_chi_ipv4 || info.ip_may || "—";
+      document.getElementById("ipBlkTime").textContent = info.thoi_diem_chan || "Đang có hiệu lực";
+      document.getElementById("ipBlkReason").textContent = info.ly_do || "Chặn truy cập toàn thiết bị theo chính sách an ninh";
+      hideAlert("ipBlkStatusMsg");
+      showScreen("IP_BLOCKED");
+    }
+
+    async function checkAndEnforceIpFirewall() {
+      try {
+        const res = await fetch("/api/auth/ip-status");
+        if (!res.ok) return false;
+        const st = await res.json();
+        if (st.blocked && !st.is_admin_session) {
+          renderAndShowIpBlockedScreen(st);
+          return true;
+        }
+        if (!st.blocked && _currentActiveScreen === "IP_BLOCKED") {
+          showScreen("LOGIN");
+        }
+      } catch (_) {}
+      return false;
+    }
+
+    async function recheckIpBlockStatus(manual = false) {
+      try {
+        const res = await fetch("/api/auth/ip-status");
+        if (!res.ok) return;
+        const st = await res.json();
+        if (!st.blocked) {
+          hideAlert("ipBlkStatusMsg");
+          showScreen("LOGIN");
+          showAlert("loginAlert", "Địa chỉ IP của thiết bị đã được Quản trị viên gỡ chặn. Bạn có thể đăng nhập trở lại.", "success");
+          return;
+        }
+        renderAndShowIpBlockedScreen(st);
+        if (manual) {
+          showAlert("ipBlkStatusMsg", `Thiết bị (${st.blocked_ip}) hiện vẫn đang bị khóa truy cập hệ thống.`, "error");
+        }
+      } catch (_) {}
+    }
+
+    function toggleIpBlockedAdminBox() {
+      const form = document.getElementById("ipBlkAdminForm");
+      if (!form) return;
+      form.classList.toggle("hidden");
+      if (!form.classList.contains("hidden")) {
+        document.getElementById("ipBlkAdminUser")?.focus();
+      }
+    }
+
+    async function handleIpBlockedAdminLogin(e) {
+      e.preventDefault();
+      hideAlert("ipBlkStatusMsg");
+      const identifier = (document.getElementById("ipBlkAdminUser")?.value || "").trim();
+      const mat_khau = document.getElementById("ipBlkAdminPass")?.value || "";
+      if (!identifier || !mat_khau) return;
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier, mat_khau }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (data?.detail?.code === "IP_BLOCKED") {
+            showAlert("ipBlkStatusMsg", "Từ chối truy cập: Thiết bị đang bị chặn IP. Chỉ tài khoản Quản trị viên IT mới có quyền đăng nhập để gỡ chặn!", "error");
+          } else {
+            const msg = typeof data.detail === "string" ? data.detail : (data.detail?.message || "Xác thực Quản trị viên thất bại.");
+            showAlert("ipBlkStatusMsg", msg, "error");
+          }
+          return;
+        }
+        document.getElementById("ipBlkAdminPass").value = "";
+        document.getElementById("ipBlkAdminForm")?.classList.add("hidden");
+        if (data.next_step === "FIRST_TIME_2FA") {
+          window._lastLoginTempPassword = mat_khau;
+          await loadFirstTime2FAScreen(1);
+        } else if (data.next_step === "VERIFY_OTP") {
+          setOtpValue(".v-otp-input", "");
+          hideAlert("verifyOtpAlert");
+          showScreen("VERIFY_OTP");
+        } else {
+          await loadDashboardScreen("Đăng nhập Quản trị viên thành công. Bạn có thể gỡ chặn IP tại mục Quản lý tài khoản hoặc Nhật ký hoạt động.");
+        }
+      } catch (err) {
+        showAlert("ipBlkStatusMsg", "Lỗi kết nối máy chủ: " + err.message, "error");
+      }
+    }
+
+    let _ipFirewallTimer = null;
+    function ensureIpFirewallWatcher() {
+      if (_ipFirewallTimer) return;
+      _ipFirewallTimer = setInterval(() => {
+        if (_currentActiveScreen === "DASHBOARD" && window.currentUser?.vai_tro === "QUAN_TRI") return;
+        checkAndEnforceIpFirewall();
+      }, 4000);
     }
 
     function showAlert(id, message, type = "error") {
@@ -3003,6 +3682,10 @@
         });
         const data = await res.json();
         if (!res.ok) {
+          if (data?.detail?.code === "IP_BLOCKED") {
+            renderAndShowIpBlockedScreen(data.detail);
+            return;
+          }
           const msg = typeof data.detail === "string" ? data.detail : (data.detail?.message || "Đăng nhập thất bại");
           showAlert("loginAlert", msg, res.status === 403 ? "warning" : "error");
           return;
@@ -3074,6 +3757,7 @@
       document.getElementById("ftStep1Panel").classList.toggle("hidden", step !== 1);
       document.getElementById("ftStep2Panel").classList.toggle("hidden", step !== 2);
       document.getElementById("ftStep3Panel").classList.toggle("hidden", step !== 3);
+      document.getElementById("ftStep4Panel")?.classList.toggle("hidden", step !== 4);
 
       const alertEl = document.getElementById("ftAlert");
       if (alertEl) {
@@ -3081,7 +3765,7 @@
         alertEl.classList.toggle("max-w-[540px]", step !== 1);
       }
 
-      [1, 2, 3].forEach(n => {
+      [1, 2, 3, 4].forEach(n => {
         const active = n === step;
         const circle = document.getElementById(`ftStepCircle${n}`);
         const title = document.getElementById(`ftStepTitle${n}`);
@@ -3123,6 +3807,12 @@
           if (target) target.focus();
         }, 40);
       }
+
+      if (step === 4) {
+        setTimeout(() => {
+          document.getElementById("ftPinInput")?.focus();
+        }, 40);
+      }
     }
 
     async function loadFirstTime2FAScreen(initialStep = null) {
@@ -3132,6 +3822,10 @@
       if (tempPw) tempPw.value = window._lastLoginTempPassword || "";
       document.getElementById("ftNewPassword").value = "";
       document.getElementById("ftConfirmPassword").value = "";
+      const pinInp = document.getElementById("ftPinInput");
+      const pinCfm = document.getElementById("ftPinConfirmInput");
+      if (pinInp) pinInp.value = "";
+      if (pinCfm) pinCfm.value = "";
       evaluatePasswordStrength("");
 
       const res = await fetch("/api/auth/2fa-setup-info");
@@ -3269,6 +3963,32 @@
       }
     }
 
+    function handleFirstTimeStep3Continue(e) {
+      e.preventDefault();
+      hideAlert("ftAlert");
+      const mat_khau_tam = document.getElementById("ftTempPassword")?.value || "";
+      const mat_khau_moi = document.getElementById("ftNewPassword").value;
+      const xac_nhan_mat_khau = document.getElementById("ftConfirmPassword").value;
+
+      if (!mat_khau_tam.trim()) {
+        showAlert("ftAlert", "Vui lòng nhập mật khẩu tạm thời.");
+        return;
+      }
+      if (mat_khau_moi.length < 8 || !/[A-Z]/.test(mat_khau_moi) || !/[0-9]/.test(mat_khau_moi) || !/[^A-Za-z0-9]/.test(mat_khau_moi)) {
+        showAlert("ftAlert", "Mật khẩu mới phải có tối thiểu 8 ký tự, gồm chữ IN HOA, chữ số và ký tự đặc biệt.");
+        return;
+      }
+      if (mat_khau_moi !== xac_nhan_mat_khau) {
+        showAlert("ftAlert", "Mật khẩu xác nhận nhập lại không khớp với mật khẩu mới.");
+        return;
+      }
+      if (mat_khau_moi === mat_khau_tam) {
+        showAlert("ftAlert", "Mật khẩu cá nhân mới không được trùng với mật khẩu tạm thời.");
+        return;
+      }
+      goToFirstTimeStep(4);
+    }
+
     async function handleFirstTimeSubmit(e) {
       e.preventDefault();
       hideAlert("ftAlert");
@@ -3276,35 +3996,55 @@
       const mat_khau_tam = document.getElementById("ftTempPassword")?.value || "";
       const mat_khau_moi = document.getElementById("ftNewPassword").value;
       const xac_nhan_mat_khau = document.getElementById("ftConfirmPassword").value;
+      const ma_pin = (document.getElementById("ftPinInput")?.value || "").trim();
+      const xac_nhan_ma_pin = (document.getElementById("ftPinConfirmInput")?.value || "").trim();
 
       if (!mat_khau_tam) {
+        goToFirstTimeStep(3);
         showAlert("ftAlert", "Vui lòng nhập mật khẩu tạm thời.");
         return;
       }
-
-      const res = await fetch("/api/auth/activate-first-time", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ma_otp, mat_khau_tam, mat_khau_moi, xac_nhan_mat_khau }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        const detail = data.detail;
-        if (detail?.code === "OTP_BRUTE_FORCE_LOCKED") {
-          stopFirstTimeOtpTimer();
-          showScreen("LOGIN");
-          showAlert("loginAlert", detail.message, "warning");
-          return;
-        }
-        const msg = typeof detail === "string" ? detail : (detail?.message || "Kích hoạt thất bại");
-        showAlert("ftAlert", msg, "error");
+      if (!/^\d{6}$/.test(ma_pin)) {
+        showAlert("ftAlert", "Mã PIN bảo mật phải gồm đúng 6 chữ số (0-9).");
+        return;
+      }
+      if (ma_pin !== xac_nhan_ma_pin) {
+        showAlert("ftAlert", "Mã PIN xác nhận nhập lại không khớp với mã PIN đã đặt.");
         return;
       }
 
-      window._lastLoginTempPassword = "";
-      stopFirstTimeOtpTimer();
-      await loadDashboardScreen(data.message || "Đăng nhập thành công!");
+      const btn = document.getElementById("ftSubmitStep4Btn");
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch("/api/auth/activate-first-time", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ma_otp, mat_khau_tam, mat_khau_moi, xac_nhan_mat_khau, ma_pin, xac_nhan_ma_pin }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          const detail = data.detail;
+          if (detail?.code === "OTP_BRUTE_FORCE_LOCKED") {
+            stopFirstTimeOtpTimer();
+            showScreen("LOGIN");
+            showAlert("loginAlert", detail.message, "warning");
+            return;
+          }
+          const msg = typeof detail === "string" ? detail : (detail?.message || "Kích hoạt thất bại");
+          if (String(msg).toLowerCase().includes("mật khẩu")) {
+            goToFirstTimeStep(3);
+          }
+          showAlert("ftAlert", msg, "error");
+          return;
+        }
+
+        window._lastLoginTempPassword = "";
+        stopFirstTimeOtpTimer();
+        await loadDashboardScreen(data.message || "Đăng nhập thành công!");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     }
 
     async function handleVerifyOtpSubmit(e) {
@@ -3384,6 +4124,7 @@
       phone: '<rect x="7" y="2" width="10" height="20" rx="2"></rect><path stroke-linecap="round" d="M11 18h2"/>',
       device: '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path stroke-linecap="round" d="M8 20h8M12 16v4"/>',
       ban: '<circle cx="12" cy="12" r="9"></circle><path stroke-linecap="round" d="M5.6 5.6l12.8 12.8"/>',
+      power: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v9m6.364-5.364a9 9 0 11-12.728 0"/>',
       check: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
       dots: '<circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle>',
       seal: '<rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path>',
@@ -3398,9 +4139,11 @@
       const box = document.getElementById("adToasts");
       const el = document.createElement("div");
       el.className = `ad-toast ${type}`;
-      el.innerHTML = `<span class="ad-toast-icon">${svg(type === "ok" ? "ok" : type === "bad" ? "bad" : "warn")}</span><span>${escapeHtml(message)}</span>`;
+      el.innerHTML = `<span class="ad-toast-icon">${svg(type === "ok" ? "ok" : type === "bad" ? "bad" : "warn")}</span><span class="flex-1">${escapeHtml(message)}</span><button type="button" class="ad-toast-close" title="Đóng thông báo" aria-label="Đóng thông báo">${svg("bad", "w-3.5 h-3.5")}</button>`;
+      const closeBtn = el.querySelector(".ad-toast-close");
+      if (closeBtn) closeBtn.addEventListener("click", () => el.remove());
       box.appendChild(el);
-      setTimeout(() => el.remove(), timeout);
+      setTimeout(() => { if (el.isConnected) el.remove(); }, timeout);
     }
 
     let _dialogResolve = null;
@@ -3440,6 +4183,9 @@
       const res = await fetch(url, { headers: { "Content-Type": "application/json" }, ...options });
       let data = {};
       try { data = await res.json(); } catch (_) {}
+      if (res.status === 403 && data?.detail?.code === "IP_BLOCKED") {
+        renderAndShowIpBlockedScreen(data.detail);
+      }
       const msg = typeof data.detail === "string" ? data.detail : (data.detail?.message || data.message || "");
       return { ok: res.ok, status: res.status, data, msg };
     }
@@ -3505,6 +4251,10 @@
     }
 
     function handleSessionError(data) {
+      if (data?.detail?.code === "IP_BLOCKED") {
+        renderAndShowIpBlockedScreen(data.detail);
+        return;
+      }
       const msg = data?.detail?.message || data?.detail || "Phiên làm việc đã kết thúc.";
       showScreen("LOGIN");
       showAlert("loginAlert", msg, "warning");
@@ -3554,7 +4304,7 @@
     function loaiKetQua(kq) {
       if (kq === "Thành công") return "ok";
       if (kq === "Báo động") return "alert";
-      if (kq === "Thất bại" || kq === "Từ chối") return "bad";
+      if (kq === "Thất bại") return "bad";
       if (kq === "Cảnh báo") return "warn";
       return "info";
     }
@@ -3580,6 +4330,15 @@
       });
     }
 
+    function _tinhChuKyNhatKy(logs, stats) {
+      const topId = logs.length ? logs[0].ma_nhat_ky : 0;
+      const tamperedSig = logs
+        .filter(l => l.bi_can_thiep || l.toan_ven_chuoi === false)
+        .map(l => `${l.ma_nhat_ky}:${l.so_lan_can_thiep || 0}:${l.ket_qua}`)
+        .join(",");
+      return `${stats?.tong_su_kien ?? logs.length}|${stats?.bao_dong ?? 0}|${topId}|${tamperedSig}`;
+    }
+
     async function loadLogs() {
       const res = await fetch("/api/logs");
       const data = await res.json();
@@ -3595,8 +4354,74 @@
         canh_bao: DASH.logs.filter(l => l.ket_qua === "Cảnh báo").length,
         bao_dong: DASH.logs.filter(l => l.ket_qua === "Báo động").length,
       };
+      if (!DASH._knownTamperedMap) {
+        DASH._knownTamperedMap = {};
+        DASH.logs.forEach(l => {
+          if (l.bi_can_thiep || l.toan_ven_chuoi === false) {
+            DASH._knownTamperedMap[l.ma_nhat_ky] = Number(l.so_lan_can_thiep || 1);
+          }
+        });
+      }
+      DASH._lastLogSig = _tinhChuKyNhatKy(DASH.logs, DASH.logStats);
       updateLogKpis();
       renderLogs();
+      ensureLogLiveWatcher();
+    }
+
+    function ensureLogLiveWatcher() {
+      if (DASH._logWatchTimer) return;
+      DASH._logWatchTimer = setInterval(async () => {
+        const dashView = document.getElementById("viewDashboard");
+        const logsSec = document.getElementById("dashSectionLogs");
+        if (!dashView || dashView.classList.contains("hidden")) return;
+        if (!logsSec || logsSec.classList.contains("hidden")) return;
+        if (DASH._pollingLogs) return;
+        DASH._pollingLogs = true;
+        try {
+          const res = await fetch("/api/logs");
+          if (!res.ok) return;
+          const data = await res.json();
+          const newLogs = data.logs || [];
+          const newStats = data.stats || {};
+          const newSig = _tinhChuKyNhatKy(newLogs, newStats);
+
+          const known = DASH._knownTamperedMap || {};
+          const newlyTampered = [];
+          newLogs.forEach(l => {
+            if (l.bi_can_thiep || l.toan_ven_chuoi === false) {
+              const curCount = Number(l.so_lan_can_thiep || 1);
+              const prevCount = Number(known[l.ma_nhat_ky] || 0);
+              if (curCount > prevCount) {
+                newlyTampered.push(l);
+              }
+              known[l.ma_nhat_ky] = curCount;
+            }
+          });
+          DASH._knownTamperedMap = known;
+
+          if (newSig !== DASH._lastLogSig || newlyTampered.length) {
+            DASH.logs = newLogs;
+            DASH.logStats = newStats;
+            DASH._lastLogSig = newSig;
+            updateLogKpis();
+            renderLogs();
+            if (DASH.activeLogDetail) {
+              const updatedActive = newLogs.find(x => Number(x.ma_nhat_ky) === Number(DASH.activeLogDetail.ma_nhat_ky));
+              if (updatedActive) populateLogDetailModal(updatedActive);
+            }
+            newlyTampered.forEach(l => {
+              toast(
+                `BÁO ĐỘNG: Phát hiện hành vi cố tình can thiệp nhật ký #${l.ma_nhat_ky}! Hệ thống đã chặn chỉnh sửa và giữ nguyên dữ liệu gốc.`,
+                "bad",
+                8000
+              );
+            });
+          }
+        } catch (_) {
+        } finally {
+          DASH._pollingLogs = false;
+        }
+      }, 4000);
     }
 
     function pickLogFilter(key) {
@@ -3636,6 +4461,7 @@
           l.hanh_dong,
           l.ket_qua,
           l.chi_tiet,
+          l.chi_tiet_can_thiep,
           l.thiet_bi_truy_cap,
         ].some(v => String(v ?? "").toLowerCase().includes(q)))
       );
@@ -3648,15 +4474,25 @@
 
       tbody.innerHTML = rows.map(lg => {
         const [ngay, gio] = String(lg.thoi_gian_hien_thi || "").split(" ");
+        const biCanThiep = Boolean(lg.bi_can_thiep) || lg.toan_ven_chuoi === false;
         const tenGiaoVien = lg.ho_ten
           ? `<span class="t-strong whitespace-nowrap">${escapeHtml(lg.ho_ten)}</span>`
           : `<span class="t-warn font-semibold whitespace-nowrap">Không xác định</span>`;
+        const ketQuaGocNote = (biCanThiep && lg.ket_qua_goc && lg.ket_qua_goc !== lg.ket_qua)
+          ? `<div class="t-muted t-xs mt-1 whitespace-nowrap">Gốc: ${escapeHtml(lg.ket_qua_goc)}</div>`
+          : "";
+        const canhBaoCanThiepHtml = (biCanThiep && lg.chi_tiet_can_thiep)
+          ? `<div class="mt-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold" style="background: var(--bad-bg); color: var(--bad-fg); border: 1px solid var(--bad-bd);">
+               ${escapeHtml(lg.chi_tiet_can_thiep)}${Number(lg.so_lan_can_thiep || 0) > 1 ? ` (Phát hiện ${lg.so_lan_can_thiep} lần can thiệp)` : ""}
+             </div>`
+          : "";
+
         return `
-          <tr>
+          <tr class="${biCanThiep ? "is-tampered-row" : ""}">
             <td class="whitespace-nowrap t-num">
               <div class="flex items-center gap-1.5">
                 <span class="t-code font-bold">#${lg.ma_nhat_ky}</span>
-                ${lg.toan_ven_chuoi === false ? '<span class="ad-pill bad">Can thiệp</span>' : ""}
+                ${biCanThiep ? '<span class="ad-pill bad">Bị can thiệp</span>' : ""}
               </div>
             </td>
             <td class="whitespace-nowrap t-num">
@@ -3676,8 +4512,14 @@
               </div>
             </td>
             <td class="whitespace-nowrap"><span class="t-strong">${escapeHtml(lg.hanh_dong)}</span></td>
-            <td><span class="ad-pill ${loaiKetQua(lg.ket_qua)}">${escapeHtml(lg.ket_qua)}</span></td>
-            <td class="t-sm leading-relaxed" style="min-width: 16rem; max-width: 28rem">${escapeHtml(lg.chi_tiet)}</td>
+            <td>
+              <span class="ad-pill ${loaiKetQua(lg.ket_qua)}">${escapeHtml(lg.ket_qua)}</span>
+              ${ketQuaGocNote}
+            </td>
+            <td class="t-sm leading-relaxed" style="min-width: 16rem; max-width: 28rem">
+              <div>${escapeHtml(lg.chi_tiet)}</div>
+              ${canhBaoCanThiepHtml}
+            </td>
             <td class="whitespace-nowrap text-right">
               <button type="button" class="ad-btn-sm" onclick="openLogDetailModal(${lg.ma_nhat_ky})">
                 ${svg("eye", "w-3.5 h-3.5")}
@@ -3693,16 +4535,20 @@
       DASH.activeLogDetail = lg;
       document.getElementById("ldMaLogBadge").textContent = "#" + lg.ma_nhat_ky;
 
-      // Bằng chứng liên kết chuỗi
+      // Bằng chứng liên kết chuỗi & chống chỉnh sửa trực tiếp
       const chainEl = document.getElementById("ldBangChungChuoi");
-      const toanVen = lg.toan_ven_chuoi !== false;
+      const biCanThiep = Boolean(lg.bi_can_thiep) || lg.toan_ven_chuoi === false;
+      const toanVen = !biCanThiep;
       chainEl.className = "ld-chain-banner " + (toanVen ? "is-intact" : "is-tampered");
+      const moTaCanThiep = lg.chi_tiet_can_thiep
+        ? `${escapeHtml(lg.chi_tiet_can_thiep)}${lg.thoi_gian_can_thiep ? " Thời điểm phát hiện: " + escapeHtml(lg.thoi_gian_can_thiep) + "." : ""}`
+        : "Cảnh báo: Phát hiện hành vi cố tình can thiệp hoặc sai lệch dấu niêm phong chuỗi băm!";
       chainEl.innerHTML = toanVen
         ? `<div class="flex items-center gap-2.5">
              ${svg("shield", "w-5 h-5")}
              <div>
                <div class="font-bold text-[0.95rem]">Toàn vẹn</div>
-               <div class="t-xs opacity-90">Bản ghi khớp liên kết chuỗi niêm phong, chưa có dấu hiệu chỉnh sửa.</div>
+               <div class="t-xs opacity-90">Bản ghi khớp liên kết chuỗi niêm phong SHA-256, chưa có dấu hiệu chỉnh sửa.</div>
              </div>
            </div>
            <span class="ad-pill ok">Toàn vẹn</span>`
@@ -3710,7 +4556,7 @@
              ${svg("warn", "w-5 h-5")}
              <div>
                <div class="font-bold text-[0.95rem]">Nhật ký bị can thiệp</div>
-               <div class="t-xs opacity-90">Cảnh báo: Phát hiện sai lệch dấu niêm phong hoặc đứt gãy liên kết chuỗi!</div>
+               <div class="t-xs opacity-90">${moTaCanThiep}</div>
              </div>
            </div>
            <span class="ad-pill bad">Nhật ký bị can thiệp</span>`;
@@ -3718,7 +4564,7 @@
       // Thời gian ghi nhận
       document.getElementById("ldThoiGian").textContent = lg.thoi_gian_hien_thi || "—";
 
-      // Giáo viên thực hiện
+      // Giáo viên / Cán bộ thực hiện
       const gvEl = document.getElementById("ldGiaoVien");
       if (lg.ma_tai_khoan) {
         let trangThaiTk = '<span class="ad-pill ok">Đang hoạt động</span>';
@@ -3766,8 +4612,22 @@
       document.getElementById("ldHanhDong").innerHTML = `
         <div class="t-strong">${escapeHtml(lg.hanh_dong || "—")}</div>
         ${lg.tai_lieu_thao_tac ? `<div class="t-muted t-xs mt-1">Tệp thao tác: <span class="t-text">${escapeHtml(lg.tai_lieu_thao_tac)}</span></div>` : ""}`;
-      document.getElementById("ldKetQua").innerHTML = `<span class="ad-pill ${loaiKetQua(lg.ket_qua)}">${escapeHtml(lg.ket_qua || "—")}</span>`;
-      document.getElementById("ldChiTiet").textContent = lg.chi_tiet || "—";
+      const kqGocHtml = (biCanThiep && lg.ket_qua_goc && lg.ket_qua_goc !== lg.ket_qua)
+        ? `<span class="t-muted t-xs ml-2">(Kết quả gốc: <b>${escapeHtml(lg.ket_qua_goc)}</b>)</span>`
+        : "";
+      document.getElementById("ldKetQua").innerHTML = `<span class="ad-pill ${loaiKetQua(lg.ket_qua)}">${escapeHtml(lg.ket_qua || "—")}</span>${kqGocHtml}`;
+
+      const ldChiTietEl = document.getElementById("ldChiTiet");
+      if (biCanThiep && lg.chi_tiet_can_thiep) {
+        ldChiTietEl.innerHTML = `
+          <div>${escapeHtml(lg.chi_tiet || "—")}</div>
+          <div class="mt-2.5 p-2.5 rounded-lg text-xs font-semibold" style="background: var(--bad-bg); color: var(--bad-fg); border: 1px solid var(--bad-bd);">
+            ${escapeHtml(lg.chi_tiet_can_thiep)}
+            ${lg.thoi_gian_can_thiep ? `<div class="mt-1 font-normal opacity-90">Thời điểm chặn can thiệp gần nhất: ${escapeHtml(lg.thoi_gian_can_thiep)} · Tổng số lần cố tình can thiệp: ${escapeHtml(String(lg.so_lan_can_thiep || 1))}</div>` : ""}
+          </div>`;
+      } else {
+        ldChiTietEl.textContent = lg.chi_tiet || "—";
+      }
 
       // Các thông tin khác: Bộ môn phân công, Khối lớp giảng dạy, Đã xác thực 2FA chưa
       document.getElementById("ldBoMon").textContent = lg.bo_mon_phan_cong || "Chưa phân công";
@@ -3917,7 +4777,10 @@
         if (!ok) return;
         const r = await apiJson("/api/ips/unblock", {
           method: "POST",
-          body: JSON.stringify({ dia_chi_ip: targetIp }),
+          body: JSON.stringify({
+            dia_chi_ip: targetIp,
+            danh_sach_ip: [lg.dia_chi_ipv4, lg.ip_may].filter(Boolean),
+          }),
         });
         if (!r.ok) {
           toast(r.msg || "Không thể gỡ chặn địa chỉ IP.", "bad");
@@ -3946,8 +4809,15 @@
         toast(r.data.message || "Đã chặn địa chỉ IP thành công.", "ok");
       }
 
-      await Promise.all([loadLogs(), loadSessions()]);
+      await Promise.all([loadLogs(), loadAccounts(), loadSessions()]);
       await openLogDetailModal(lg.ma_nhat_ky);
+    }
+
+    function closeHashChainStatusBox() {
+      const box = document.getElementById("hashChainStatusBox");
+      if (!box) return;
+      box.className = "hidden";
+      box.innerHTML = "";
     }
 
     async function verifyHashChain() {
@@ -3959,9 +4829,10 @@
       }
       const box = document.getElementById("hashChainStatusBox");
       box.className = "ad-note " + (data.valid ? "ok" : "bad");
-      box.innerHTML = data.valid
-        ? `${svg("check", "w-5 h-5 mt-0.5")}<div><b>Nhật ký toàn vẹn.</b> Đã đối chiếu ${data.total_records} bản ghi trong chuỗi liên kết, không có bản ghi nào bị chỉnh sửa hoặc xóa.</div>`
-        : `${svg("warn", "w-5 h-5 mt-0.5")}<div><b>Nhật ký bị can thiệp.</b> Phát hiện đứt gãy liên kết chuỗi tại bản ghi #${data.broken_at_id}.</div>`;
+      const contentHtml = data.valid
+        ? `${svg("check", "w-5 h-5")}<div class="flex-1"><b>Nhật ký toàn vẹn.</b> Đã đối chiếu ${data.total_records} bản ghi trong chuỗi liên kết, không có bản ghi nào bị chỉnh sửa hoặc xóa.</div>`
+        : `${svg("warn", "w-5 h-5")}<div class="flex-1"><b>Nhật ký bị can thiệp.</b> Phát hiện đứt gãy liên kết chuỗi tại bản ghi #${data.broken_at_id}.</div>`;
+      box.innerHTML = `${contentHtml}<button type="button" class="ad-note-close" onclick="closeHashChainStatusBox()" title="Đóng thông báo" aria-label="Đóng thông báo">${svg("bad", "w-4 h-4")}</button>`;
       box.classList.remove("hidden");
     }
 
@@ -3988,7 +4859,7 @@
         .filter(Boolean);
       if (!words.length) return "";
       const ten = words[words.length - 1];
-      const prefix = { GIAO_VIEN: "gv", BAN_GIAM_HIEU: "ht", QUAN_TRI: "admin" }[vaiTro] || "gv";
+      const prefix = { GIAO_VIEN: "gv", QUAN_TRI: "admin" }[vaiTro] || "gv";
       return `${prefix}.${ten}`;
     }
 
@@ -4041,108 +4912,62 @@
 
     function renderPhanQuyenMatrix(prefix, presetRows = null) {
       const cat = DASH.permCatalog || FALLBACK_PERM_CATALOG;
-      const tbody = document.getElementById(`${prefix}KhoiMatrixBody`);
-      if (!tbody) return;
+      const box = document.getElementById(`${prefix}KhoiList`);
+      if (!box) return;
 
       const mapPreset = {};
       if (Array.isArray(presetRows)) {
         presetRows.forEach(r => { mapPreset[Number(r.ma_khoi)] = r; });
       }
+      const hasPreset = Array.isArray(presetRows);
 
-      tbody.innerHTML = (cat.khoi_lop || []).map(k => {
+      box.innerHTML = (cat.khoi_lop || []).map(k => {
         const mk = Number(k.ma_khoi);
-        const hasPreset = Array.isArray(presetRows);
-        const rowCfg = mapPreset[mk];
-        const enabled = hasPreset ? !!rowCfg : true;
-        const chung = hasPreset ? !!(rowCfg && rowCfg.duoc_truy_cap_de_chung) : true;
-        const chinhThuc = hasPreset ? !!(rowCfg && rowCfg.duoc_truy_cap_de_chinh_thuc) : false;
-
+        const enabled = hasPreset ? !!mapPreset[mk] : true;
         return `
-          <tr id="${prefix}PqRow_${mk}" class="${enabled ? "" : "is-off"}" data-ma-khoi="${mk}">
-            <td>
-              <label class="pq-check-label">
-                <input
-                  id="${prefix}PqKhoi_${mk}"
-                  type="checkbox"
-                  ${enabled ? "checked" : ""}
-                  onchange="onMatrixKhoiToggle('${prefix}', ${mk})"
-                />
-                <span>${escapeHtml(k.ten_khoi)}</span>
-              </label>
-            </td>
-            <td>
-              <label class="pq-check-label is-sub">
-                <input
-                  id="${prefix}PqChung_${mk}"
-                  type="checkbox"
-                  ${chung ? "checked" : ""}
-                  ${enabled ? "" : "disabled"}
-                />
-                <span>Xem &amp; tải đề chung</span>
-              </label>
-            </td>
-            <td>
-              <label class="pq-check-label is-sub">
-                <input
-                  id="${prefix}PqChinhThuc_${mk}"
-                  type="checkbox"
-                  ${chinhThuc ? "checked" : ""}
-                  ${enabled ? "" : "disabled"}
-                />
-                <span>Ra đề &amp; đề chính thức</span>
-              </label>
-            </td>
-          </tr>`;
+          <label
+            for="${prefix}PqKhoi_${mk}"
+            class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl cursor-pointer select-none transition"
+            style="background: var(--surface-2); border: 1px solid var(--border);"
+          >
+            <input
+              id="${prefix}PqKhoi_${mk}"
+              type="checkbox"
+              class="w-4 h-4 accent-[#2563eb]"
+              ${enabled ? "checked" : ""}
+            />
+            <span class="t-strong text-[0.9rem]">${escapeHtml(k.ten_khoi)}</span>
+          </label>`;
       }).join("");
-    }
 
-    function onMatrixKhoiToggle(prefix, maKhoi) {
-      const cbKhoi = document.getElementById(`${prefix}PqKhoi_${maKhoi}`);
-      const cbChung = document.getElementById(`${prefix}PqChung_${maKhoi}`);
-      const cbChinhThuc = document.getElementById(`${prefix}PqChinhThuc_${maKhoi}`);
-      const row = document.getElementById(`${prefix}PqRow_${maKhoi}`);
-      if (!cbKhoi || !cbChung || !cbChinhThuc || !row) return;
-      const on = cbKhoi.checked;
-      row.classList.toggle("is-off", !on);
-      cbChung.disabled = !on;
-      cbChinhThuc.disabled = !on;
-      if (on) {
-        cbChung.checked = true;
-      } else {
-        cbChung.checked = false;
-        cbChinhThuc.checked = false;
+      const cbRaDe = document.getElementById(`${prefix}DuocPhepRaDe`);
+      if (cbRaDe) {
+        cbRaDe.checked = hasPreset
+          ? presetRows.some(r => Boolean(r.duoc_truy_cap_de_chinh_thuc))
+          : false;
       }
-    }
-
-    function toggleAllMatrixCol(prefix, col) {
-      const suffix = col === "chinh_thuc" ? "PqChinhThuc_" : "PqChung_";
-      const cat = DASH.permCatalog || FALLBACK_PERM_CATALOG;
-      const activeInputs = (cat.khoi_lop || [])
-        .filter(k => document.getElementById(`${prefix}PqKhoi_${k.ma_khoi}`)?.checked)
-        .map(k => document.getElementById(`${prefix}${suffix}${k.ma_khoi}`))
-        .filter(Boolean);
-      if (!activeInputs.length) return;
-      const allChecked = activeInputs.every(inp => inp.checked);
-      activeInputs.forEach(inp => { inp.checked = !allChecked; });
     }
 
     function collectPhanQuyenPayload(prefix) {
       const selMon = document.getElementById(`${prefix}MaMonHoc`);
       const ma_mon_hoc = selMon ? parseInt(selMon.value, 10) || 0 : 0;
+      const duoc_phep_ra_de_thi = Boolean(document.getElementById(`${prefix}DuocPhepRaDe`)?.checked);
       const cat = DASH.permCatalog || FALLBACK_PERM_CATALOG;
       const danh_sach_khoi = [];
+      const danh_sach_ma_khoi = [];
       (cat.khoi_lop || []).forEach(k => {
         const mk = Number(k.ma_khoi);
         const cbKhoi = document.getElementById(`${prefix}PqKhoi_${mk}`);
         if (cbKhoi && cbKhoi.checked) {
+          danh_sach_ma_khoi.push(mk);
           danh_sach_khoi.push({
             ma_khoi: mk,
-            duoc_truy_cap_de_chung: !!document.getElementById(`${prefix}PqChung_${mk}`)?.checked,
-            duoc_truy_cap_de_chinh_thuc: !!document.getElementById(`${prefix}PqChinhThuc_${mk}`)?.checked,
+            duoc_truy_cap_de_chung: true,
+            duoc_truy_cap_de_chinh_thuc: duoc_phep_ra_de_thi,
           });
         }
       });
-      return { ma_mon_hoc, danh_sach_khoi };
+      return { ma_mon_hoc, danh_sach_khoi, danh_sach_ma_khoi, duoc_phep_ra_de_thi };
     }
 
     function syncCreatePhanQuyenVisibility() {
@@ -4216,7 +5041,7 @@
         maInput.value = data.ma_can_bo;
         setHint("caMaCanBoHint", "", false);
       }
-      if (!document.getElementById("caMatKhau").value) {
+      if (!window._userEditedPassword && !document.getElementById("caMatKhau").value) {
         document.getElementById("caMatKhau").value = data.mat_khau_khoi_tao;
       }
       if (!window._userEditedUsername) {
@@ -4242,6 +5067,7 @@
     }
 
     async function regenerateMatKhau() {
+      window._userEditedPassword = false;
       const data = await fetchFormulaPreview();
       if (data) document.getElementById("caMatKhau").value = data.mat_khau_khoi_tao;
     }
@@ -4252,7 +5078,8 @@
     }
 
     function validateCreateForm(payload) {
-      const prefix = { GIAO_VIEN: "GV", BAN_GIAM_HIEU: "HT", QUAN_TRI: "AD" }[payload.vai_tro];
+      const prefix = { GIAO_VIEN: "GV", QUAN_TRI: "AD" }[payload.vai_tro];
+      if (!prefix) return "Vai trò tài khoản không hợp lệ (chỉ hỗ trợ Giáo viên hoặc Quản trị viên IT).";
       if (!payload.ho_ten) return "Vui lòng nhập họ và tên.";
       if (!new RegExp(`^${prefix}\\d{7}$`).test(payload.ma_can_bo)) {
         return `Mã cán bộ phải gồm ${prefix} và 7 chữ số, ví dụ ${prefix}1004589.`;
@@ -4263,10 +5090,13 @@
       if (!/^[a-z0-9._%+-]+@thpthoangvanthu\.edu\.vn$/.test(payload.email)) {
         return "Email phải có đuôi @thpthoangvanthu.edu.vn.";
       }
+      if (!payload.mat_khau_khoi_tao || payload.mat_khau_khoi_tao.length < 6) {
+        return "Vui lòng nhập mật khẩu khởi tạo (tối thiểu 6 ký tự).";
+      }
       if (payload.vai_tro === "GIAO_VIEN") {
-        if (!payload.ma_mon_hoc) return "Vui lòng chọn môn học được phép truy cập cho giáo viên.";
+        if (!payload.ma_mon_hoc) return "Vui lòng chọn môn học phụ trách cho giáo viên.";
         if (!Array.isArray(payload.danh_sach_khoi) || !payload.danh_sach_khoi.length) {
-          return "Vui lòng chọn ít nhất một khối lớp được phép truy cập cho giáo viên.";
+          return "Vui lòng chọn ít nhất một khối lớp giảng dạy cho giáo viên.";
         }
       }
       return "";
@@ -4285,6 +5115,7 @@
 
     async function resetCreateForm(regenerate) {
       window._userEditedUsername = false;
+      window._userEditedPassword = false;
       ["caHoTen", "caTenDangNhap", "caEmail", "caMatKhau", "caMaCanBo"].forEach(id => (document.getElementById(id).value = ""));
       document.getElementById("caVaiTro").value = "GIAO_VIEN";
       ["caMaCanBoHint", "caTenDangNhapHint", "caEmailHint"].forEach(id => setHint(id, "", false));
@@ -4327,6 +5158,8 @@
         const pq = collectPhanQuyenPayload("ca");
         payload.ma_mon_hoc = pq.ma_mon_hoc;
         payload.danh_sach_khoi = pq.danh_sach_khoi;
+        payload.danh_sach_ma_khoi = pq.danh_sach_ma_khoi;
+        payload.duoc_phep_ra_de_thi = pq.duoc_phep_ra_de_thi;
       }
 
       const loi = validateCreateForm(payload);
@@ -4334,6 +5167,10 @@
         showCreateMsg(loi, "bad");
         return;
       }
+
+      const pin = await requestPinVerification(`Cấp tài khoản mới cho ${payload.ho_ten} (${payload.ten_dang_nhap})`);
+      if (!pin) return;
+      payload.ma_pin = pin;
 
       const btn = document.getElementById("caSubmitBtn");
       btn.disabled = true;
@@ -4363,11 +5200,10 @@
       document.getElementById("hoPhamViQuyen")?.classList.toggle("hidden", !showPq);
       if (pqRes) {
         document.getElementById("hoMonKhoi").textContent = `${pqRes.ten_mon_hoc} (${pqRes.danh_sach_khoi_ten})`;
-        const badges = [];
-        if (pqRes.co_quyen_de_chung) badges.push('<span class="ad-pill info">Mục đề chung</span>');
-        if (pqRes.co_quyen_de_chinh_thuc) badges.push('<span class="ad-pill ok">Đề thi chính thức</span>');
-        if (!badges.length) badges.push('<span class="ad-pill muted">Chỉ xem</span>');
-        document.getElementById("hoPhamViQuyen").innerHTML = `<div class="flex flex-wrap gap-1.5">${badges.join("")}</div>`;
+        const badgeHtml = pqRes.co_quyen_de_chinh_thuc
+          ? '<span class="ad-pill ok">Được phép ra đề</span>'
+          : '<span class="ad-pill muted">Không cấp quyền ra đề</span>';
+        document.getElementById("hoPhamViQuyen").innerHTML = `<div class="flex flex-wrap gap-1.5">${badgeHtml}</div>`;
       }
 
       const coMatKhau = !d.email_sent && d.mat_khau_khoi_tao;
@@ -4443,25 +5279,25 @@
         const ipv4 = a.ipv4_gan_nhat || a.ip_thiet_bi_gan_nhat;
         const truyCapGanNhat = (ipMay || ipv4)
           ? `<div><span class="t-dim">IP:</span> ${escapeHtml(ipMay)}</div>
-             <div class="t-muted t-xs"><span class="t-dim">IPv4:</span> ${escapeHtml(ipv4)}</div>`
+             <div class="t-muted t-xs flex items-center gap-1.5 flex-wrap"><span class="t-dim">IPv4:</span> <span>${escapeHtml(ipv4)}</span>${a.ip_dang_bi_chan ? '<span class="ad-pill bad">IP bị chặn</span>' : ""}</div>`
           : '<span class="t-dim">Chưa đăng nhập</span>';
         const laToi = window.currentUser && a.ten_dang_nhap === window.currentUser.ten_dang_nhap;
 
         let phanQuyenHtml = "";
         if (a.vai_tro !== "GIAO_VIEN") {
-          phanQuyenHtml = `<span class="ad-pill info">Toàn hệ thống</span>`;
+          phanQuyenHtml = `<span class="ad-pill info">Quản trị hệ thống</span>`;
         } else if (a.ten_mon_hoc) {
-          const pills = [];
-          if (a.co_quyen_de_chung) pills.push('<span class="ad-pill muted">Đề chung</span>');
-          if (a.co_quyen_de_chinh_thuc) pills.push('<span class="ad-pill ok">Đề chính thức</span>');
+          const badgeRaDe = a.co_quyen_de_chinh_thuc
+            ? `<div class="flex flex-wrap gap-1 mt-1"><span class="ad-pill ok">Được phép ra đề</span></div>`
+            : "";
           phanQuyenHtml = `
-            <div class="cursor-pointer group" onclick="openPermModal('${a.ma_tai_khoan}')" title="Nhấn để điều chỉnh phân quyền khối và môn">
+            <div class="cursor-pointer group" onclick="openPermModal('${a.ma_tai_khoan}')" title="Nhấn để điều chỉnh phân công chuyên môn">
               <div class="t-strong whitespace-nowrap group-hover:underline">${escapeHtml(a.ten_mon_hoc)}</div>
               <div class="t-muted t-xs whitespace-nowrap">${escapeHtml(a.danh_sach_khoi_ten || "")}</div>
-              ${pills.length ? `<div class="flex flex-wrap gap-1 mt-1">${pills.join("")}</div>` : ""}
+              ${badgeRaDe}
             </div>`;
         } else {
-          phanQuyenHtml = `<button type="button" class="ad-link t-sm font-semibold" onclick="openPermModal('${a.ma_tai_khoan}')">Thiết lập phân quyền</button>`;
+          phanQuyenHtml = `<button type="button" class="ad-link t-sm font-semibold" onclick="openPermModal('${a.ma_tai_khoan}')">Thiết lập phân công</button>`;
         }
 
         return `
@@ -4494,19 +5330,31 @@
       e.stopPropagation();
       const a = DASH.accounts.find(x => x.ma_tai_khoan === id);
       if (!a) return;
+      const targetIp = a.ipv4_gan_nhat || a.ip_thiet_bi_gan_nhat || "";
       const items = [`<div class="ad-menu-title">${escapeHtml(a.ho_ten)}</div>`];
       if (a.vai_tro === "GIAO_VIEN") {
-        items.push(`<button type="button" onclick="openPermModal('${id}')">${svg("shield")}Phân quyền khối &amp; môn</button>`);
+        items.push(`<button type="button" onclick="openPermModal('${id}')">${svg("shield")}Phân công chuyên môn</button>`);
       }
-      if (a.bi_khoa) items.push(`<button type="button" class="success" onclick="handleUnlockAccount('${id}', false)">${svg("unlock")}Mở khóa ngay</button>`);
       items.push(`<button type="button" onclick="handleUnlockAccount('${id}', true)">${svg("key")}Cấp lại mật khẩu tạm thời</button>`);
       items.push(`<button type="button" onclick="handleReset2FA('${id}')">${svg("phone")}Đặt lại 2FA</button>`);
       if (a.da_kich_hoat_otp && (a.ip_thiet_bi_gan_nhat || a.ipv4_gan_nhat)) {
         items.push(`<button type="button" onclick="handleClearTrustedIp('${id}')">${svg("device")}Quên thiết bị tin cậy</button>`);
       }
       items.push("<hr>");
+      if (a.bi_khoa) {
+        items.push(`<button type="button" class="success" onclick="handleUnlockAccount('${id}', false)">${svg("unlock")}Mở khóa ngay</button>`);
+      } else {
+        items.push(`<button type="button" class="warn" onclick="handleTempLockAccount('${id}')">${svg("lock")}Tạm khóa tài khoản</button>`);
+      }
+      if (!targetIp) {
+        items.push(`<button type="button" class="danger" disabled title="Tài khoản chưa đăng nhập nên chưa ghi nhận địa chỉ IP">${svg("ban")}Chặn địa chỉ IP</button>`);
+      } else if (a.ip_dang_bi_chan) {
+        items.push(`<button type="button" class="success" onclick="handleBlockAccountIp('${id}', false)">${svg("check")}Gỡ chặn địa chỉ IP</button>`);
+      } else {
+        items.push(`<button type="button" class="danger" onclick="handleBlockAccountIp('${id}', true)">${svg("ban")}Chặn địa chỉ IP</button>`);
+      }
       items.push(a.dang_hoat_dong
-        ? `<button type="button" class="danger" onclick="handleToggleActive('${id}', false)">${svg("ban")}Ngừng hoạt động</button>`
+        ? `<button type="button" class="danger" onclick="handleToggleActive('${id}', false)">${svg("power")}Ngừng hoạt động</button>`
         : `<button type="button" class="success" onclick="handleToggleActive('${id}', true)">${svg("check")}Kích hoạt lại tài khoản</button>`);
       const menu = document.getElementById("rowMenu");
       menu.innerHTML = items.join("");
@@ -4548,7 +5396,7 @@
         const thoiDiem = dsPq[0].thoi_diem_cap_quyen || "";
         metaEl.textContent = `Cập nhật gần nhất bởi: ${nguoiCap}${thoiDiem ? " lúc " + thoiDiem : ""}`;
       } else {
-        metaEl.textContent = "Tài khoản này chưa được thiết lập phân quyền khối và môn.";
+        metaEl.textContent = "Tài khoản này chưa được thiết lập phân công chuyên môn.";
       }
 
       document.getElementById("permModal").classList.remove("hidden");
@@ -4566,14 +5414,20 @@
 
       if (!pq.ma_mon_hoc) {
         alertEl.className = "ad-msg bad";
-        alertEl.textContent = "Vui lòng chọn môn học được phép truy cập.";
+        alertEl.textContent = "Vui lòng chọn môn học phụ trách.";
         return;
       }
       if (!pq.danh_sach_khoi.length) {
         alertEl.className = "ad-msg bad";
-        alertEl.textContent = "Vui lòng chọn ít nhất một khối lớp được phép truy cập.";
+        alertEl.textContent = "Vui lòng chọn ít nhất một khối lớp giảng dạy.";
         return;
       }
+
+      const accTarget = DASH.accounts.find(x => String(x.ma_tai_khoan) === String(maTaiKhoan));
+      const nhanTarget = accTarget ? `${accTarget.ho_ten} (${accTarget.ma_can_bo})` : "giáo viên";
+      const pin = await requestPinVerification(`Phân công chuyên môn cho ${nhanTarget}`);
+      if (!pin) return;
+      pq.ma_pin = pin;
 
       const btn = document.getElementById("pmSubmitBtn");
       btn.disabled = true;
@@ -4583,15 +5437,15 @@
         body: JSON.stringify(pq),
       });
       btn.disabled = false;
-      btn.textContent = "Lưu phân quyền";
+      btn.textContent = "Lưu phân công";
 
       if (!r.ok) {
         alertEl.className = "ad-msg bad";
-        alertEl.textContent = r.msg || "Không thể lưu phân quyền.";
+        alertEl.textContent = r.msg || "Không thể lưu phân công chuyên môn.";
         return;
       }
 
-      toast(r.data.message || "Đã cập nhật phân quyền thành công.", "ok");
+      toast(r.data.message || "Đã cập nhật phân công chuyên môn thành công.", "ok");
       closePermModal();
       await Promise.all([loadAccounts(), loadLogs()]);
     }
@@ -4606,6 +5460,7 @@
       const r = await apiJson(`/api/accounts/${id}/clear-trusted-ip`, { method: "POST" });
       toast(r.ok ? `Đã quên thiết bị tin cậy của ${a.ho_ten}.` : (r.msg || "Thao tác thất bại."), r.ok ? "ok" : "bad");
       loadAccounts();
+      loadLogs();
     }
 
     async function handleReset2FA(id) {
@@ -4655,6 +5510,98 @@
       }
       loadAccounts();
       loadLogs();
+    }
+
+    async function handleTempLockAccount(id) {
+      closeRowMenu();
+      const a = timTaiKhoan(id);
+      if (window.currentUser && String(window.currentUser.ma_tai_khoan) === String(id)) {
+        toast("Không thể tự tạm khóa tài khoản Quản trị viên đang đăng nhập.", "warn");
+        return;
+      }
+      const ok = await openAdDialog({
+        title: "Tạm khóa tài khoản",
+        okText: "Tạm khóa ngay",
+        danger: true,
+        html: `
+          <p class="mb-3">Tạm khóa tài khoản của <b>${escapeHtml(a.ho_ten)}</b> (${escapeHtml(a.ma_can_bo || a.ten_dang_nhap || "")}) và thu hồi toàn bộ phiên đăng nhập hiện hành:</p>
+          <div class="ad-field">
+            <label for="rowTempLockMinutes">Thời hạn tạm khóa</label>
+            <select id="rowTempLockMinutes" class="ad-input">
+              <option value="15">Tạm khóa 15 phút</option>
+              <option value="60">Tạm khóa 60 phút</option>
+              <option value="0">Khóa an ninh cho đến khi mở khóa thủ công</option>
+            </select>
+          </div>`,
+      });
+      if (!ok) return;
+      const sel = document.getElementById("rowTempLockMinutes");
+      const soPhut = sel ? parseInt(sel.value, 10) : 15;
+      const r = await apiJson(`/api/accounts/${id}/temp-lock`, {
+        method: "POST",
+        body: JSON.stringify({
+          so_phut: Number.isNaN(soPhut) ? 15 : soPhut,
+          ly_do: "Tạm khóa trực tiếp từ bảng Quản lý tài khoản",
+        }),
+      });
+      if (!r.ok) {
+        toast(r.msg || "Không thể tạm khóa tài khoản.", "bad");
+        return;
+      }
+      toast(r.data.message || `Đã tạm khóa tài khoản ${a.ho_ten}.`, "ok");
+      await Promise.all([loadAccounts(), loadLogs(), loadSessions()]);
+    }
+
+    async function handleBlockAccountIp(id, chanIp) {
+      closeRowMenu();
+      const a = timTaiKhoan(id);
+      const targetIp = a.ipv4_gan_nhat || a.ip_thiet_bi_gan_nhat || "";
+      if (!targetIp) {
+        toast("Tài khoản chưa từng đăng nhập nên chưa ghi nhận địa chỉ IP.", "warn");
+        return;
+      }
+      if (!chanIp) {
+        const ok = await askConfirm(
+          "Gỡ chặn địa chỉ IP?",
+          `Cho phép các thiết bị sử dụng địa chỉ IP <b>${escapeHtml(targetIp)}</b> (gắn với tài khoản <b>${escapeHtml(a.ho_ten)}</b>) truy cập trở lại hệ thống?`,
+          "Gỡ chặn IP",
+          false
+        );
+        if (!ok) return;
+        const r = await apiJson("/api/ips/unblock", {
+          method: "POST",
+          body: JSON.stringify({
+            dia_chi_ip: targetIp,
+            danh_sach_ip: [a.ipv4_gan_nhat, a.ip_thiet_bi_gan_nhat].filter(Boolean),
+          }),
+        });
+        if (!r.ok) {
+          toast(r.msg || "Không thể gỡ chặn địa chỉ IP.", "bad");
+          return;
+        }
+        toast(r.data.message || "Đã gỡ chặn địa chỉ IP.", "ok");
+      } else {
+        const ok = await askConfirm(
+          "Chặn địa chỉ IP truy cập?",
+          `Xác nhận chặn địa chỉ IP <b>${escapeHtml(targetIp)}</b> của tài khoản <b>${escapeHtml(a.ho_ten)}</b>? Toàn bộ phiên làm việc của giáo viên từ địa chỉ IP này sẽ bị thu hồi ngay lập tức.`,
+          "Chặn địa chỉ IP",
+          true
+        );
+        if (!ok) return;
+        const r = await apiJson("/api/ips/block", {
+          method: "POST",
+          body: JSON.stringify({
+            dia_chi_ip: targetIp,
+            ly_do: `Chặn từ bảng Quản lý tài khoản (${a.ho_ten} - ${a.ma_can_bo || a.ten_dang_nhap || ""})`,
+          }),
+        });
+        if (!r.ok) {
+          toast(r.msg || "Không thể chặn địa chỉ IP.", "bad");
+          return;
+        }
+        toast(r.data.message || "Đã chặn địa chỉ IP thành công.", "ok");
+      }
+      await Promise.all([loadAccounts(), loadLogs(), loadSessions()]);
     }
 
     // ---------- Phiên đăng nhập ----------
@@ -4753,17 +5700,17 @@
 
     async function openTeacherPortal(initialTab = "ON_TAP", successMessage = "") {
       const u = window.currentUser || {};
+      if (u.vai_tro === "QUAN_TRI") {
+        showScreen("DASHBOARD");
+        switchDashboardTab("LOGS");
+        return;
+      }
       const pq = window.currentPhanQuyenMon || {};
       const tenMon = pq.ten_mon_hoc || "Toán";
 
       document.getElementById("tpUserHoTen").textContent = u.ho_ten || "Giáo viên";
       document.getElementById("tpUserRoleSub").textContent =
         u.vai_tro === "GIAO_VIEN" ? `Giáo viên ${tenMon}` : nhanVaiTro(u.vai_tro);
-
-      const adminBackBtn = document.getElementById("tpNavAdminBack");
-      if (adminBackBtn) {
-        adminBackBtn.classList.toggle("hidden", u.vai_tro === "GIAO_VIEN");
-      }
 
       document.getElementById("tpOnTapMonLabel").textContent = tenMon;
       document.getElementById("tpDeThiMonLabel").textContent = tenMon;
@@ -5004,8 +5951,356 @@
       renderDeOnTap();
     }
 
-    function downloadDeOnTapFile(maDe) {
-      window.open(`/api/de-on-tap/${maDe}/file?mode=attachment`, "_blank");
+    // ---------- CƠ CHẾ XÁC MINH / THIẾT LẬP / QUÊN MÃ PIN 6 SỐ ----------
+    const PIN_STATE = {
+      resolve: null,
+      actionLabel: "",
+      manageOnly: false,
+      mode: "VERIFY",
+    };
+
+    function resetPinModalFields() {
+      ["pinVerifyInput", "pinSetupNew", "pinSetupConfirm", "pinResetCode", "pinResetNew", "pinResetConfirm"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+      hideAlert("pinModalAlert");
+      document.getElementById("pinForgotFallbackWrap")?.classList.add("hidden");
+      const fbCode = document.getElementById("pinForgotFallbackCode");
+      if (fbCode) fbCode.textContent = "";
+    }
+
+    function switchPinModalMode(mode) {
+      PIN_STATE.mode = mode;
+      hideAlert("pinModalAlert");
+
+      const verifyPanel = document.getElementById("pinVerifyPanel");
+      const setupPanel = document.getElementById("pinSetupPanel");
+      const forgotPanel = document.getElementById("pinForgotPanel");
+      const titleEl = document.getElementById("pinModalTitle");
+      const subEl = document.getElementById("pinModalSubtitle");
+
+      verifyPanel?.classList.toggle("hidden", mode !== "VERIFY");
+      setupPanel?.classList.toggle("hidden", mode !== "SETUP");
+      forgotPanel?.classList.toggle("hidden", mode !== "FORGOT");
+
+      if (mode === "SETUP") {
+        if (titleEl) titleEl.textContent = "Thiết lập mã PIN 6 số";
+        if (subEl) subEl.textContent = "Khởi tạo mã PIN bảo mật cho tài khoản của bạn";
+        setTimeout(() => document.getElementById("pinSetupNew")?.focus(), 40);
+      } else if (mode === "FORGOT") {
+        if (titleEl) titleEl.textContent = "Quên / Đổi mã PIN 6 số";
+        if (subEl) subEl.textContent = "Nhận mã xác nhận qua email nội bộ để đặt lại mã PIN";
+        const emailEl = document.getElementById("pinForgotEmailText");
+        if (emailEl) emailEl.textContent = window.currentUser?.email || "Email nội bộ";
+        const backBtn = document.getElementById("pinForgotBackBtn");
+        if (backBtn) {
+          if (PIN_STATE.manageOnly || !window.currentUser?.da_co_ma_pin) {
+            backBtn.textContent = "Đóng";
+            backBtn.onclick = () => closePinModal(null);
+          } else {
+            backBtn.textContent = "Quay lại";
+            backBtn.onclick = () => switchPinModalMode("VERIFY");
+          }
+        }
+        setTimeout(() => document.getElementById("pinResetCode")?.focus(), 40);
+      } else {
+        if (titleEl) titleEl.textContent = "Xác minh mã PIN 6 số";
+        if (subEl) subEl.textContent = "Xác thực bảo mật cho thao tác quan trọng trên hệ thống";
+        setTimeout(() => document.getElementById("pinVerifyInput")?.focus(), 40);
+      }
+    }
+
+    function requestPinVerification(actionLabel = "Xác minh thao tác tài liệu") {
+      closeRowMenu();
+      closeOnTapRowMenu();
+      closeDeThiRowMenu();
+
+      if (PIN_STATE.resolve) {
+        const prev = PIN_STATE.resolve;
+        PIN_STATE.resolve = null;
+        prev(null);
+      }
+
+      PIN_STATE.actionLabel = actionLabel;
+      PIN_STATE.manageOnly = false;
+      resetPinModalFields();
+
+      const descEl = document.getElementById("pinActionDesc");
+      if (descEl) descEl.textContent = actionLabel;
+
+      const hasPin = Boolean(window.currentUser?.da_co_ma_pin);
+      switchPinModalMode(hasPin ? "VERIFY" : "SETUP");
+      document.getElementById("pinModal")?.classList.remove("hidden");
+
+      return new Promise(resolve => {
+        PIN_STATE.resolve = resolve;
+      });
+    }
+
+    function openPinManageModal() {
+      closeRowMenu();
+      closeOnTapRowMenu();
+      closeDeThiRowMenu();
+
+      if (PIN_STATE.resolve) {
+        const prev = PIN_STATE.resolve;
+        PIN_STATE.resolve = null;
+        prev(null);
+      }
+
+      PIN_STATE.actionLabel = "Quản lý mã PIN bảo mật";
+      PIN_STATE.manageOnly = true;
+      resetPinModalFields();
+
+      const hasPin = Boolean(window.currentUser?.da_co_ma_pin);
+      switchPinModalMode(hasPin ? "FORGOT" : "SETUP");
+      document.getElementById("pinModal")?.classList.remove("hidden");
+    }
+
+    function closePinModal(resolvedPin = null) {
+      document.getElementById("pinModal")?.classList.add("hidden");
+      resetPinModalFields();
+      if (PIN_STATE.resolve) {
+        const fn = PIN_STATE.resolve;
+        PIN_STATE.resolve = null;
+        fn(resolvedPin);
+      }
+    }
+
+    async function handlePinVerifySubmit(e) {
+      e.preventDefault();
+      hideAlert("pinModalAlert");
+      const pin = (document.getElementById("pinVerifyInput")?.value || "").trim();
+      if (!/^\d{6}$/.test(pin)) {
+        showAlert("pinModalAlert", "Mã PIN phải gồm đúng 6 chữ số (0-9).");
+        return;
+      }
+
+      const btn = document.getElementById("pinVerifySubmitBtn");
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch("/api/auth/pin/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ma_pin: pin }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const code = data?.detail?.code || "";
+          const msg = typeof data.detail === "string"
+            ? data.detail
+            : (data.detail?.message || "Mã PIN xác minh không chính xác.");
+          if (code === "PIN_SETUP_REQUIRED") {
+            if (window.currentUser) window.currentUser.da_co_ma_pin = false;
+            switchPinModalMode("SETUP");
+            showAlert("pinModalAlert", msg, "warning");
+            return;
+          }
+          showAlert("pinModalAlert", msg, "error");
+          const inp = document.getElementById("pinVerifyInput");
+          if (inp) {
+            inp.value = "";
+            inp.focus();
+          }
+          return;
+        }
+        closePinModal(pin);
+      } catch (err) {
+        showAlert("pinModalAlert", "Lỗi kết nối máy chủ: " + err.message, "error");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function handlePinSetupSubmit(e) {
+      e.preventDefault();
+      hideAlert("pinModalAlert");
+      const pinNew = (document.getElementById("pinSetupNew")?.value || "").trim();
+      const pinConfirm = (document.getElementById("pinSetupConfirm")?.value || "").trim();
+
+      if (!/^\d{6}$/.test(pinNew)) {
+        showAlert("pinModalAlert", "Mã PIN bảo mật phải gồm đúng 6 chữ số (0-9).");
+        return;
+      }
+      if (pinNew !== pinConfirm) {
+        showAlert("pinModalAlert", "Mã PIN xác nhận nhập lại không khớp.");
+        return;
+      }
+
+      const btn = document.getElementById("pinSetupSubmitBtn");
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch("/api/auth/pin/setup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ma_pin: pinNew, xac_nhan_ma_pin: pinConfirm }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = typeof data.detail === "string"
+            ? data.detail
+            : (data.detail?.message || "Không thể thiết lập mã PIN.");
+          showAlert("pinModalAlert", msg, "error");
+          return;
+        }
+        if (window.currentUser) window.currentUser.da_co_ma_pin = true;
+        toast(data.message || "Thiết lập mã PIN 6 số thành công!", "ok");
+        closePinModal(PIN_STATE.manageOnly ? null : pinNew);
+      } catch (err) {
+        showAlert("pinModalAlert", "Lỗi kết nối máy chủ: " + err.message, "error");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function handleSendPinForgotEmail() {
+      hideAlert("pinModalAlert");
+      const btn = document.getElementById("btnSendPinResetCode");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Đang gửi mã xác nhận...";
+      }
+      try {
+        const res = await fetch("/api/auth/pin/forgot", { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = typeof data.detail === "string"
+            ? data.detail
+            : (data.detail?.message || "Không thể gửi mã xác nhận qua email.");
+          showAlert("pinModalAlert", msg, "error");
+          return;
+        }
+
+        if (data.email_sent === false && data.ma_xac_nhan_ban_giao) {
+          document.getElementById("pinForgotFallbackCode").textContent = data.ma_xac_nhan_ban_giao;
+          document.getElementById("pinForgotFallbackWrap")?.classList.remove("hidden");
+          showAlert("pinModalAlert", data.message, "warning");
+        } else {
+          document.getElementById("pinForgotFallbackWrap")?.classList.add("hidden");
+          showAlert("pinModalAlert", data.message || "Đã gửi mã xác nhận về email nội bộ.", "success");
+        }
+        document.getElementById("pinResetCode")?.focus();
+      } catch (err) {
+        showAlert("pinModalAlert", "Lỗi kết nối máy chủ: " + err.message, "error");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Gửi lại mã xác nhận về Email";
+        }
+      }
+    }
+
+    async function handlePinResetSubmit(e) {
+      e.preventDefault();
+      hideAlert("pinModalAlert");
+      const code = (document.getElementById("pinResetCode")?.value || "").trim();
+      const pinNew = (document.getElementById("pinResetNew")?.value || "").trim();
+      const pinConfirm = (document.getElementById("pinResetConfirm")?.value || "").trim();
+
+      if (!/^\d{6}$/.test(code)) {
+        showAlert("pinModalAlert", "Vui lòng nhập đúng mã xác nhận gồm 6 chữ số từ email.");
+        return;
+      }
+      if (!/^\d{6}$/.test(pinNew)) {
+        showAlert("pinModalAlert", "Mã PIN mới phải gồm đúng 6 chữ số (0-9).");
+        return;
+      }
+      if (pinNew !== pinConfirm) {
+        showAlert("pinModalAlert", "Mã PIN mới nhập lại không khớp.");
+        return;
+      }
+
+      const btn = document.getElementById("pinResetSubmitBtn");
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch("/api/auth/pin/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ma_xac_nhan: code,
+            ma_pin_moi: pinNew,
+            xac_nhan_ma_pin_moi: pinConfirm,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = typeof data.detail === "string"
+            ? data.detail
+            : (data.detail?.message || "Không thể đặt lại mã PIN.");
+          showAlert("pinModalAlert", msg, "error");
+          return;
+        }
+        if (window.currentUser) window.currentUser.da_co_ma_pin = true;
+        toast(data.message || "Đặt lại mã PIN 6 số thành công!", "ok");
+        closePinModal(PIN_STATE.manageOnly ? null : pinNew);
+      } catch (err) {
+        showAlert("pinModalAlert", "Lỗi kết nối máy chủ: " + err.message, "error");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function triggerProtectedFileDownload(url, pin, fallbackFilename = "Tai_Lieu.pdf") {
+      try {
+        const res = await fetch(url, {
+          headers: { "X-Pin-Code": pin },
+        });
+        if (!res.ok) {
+          let data = {};
+          try { data = await res.json(); } catch (_) {}
+          const msg = typeof data.detail === "string"
+            ? data.detail
+            : (data.detail?.message || "Không thể tải xuống tài liệu.");
+          await openAdDialog({
+            title: "Cảnh báo An ninh Tài liệu",
+            html: `<p class="text-rose-600 font-semibold">${escapeHtml(msg)}</p>`,
+            okText: "Đã hiểu",
+            hideCancel: true,
+            danger: true,
+          });
+          return false;
+        }
+
+        let filename = fallbackFilename;
+        const cd = res.headers.get("Content-Disposition") || "";
+        const utf8Match = cd.match(/filename\*=UTF-8''([^;]+)/i);
+        const asciiMatch = cd.match(/filename="?([^";]+)"?/i);
+        if (utf8Match && utf8Match[1]) {
+          try { filename = decodeURIComponent(utf8Match[1]); } catch (_) {}
+        } else if (asciiMatch && asciiMatch[1]) {
+          filename = asciiMatch[1];
+        }
+
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+        toast(`Đã xác minh mã PIN và tải xuống "${filename}".`, "ok");
+        return true;
+      } catch (err) {
+        toast("Lỗi kết nối khi tải xuống tệp: " + err.message, "bad");
+        return false;
+      }
+    }
+
+    async function downloadDeOnTapFile(maDe) {
+      const item = TP.deOnTap.find(x => String(x.ma_de_on_tap) === String(maDe));
+      const label = item?.ten_de_on_tap
+        ? `Tải xuống đề ôn tập: ${item.ten_de_on_tap}`
+        : "Tải xuống tệp đề ôn tập";
+      const pin = await requestPinVerification(label);
+      if (!pin) return;
+      await triggerProtectedFileDownload(
+        `/api/de-on-tap/${maDe}/file?mode=attachment`,
+        pin,
+        item?.ten_tep_goc || "De_On_Tap.pdf"
+      );
     }
 
     function previewDeOnTapFile(maDe) {
@@ -5014,11 +6309,13 @@
 
     function coQuyenSuaDeOnTap(item) {
       if (!item) return false;
+      const myId = window.currentUser?.ma_tai_khoan;
+      const laNguoiTao = Boolean(myId && String(item.nguoi_tao) === String(myId));
+      if (!laNguoiTao) return false;
       if (typeof item.duoc_phep_chinh_sua === "boolean") {
         return item.duoc_phep_chinh_sua;
       }
-      const myId = window.currentUser?.ma_tai_khoan;
-      return Boolean(myId && String(item.nguoi_tao) === String(myId));
+      return true;
     }
 
     function openOnTapRowMenu(e, maDe) {
@@ -5054,7 +6351,10 @@
         <button type="button" onclick="closeOnTapRowMenu(); handleDeleteDeOnTap('${id}')" class="w-full px-3.5 py-2 text-left hover:bg-rose-50 flex items-center gap-2.5 text-rose-600 font-medium">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           <span>Xóa đề ôn tập</span>
-        </button>` : ""}
+        </button>` : `
+        <div class="px-3.5 py-2 text-xs text-slate-400 border-t border-slate-100 leading-snug max-w-[15rem]">
+          Chỉ giáo viên tạo đề (${escapeHtml(item.ho_ten_nguoi_tao || "người tạo")}) mới được sửa / xóa
+        </div>`}
       `;
       menu.classList.remove("hidden");
       const r = e.currentTarget.getBoundingClientRect();
@@ -5141,10 +6441,18 @@
         return;
       }
 
+      const pin = await requestPinVerification(
+        editId
+          ? `Cập nhật đề ôn tập: ${tenDe}`
+          : `Tải đề ôn tập mới lên hệ thống: ${tenDe}`
+      );
+      if (!pin) return;
+
       const fd = new FormData();
       fd.append("ten_de_on_tap", tenDe);
       fd.append("ma_khoi", maKhoi);
       fd.append("loai_de", loaiDe);
+      fd.append("ma_pin", pin);
       if (file) fd.append("file", file);
 
       const btn = document.getElementById("otSubmitBtn");
@@ -5314,11 +6622,13 @@
 
     function coQuyenSuaDeThi(item) {
       if (!coQuyenThemDeThi() || !item) return false;
+      const myId = window.currentUser?.ma_tai_khoan;
+      const laNguoiRaDe = Boolean(myId && String(item.nguoi_ra_de) === String(myId));
+      if (!laNguoiRaDe) return false;
       if (typeof item.duoc_phep_chinh_sua === "boolean") {
         return item.duoc_phep_chinh_sua;
       }
-      const myId = window.currentUser?.ma_tai_khoan;
-      return Boolean(myId && String(item.nguoi_ra_de) === String(myId));
+      return !Boolean(item.dang_niem_phong);
     }
 
     async function loadDeThi() {
@@ -5357,12 +6667,51 @@
       renderDeThi();
     }
 
+    function badgePhanLoaiTaiLieu(loai) {
+      const s = String(loai || "Đề thi").trim();
+      if (s === "Đáp án") {
+        return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">Đáp án</span>`;
+      }
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Đề thi</span>`;
+    }
+
+    function badgeTrangThaiNiemPhong(item) {
+      const tip = escapeHtml(item?.mo_ta_niem_phong || "");
+      if (item?.dang_niem_phong) {
+        return `
+          <span title="${tip}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
+            </svg>
+            <span>Đang niêm phong</span>
+          </span>`;
+      }
+      if (item?.da_mo) {
+        return `
+          <span title="${tip}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 017.75-1.4"/>
+            </svg>
+            <span>Đã mở</span>
+          </span>`;
+      }
+      return `
+        <span title="${tip}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2"/>
+          </svg>
+          <span>Chưa niêm phong</span>
+        </span>`;
+    }
+
     function getFilteredDeThi() {
       const q = (document.getElementById("dtSearchInput")?.value || "").trim().toLowerCase();
+      const phanLoai = (document.getElementById("dtPhanLoaiFilter")?.value || "").trim();
       const namHoc = (document.getElementById("dtNamHocFilter")?.value || "").trim();
       const khoi = document.getElementById("dtKhoiFilter")?.value || "";
       const loai = document.getElementById("dtLoaiFilter")?.value || "";
       return TP.deThi.filter(item => {
+        if (phanLoai && String(item.loai || "Đề thi").trim() !== phanLoai) return false;
         if (namHoc && String(item.nam_hoc || "").trim() !== namHoc) return false;
         if (khoi && String(item.ma_khoi) !== String(khoi)) return false;
         if (loai && String(item.loai_ky_thi || "") !== String(loai)) return false;
@@ -5371,6 +6720,8 @@
             item.ten_ky_thi,
             item.ten_lich_thi,
             item.ten_de_thi,
+            item.loai,
+            item.trang_thai_niem_phong,
             item.loai_ky_thi,
             item.nam_hoc,
             item.ten_khoi,
@@ -5396,8 +6747,9 @@
 
       const tbody = document.getElementById("deThiTableBody");
       if (!pageItems.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-400 text-sm">Không có kỳ thi / đề thi nào phù hợp với bộ lọc hiện tại.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="py-10 text-center text-slate-400 text-sm">Không có kỳ thi / tài liệu nào phù hợp với bộ lọc hiện tại.</td></tr>`;
       } else {
+        const myId = window.currentUser?.ma_tai_khoan;
         tbody.innerHTML = pageItems.map((item, idx) => {
           const stt = startIdx + idx + 1;
           const id = escapeHtml(item.ma_de_thi);
@@ -5405,28 +6757,78 @@
           const tenKyThi = item.ten_ky_thi || item.ten_lich_thi || "Kỳ thi";
           const namHoc = item.nam_hoc || "2026 - 2027";
           const thoiGianThi = formatThoiGianThi(item.gio_bat_dau, item.gio_ket_thuc);
+          const dangKhoa = Boolean(item.dang_niem_phong);
+          const laDeCuaToi = Boolean(
+            item.la_nguoi_ra_de === true || (myId && String(item.nguoi_ra_de) === String(myId))
+          );
+          const coTheNiemPhong = Boolean(item.duoc_phep_niem_phong) && laDeCuaToi;
+          const tenNguoiRaDe = item.ho_ten_nguoi_ra_de || item.nguoi_ra_de_hien_thi || "—";
+          const monNguoiRaDe = item.ten_mon_ngan || item.ten_mon_hoc || "";
+
+          const sealBtnHtml = coTheNiemPhong
+            ? `<button
+                 type="button"
+                 title="Niêm phong ngay (yêu cầu mã PIN 6 số)"
+                 onclick="handleSealDeThi('${id}')"
+                 class="w-8 h-8 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 inline-flex items-center justify-center transition"
+               >
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                   <rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
+                 </svg>
+               </button>`
+            : "";
+
+          const downloadOrLockHtml = dangKhoa
+            ? `<span
+                 title="Đang niêm phong đến ${escapeHtml(item.thoi_diem_mo_hien_thi || "")} — kể cả Quản trị viên hay người ra đề đều không thể can thiệp"
+                 class="w-8 h-8 rounded-lg bg-rose-50 text-rose-500 border border-rose-200 inline-flex items-center justify-center cursor-not-allowed"
+               >
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                   <rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
+                 </svg>
+               </span>`
+            : `<button
+                 type="button"
+                 title="Tải xuống tệp (xác minh mã PIN 6 số)"
+                 onclick="handleAccessDeThi('${id}', 'attachment')"
+                 class="w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563eb] inline-flex items-center justify-center transition"
+               >
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+                 </svg>
+               </button>`;
 
           return `
             <tr class="hover:bg-slate-50/80 transition">
-              <td class="py-4 px-4 text-center text-slate-600 font-medium">${stt}</td>
+              <td class="py-4 px-3.5 text-center text-slate-600 font-medium">${stt}</td>
               <td class="py-4 px-4">
                 <button
                   type="button"
                   onclick="openDeThiDetailModal('${id}')"
-                  class="font-bold text-slate-800 hover:text-[#2563eb] text-left transition"
+                  class="font-bold text-slate-800 hover:text-[#2563eb] text-left transition block"
                 >
                   ${escapeHtml(tenKyThi)}
                 </button>
+                <div class="text-xs text-slate-500 mt-0.5 truncate max-w-[16rem]">${escapeHtml(item.ten_de_thi || "")}</div>
               </td>
-              <td class="py-4 px-4 text-center whitespace-nowrap">${badgeKhoiLop(item.ma_khoi, item.ten_khoi)}</td>
-              <td class="py-4 px-4 text-center whitespace-nowrap">${badgeLoaiDeOnTap(loaiKyThi)}</td>
-              <td class="py-4 px-4 text-center text-slate-600 font-medium whitespace-nowrap">${escapeHtml(namHoc)}</td>
-              <td class="py-4 px-4 text-slate-600 text-[0.9rem] whitespace-nowrap">${escapeHtml(thoiGianThi)}</td>
-              <td class="py-4 px-4 text-center whitespace-nowrap">
+              <td class="py-4 px-3.5 whitespace-nowrap">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-semibold text-slate-800">${escapeHtml(tenNguoiRaDe)}</span>
+                  ${laDeCuaToi ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[0.68rem] font-bold bg-blue-50 text-[#2563eb] border border-blue-200">Của bạn</span>' : ""}
+                </div>
+                ${monNguoiRaDe ? `<div class="text-xs text-slate-400 mt-0.5">GV. ${escapeHtml(monNguoiRaDe)}</div>` : ""}
+              </td>
+              <td class="py-4 px-3 text-center whitespace-nowrap">${badgePhanLoaiTaiLieu(item.loai)}</td>
+              <td class="py-4 px-3 text-center whitespace-nowrap">${badgeKhoiLop(item.ma_khoi, item.ten_khoi)}</td>
+              <td class="py-4 px-3 text-center whitespace-nowrap">${badgeLoaiDeOnTap(loaiKyThi)}</td>
+              <td class="py-4 px-3 text-center text-slate-600 font-medium whitespace-nowrap">${escapeHtml(namHoc)}</td>
+              <td class="py-4 px-3.5 text-slate-600 text-[0.88rem] whitespace-nowrap">${escapeHtml(thoiGianThi)}</td>
+              <td class="py-4 px-3.5 text-center whitespace-nowrap">${badgeTrangThaiNiemPhong(item)}</td>
+              <td class="py-4 px-3.5 text-center whitespace-nowrap">
                 <div class="inline-flex items-center justify-center gap-1.5">
                   <button
                     type="button"
-                    title="Xem chi tiết kỳ thi và đề thi"
+                    title="Xem thông tin chi tiết"
                     onclick="openDeThiDetailModal('${id}')"
                     class="w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563eb] inline-flex items-center justify-center transition"
                   >
@@ -5435,16 +6837,8 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                     </svg>
                   </button>
-                  <button
-                    type="button"
-                    title="Tải xuống tệp đề thi"
-                    onclick="handleAccessDeThi('${id}', 'attachment')"
-                    class="w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563eb] inline-flex items-center justify-center transition"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
-                    </svg>
-                  </button>
+                  ${sealBtnHtml}
+                  ${downloadOrLockHtml}
                   <button
                     type="button"
                     title="Tùy chọn khác"
@@ -5464,11 +6858,11 @@
       const info = document.getElementById("deThiPageInfo");
       if (info) {
         if (total === 0) {
-          info.textContent = "Hiển thị 0 - 0 trong tổng số 0 đề thi";
+          info.textContent = "Hiển thị 0 - 0 trong tổng số 0 tài liệu thi";
         } else {
           const from = startIdx + 1;
           const to = Math.min(startIdx + pageItems.length, total);
-          info.textContent = `Hiển thị ${from} - ${to} trong tổng số ${total} đề thi`;
+          info.textContent = `Hiển thị ${from} - ${to} trong tổng số ${total} tài liệu thi`;
         }
       }
 
@@ -5516,31 +6910,57 @@
       if (!item) return;
       const menu = document.getElementById("deThiRowMenu");
       const id = escapeHtml(item.ma_de_thi);
+      const myId = window.currentUser?.ma_tai_khoan;
+      const laDeCuaToi = Boolean(
+        item.la_nguoi_ra_de === true || (myId && String(item.nguoi_ra_de) === String(myId))
+      );
       const canEdit = coQuyenSuaDeThi(item);
+      const dangKhoa = Boolean(item.dang_niem_phong);
+      const coTheNiemPhong = Boolean(item.duoc_phep_niem_phong) && laDeCuaToi;
+
       menu.innerHTML = `
+        <div class="px-3.5 py-2 text-xs font-bold text-slate-400 border-b border-slate-100 truncate max-w-[16rem]">
+          ${escapeHtml(item.ten_de_thi || item.ten_ky_thi || "")}
+        </div>
         <button type="button" onclick="closeDeThiRowMenu(); openDeThiDetailModal('${id}')" class="w-full px-3.5 py-2 text-left hover:bg-slate-50 flex items-center gap-2.5 font-medium text-slate-700">
           <svg class="w-4 h-4 text-[#2563eb]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-          Xem chi tiết lịch thi &amp; đề thi
+          <span>Xem chi tiết lịch thi &amp; tài liệu</span>
         </button>
+        ${coTheNiemPhong ? `
+        <button type="button" onclick="closeDeThiRowMenu(); handleSealDeThi('${id}')" class="w-full px-3.5 py-2 text-left hover:bg-amber-50 flex items-center gap-2.5 font-bold text-amber-800">
+          <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/></svg>
+          <span>Niêm phong ngay</span>
+        </button>` : ""}
+        ${dangKhoa ? `
+        <div class="px-3.5 py-2 text-xs text-rose-700 bg-rose-50/70 border-y border-rose-100 leading-snug">
+          Đang niêm phong đến <b>${escapeHtml(item.thoi_diem_mo_hien_thi || "")}</b>
+        </div>` : `
         <button type="button" onclick="closeDeThiRowMenu(); handleAccessDeThi('${id}', 'inline')" class="w-full px-3.5 py-2 text-left hover:bg-slate-50 flex items-center gap-2.5 font-medium text-slate-700">
           <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Mở xem trực tiếp tệp đề thi
+          <span>Mở xem trực tiếp tệp</span>
         </button>
+        <button type="button" onclick="closeDeThiRowMenu(); handleAccessDeThi('${id}', 'attachment')" class="w-full px-3.5 py-2 text-left hover:bg-slate-50 flex items-center gap-2.5 font-medium text-slate-700">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+          <span>Tải xuống tệp (xác minh PIN)</span>
+        </button>`}
         ${canEdit ? `
         <button type="button" onclick="closeDeThiRowMenu(); openDeThiFormModal('${id}')" class="w-full px-3.5 py-2 text-left hover:bg-slate-50 flex items-center gap-2.5 font-medium text-slate-700">
           <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-          Chỉnh sửa lịch thi &amp; đề thi
+          <span>Chỉnh sửa lịch thi &amp; tài liệu</span>
         </button>
         <div class="my-1 border-t border-slate-100"></div>
         <button type="button" onclick="closeDeThiRowMenu(); handleDeleteDeThi('${id}')" class="w-full px-3.5 py-2 text-left hover:bg-rose-50 flex items-center gap-2.5 font-medium text-rose-600">
           <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          Xóa lịch thi &amp; đề thi
-        </button>` : ""}
+          <span>Xóa lịch thi &amp; tài liệu</span>
+        </button>` : (!dangKhoa ? `
+        <div class="px-3.5 py-2 text-xs text-slate-400 border-t border-slate-100 leading-snug max-w-[16rem]">
+          Chỉ giáo viên ra đề (${escapeHtml(item.ho_ten_nguoi_ra_de || "người ra đề")}) mới được sửa / xóa
+        </div>` : "")}
       `;
       menu.classList.remove("hidden");
       const rect = e.currentTarget.getBoundingClientRect();
-      const mw = menu.offsetWidth || 225;
-      const mh = menu.offsetHeight || 165;
+      const mw = menu.offsetWidth || 235;
+      const mh = menu.offsetHeight || 195;
       let left = rect.right - mw;
       let top = rect.bottom + 6;
       if (left < 8) left = 8;
@@ -5553,13 +6973,68 @@
       document.getElementById("deThiRowMenu")?.classList.add("hidden");
     }
 
+    async function handleSealDeThi(maDeThi) {
+      const item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi));
+      if (!item) return;
+      const phanLoai = item.loai || "Đề thi";
+      const mocMo = phanLoai === "Đáp án"
+        ? `kết thúc giờ thi (${escapeHtml(item.gio_ket_thuc || item.thoi_diem_mo_hien_thi || "")})`
+        : `bắt đầu giờ thi (${escapeHtml(item.gio_bat_dau || item.thoi_diem_mo_hien_thi || "")})`;
+
+      const ok = await askConfirm(
+        `Niêm phong ${phanLoai.toLowerCase()} ngay lập tức?`,
+        `Bạn sắp niêm phong <b>${escapeHtml(item.ten_de_thi)}</b> (${escapeHtml(phanLoai)}).<br><br>` +
+        `Trong suốt thời gian niêm phong cho tới khi <b>${mocMo}</b>, <b>kể cả Quản trị viên hay giáo viên tạo đề đều không có quyền xem, tải xuống, chỉnh sửa hoặc xóa</b> tài liệu này.`,
+        "Tiếp tục nhập PIN niêm phong"
+      );
+      if (!ok) return;
+
+      const pin = await requestPinVerification(`Niêm phong ${phanLoai}: ${item.ten_de_thi}`);
+      if (!pin) return;
+
+      const r = await apiJson(`/api/de-thi/${maDeThi}/seal`, {
+        method: "POST",
+        body: JSON.stringify({ ma_pin: pin }),
+      });
+      if (!r.ok) {
+        toast(r.msg || "Không thể niêm phong tài liệu.", "bad", 5500);
+        return;
+      }
+
+      toast(r.data.message || `Đã niêm phong ${phanLoai.toLowerCase()} thành công.`, "ok", 5500);
+      await loadDeThi();
+      const detailModal = document.getElementById("deThiDetailModal");
+      if (detailModal && !detailModal.classList.contains("hidden")) {
+        await openDeThiDetailModal(maDeThi);
+      }
+    }
+
     async function handleAccessDeThi(maDeThi, mode = "inline") {
+      const item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi));
       const url = `/api/de-thi/${maDeThi}/file?mode=${mode}`;
+
+      if (mode === "attachment" && !item?.dang_niem_phong) {
+        const phanLoai = item?.loai || "Đề thi";
+        const pin = await requestPinVerification(
+          `Tải xuống ${phanLoai.toLowerCase()}: ${item?.ten_de_thi || ""}`
+        );
+        if (!pin) return;
+        const ok = await triggerProtectedFileDownload(
+          url,
+          pin,
+          item?.ten_tep_goc || "De_Thi.pdf"
+        );
+        if (!ok) await loadDeThi();
+        return;
+      }
+
       const res = await fetch(url);
       if (!res.ok) {
         let data = {};
         try { data = await res.json(); } catch (_) {}
-        const msg = typeof data.detail === "string" ? data.detail : (data.detail?.message || "Truy cập đề thi bị từ chối.");
+        const msg = typeof data.detail === "string"
+          ? data.detail
+          : (data.detail?.message || "Truy cập tài liệu thi bị từ chối.");
         await openAdDialog({
           title: "Cảnh báo An ninh Kho đề thi",
           html: `<p class="text-rose-600 font-semibold">${escapeHtml(msg)}</p>`,
@@ -5570,7 +7045,11 @@
         await loadDeThi();
         return;
       }
-      window.open(url, "_blank");
+
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank");
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     }
 
     function syncDateTimePickerToText(pickerId, textId) {
@@ -5591,11 +7070,13 @@
       const tenKyThi = (document.getElementById("dtNewTenLich")?.value || "").trim();
       const maKhoi = document.getElementById("dtNewMaKhoi")?.value || "10";
       const monText = (document.getElementById("dtFormMonLockedText")?.textContent || "Toán").trim();
+      const phanLoai = document.getElementById("dtNewLoaiTaiLieu")?.value || "Đề thi";
       const tenDeInput = document.getElementById("dtNewTenDe");
       if (!tenDeInput) return;
       if (tenKyThi) {
         const lowerKyThi = tenKyThi.charAt(0).toLowerCase() + tenKyThi.slice(1);
-        tenDeInput.value = `Đề ${lowerKyThi} - ${monText} ${maKhoi}`;
+        const tienTo = phanLoai === "Đáp án" ? "Đáp án đề" : "Đề";
+        tenDeInput.value = `${tienTo} ${lowerKyThi} - ${monText} ${maKhoi}`;
       }
     }
 
@@ -5617,7 +7098,7 @@
         ? TP.deThi.find(x => String(x.ma_de_thi) === String(editMaDeThi))
         : null;
       if (editMaDeThi && (!editItem || !coQuyenSuaDeThi(editItem))) {
-        toast("Bạn không có quyền chỉnh sửa đề thi này.", "bad");
+        toast("Bạn không có quyền chỉnh sửa tài liệu này (hoặc tài liệu đang trong thời gian niêm phong).", "bad");
         return;
       }
 
@@ -5630,8 +7111,13 @@
       const titleEl = document.getElementById("dtFormHeaderTitle");
       if (titleEl) {
         titleEl.textContent = editItem
-          ? "CHỈNH SỬA LỊCH THI VÀ ĐỀ THI"
+          ? "CHỈNH SỬA LỊCH THI VÀ TÀI LIỆU THI"
           : "TẠO LỊCH THI VÀ ĐỀ THI";
+      }
+
+      const loaiTlEl = document.getElementById("dtNewLoaiTaiLieu");
+      if (loaiTlEl) {
+        loaiTlEl.value = editItem ? (editItem.loai || "Đề thi") : "Đề thi";
       }
 
       const tenLichEl = document.getElementById("dtNewTenLich");
@@ -5688,21 +7174,29 @@
       const tenKyThi = (document.getElementById("dtNewTenLich")?.value || "").trim();
       const namHoc = (document.getElementById("dtNewNamHoc")?.value || "").trim();
       const maKhoi = document.getElementById("dtNewMaKhoi")?.value || "10";
-      const loaiKyThi = document.getElementById("dtNewLoaiKyThi")?.value || "Giữa kỳ I";
+      const loaiKyThi = (document.getElementById("dtNewLoaiKyThi")?.value || "Giữa kỳ I").trim();
       const gioBatDau = (document.getElementById("dtNewGioBatDau")?.value || "").trim();
       const gioKetThuc = (document.getElementById("dtNewGioKetThuc")?.value || "").trim();
+      const phanLoai = (document.getElementById("dtNewLoaiTaiLieu")?.value || "Đề thi").trim();
       const tenDe = (document.getElementById("dtNewTenDe")?.value || "").trim();
       const loaiDe = "CHINH_THUC";
       const file = document.getElementById("dtNewFileInput")?.files?.[0];
 
       if (!tenKyThi || !namHoc || !gioBatDau || !gioKetThuc || !tenDe) {
-        showAlert("dtFormAlert", "Vui lòng điền đầy đủ thông tin kỳ thi, thời gian thi và tên đề thi.");
+        showAlert("dtFormAlert", "Vui lòng điền đầy đủ thông tin kỳ thi, thời gian thi và tên tài liệu.");
         return;
       }
       if (!editId && !file) {
-        showAlert("dtFormAlert", "Vui lòng chọn tệp đề thi đính kèm (.pdf, .docx, .xlsx).");
+        showAlert("dtFormAlert", "Vui lòng chọn tệp tài liệu đính kèm (.pdf, .docx, .xlsx).");
         return;
       }
+
+      const pin = await requestPinVerification(
+        editId
+          ? `Cập nhật ${phanLoai.toLowerCase()}: ${tenDe}`
+          : `Tải ${phanLoai.toLowerCase()} mới lên hệ thống: ${tenDe}`
+      );
+      if (!pin) return;
 
       const fd = new FormData();
       fd.append("ten_ky_thi", tenKyThi);
@@ -5712,8 +7206,10 @@
       fd.append("loai_ky_thi", loaiKyThi);
       fd.append("gio_bat_dau", gioBatDau);
       fd.append("gio_ket_thuc", gioKetThuc);
+      fd.append("loai", phanLoai);
       fd.append("ten_de_thi", tenDe);
       fd.append("loai_de", loaiDe);
+      fd.append("ma_pin", pin);
       if (file) {
         fd.append("file", file);
       }
@@ -5726,11 +7222,14 @@
         const res = await fetch(url, { method, body: fd });
         const data = await res.json();
         if (!res.ok) {
-          showAlert("dtFormAlert", typeof data.detail === "string" ? data.detail : "Không thể lưu thông tin lịch thi và đề thi.");
+          const msg = typeof data.detail === "string"
+            ? data.detail
+            : (data.detail?.message || "Không thể lưu thông tin lịch thi và tài liệu.");
+          showAlert("dtFormAlert", msg);
           return;
         }
         closeDeThiFormModal();
-        toast(data.message || "Đã lưu thông tin lịch thi và đề thi thành công.", "ok");
+        toast(data.message || "Đã lưu thông tin lịch thi và tài liệu thành công.", "ok");
         await loadDeThi();
       } catch (err) {
         showAlert("dtFormAlert", "Lỗi kết nối: " + err.message);
@@ -5747,6 +7246,7 @@
       }
       const d = r.data.item;
       const tenKyThi = d.ten_ky_thi || d.ten_lich_thi || "—";
+      const phanLoai = d.loai || "Đề thi";
       const loaiKyThi = d.loai_ky_thi || "Giữa kỳ I";
       const namHoc = d.nam_hoc || "2026 - 2027";
       const khoiLop = d.ten_khoi || `Khối ${d.ma_khoi}`;
@@ -5755,17 +7255,36 @@
 
       // Thanh tiêu đề tóm tắt
       document.getElementById("dtDetailHeaderTitle").textContent = tenKyThi;
+      document.getElementById("dtDetailPhanLoaiBadge").innerHTML = badgePhanLoaiTaiLieu(phanLoai);
       document.getElementById("dtDetailHeaderBadge").innerHTML = badgeLoaiDeOnTap(loaiKyThi);
       document.getElementById("dtDetailHeaderMon").textContent = d.ten_mon_ngan || tenMon;
 
-      // 11 mục xem chi tiết theo đặc tả
+      // Banner trạng thái niêm phong
+      const bannerEl = document.getElementById("dtDetailSealBanner");
+      if (bannerEl) {
+        const moTa = escapeHtml(d.mo_ta_niem_phong || "");
+        if (d.dang_niem_phong) {
+          bannerEl.className = "rounded-xl px-4 py-3 border bg-rose-50/90 border-rose-200 text-rose-900 text-xs leading-relaxed";
+          bannerEl.innerHTML = `<b>Trạng thái bảo mật:</b> ${moTa} Trong thời gian niêm phong, kể cả Quản trị viên hay người tạo đề đều không có quyền can thiệp.`;
+        } else if (d.da_mo) {
+          bannerEl.className = "rounded-xl px-4 py-3 border bg-emerald-50/90 border-emerald-200 text-emerald-900 text-xs leading-relaxed";
+          bannerEl.innerHTML = `<b>Trạng thái bảo mật:</b> ${moTa}`;
+        } else {
+          bannerEl.className = "rounded-xl px-4 py-3 border bg-amber-50/90 border-amber-200 text-amber-900 text-xs leading-relaxed";
+          bannerEl.innerHTML = `<b>Trạng thái bảo mật:</b> ${moTa}`;
+        }
+      }
+
+      // Các mục xem chi tiết
       document.getElementById("dtDetailTenKyThi").textContent = tenKyThi;
+      document.getElementById("dtDetailPhanLoai").textContent = phanLoai;
       document.getElementById("dtDetailKhoiLop").textContent = khoiLop;
       document.getElementById("dtDetailLoaiKyThi").textContent = loaiKyThi;
       document.getElementById("dtDetailNamHoc").textContent = namHoc;
       document.getElementById("dtDetailThoiGianThi").textContent = thoiGianThi;
       document.getElementById("dtDetailTenMonHoc").textContent = tenMon;
       document.getElementById("dtDetailTenDe").textContent = d.ten_de_thi || "—";
+      document.getElementById("dtDetailTrangThaiNiemPhong").innerHTML = badgeTrangThaiNiemPhong(d);
       document.getElementById("dtDetailNguoiRaDe").textContent = d.nguoi_ra_de_hien_thi || d.ho_ten_nguoi_ra_de || "—";
       document.getElementById("dtDetailThoiDiemTao").textContent = d.thoi_diem_tao || d.thoi_gian_tao || "—";
 
@@ -5787,9 +7306,30 @@
         ? "font-medium italic text-sm text-slate-400 mt-0.5"
         : "font-bold text-sm text-slate-800 mt-0.5";
 
+      const dangKhoa = Boolean(d.dang_niem_phong);
+      document.getElementById("dtDetailFileAccessBox")?.classList.toggle("hidden", dangKhoa);
+      document.getElementById("dtDetailFileLockedBox")?.classList.toggle("hidden", !dangKhoa);
+      const lockedDescEl = document.getElementById("dtDetailFileLockedDesc");
+      if (lockedDescEl && dangKhoa) {
+        lockedDescEl.textContent =
+          `${phanLoai} này đang được khóa niêm phong bảo mật và chỉ tự động mở lúc ${d.thoi_diem_mo_hien_thi || "đến giờ theo lịch thi"}. Kể cả Quản trị viên hay người ra đề đều không thể xem, tải xuống, chỉnh sửa hoặc xóa.`;
+      }
+
       document.getElementById("dtDetailViewBtn").onclick = () => handleAccessDeThi(d.ma_de_thi, "inline");
       document.getElementById("dtDetailDownloadBtn").onclick = () => handleAccessDeThi(d.ma_de_thi, "attachment");
-      const canEditDeThi = coQuyenSuaDeThi(d);
+
+      const myId = window.currentUser?.ma_tai_khoan;
+      const laDeCuaToi = Boolean(
+        d.la_nguoi_ra_de === true || (myId && String(d.nguoi_ra_de) === String(myId))
+      );
+      const dtSealBtn = document.getElementById("dtDetailSealBtn");
+      const canSeal = Boolean(d.duoc_phep_niem_phong) && laDeCuaToi;
+      if (dtSealBtn) {
+        dtSealBtn.classList.toggle("hidden", !canSeal);
+        dtSealBtn.onclick = canSeal ? () => handleSealDeThi(d.ma_de_thi) : null;
+      }
+
+      const canEditDeThi = coQuyenSuaDeThi(d) && !dangKhoa;
       const dtEditBtn = document.getElementById("dtDetailEditBtn");
       if (dtEditBtn) {
         dtEditBtn.classList.toggle("hidden", !canEditDeThi);
@@ -5811,23 +7351,27 @@
     async function handleDeleteDeThi(maDeThi) {
       const item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi));
       if (!item) return;
+      if (item.dang_niem_phong) {
+        toast("Tài liệu đang trong thời gian niêm phong bảo mật, không ai có quyền xóa hoặc can thiệp.", "bad");
+        return;
+      }
       if (!coQuyenSuaDeThi(item)) {
-        toast("Tài khoản của bạn không có quyền xóa đề thi chính thức.", "bad");
+        toast("Tài khoản của bạn không có quyền xóa tài liệu thi này.", "bad");
         return;
       }
       const ok = await askConfirm(
-        "Xóa lịch thi & đề thi?",
-        `Bạn có chắc chắn muốn xóa đề thi <b>${escapeHtml(item.ten_de_thi)}</b> (${escapeHtml(item.ten_ky_thi || item.ten_lich_thi || "")}) khỏi hệ thống không?`,
-        "Xóa đề thi",
+        "Xóa lịch thi & tài liệu?",
+        `Bạn có chắc chắn muốn xóa <b>${escapeHtml(item.ten_de_thi)}</b> (${escapeHtml(item.loai || "Đề thi")} · ${escapeHtml(item.ten_ky_thi || item.ten_lich_thi || "")}) khỏi hệ thống không?`,
+        "Xóa tài liệu",
         true
       );
       if (!ok) return;
       const r = await apiJson(`/api/de-thi/${maDeThi}`, { method: "DELETE" });
       if (!r.ok) {
-        toast(r.msg || "Không thể xóa đề thi.", "bad");
+        toast(r.msg || "Không thể xóa tài liệu thi.", "bad");
         return;
       }
-      toast(r.data.message || "Đã xóa lịch thi và đề thi.", "ok");
+      toast(r.data.message || "Đã xóa lịch thi và tài liệu.", "ok");
       await loadDeThi();
     }
 
@@ -5840,6 +7384,10 @@
     });
     document.addEventListener("keydown", e => {
       if (e.key !== "Escape") return;
+      if (!document.getElementById("pinModal")?.classList.contains("hidden")) {
+        closePinModal(null);
+        return;
+      }
       closeRowMenu();
       closeOnTapRowMenu();
       closeDeThiRowMenu();
@@ -5856,12 +7404,19 @@
 
     async function handleLogout() {
       await fetch("/api/auth/logout", { method: "POST" });
+      window.currentUser = null;
+      if (await checkAndEnforceIpFirewall()) return;
       showScreen("LOGIN");
     }
 
     window.addEventListener("DOMContentLoaded", async () => {
       setupOtpInputs(".ft-otp-input");
       setupOtpInputs(".v-otp-input");
+      ensureIpFirewallWatcher();
+
+      if (await checkAndEnforceIpFirewall()) {
+        return;
+      }
 
       try {
         const res = await fetch("/api/auth/session-status");
@@ -5874,6 +7429,11 @@
           } else {
             showScreen("VERIFY_OTP");
           }
+          return;
+        }
+        const errData = await res.json().catch(() => ({}));
+        if (errData?.detail?.code === "IP_BLOCKED") {
+          renderAndShowIpBlockedScreen(errData.detail);
           return;
         }
       } catch (_) {}

@@ -76,3 +76,20 @@ def gui_mat_khau_khoi_tao(email: str, ho_ten: str, ten_dang_nhap: str, mat_khau_
         "Trân trọng,\nQuản trị viên IT - THPT Hoàng Văn Thụ"
     )
     return gui_email(email, "[THPT Hoàng Văn Thụ] Thông tin tài khoản và mật khẩu khởi tạo", noi_dung)
+
+
+def gui_ma_xac_nhan_quen_pin(email: str, ho_ten: str, ten_dang_nhap: str, ma_xac_nhan: str) -> Tuple[bool, str]:
+    """Soạn và gửi mã xác nhận đặt lại mã PIN 6 số về email nội bộ của giáo viên."""
+    noi_dung = (
+        f"Kính gửi thầy/cô {ho_ten},\n\n"
+        "Hệ thống Quản lý và Phân phối Đề thi - Trường THPT Hoàng Văn Thụ "
+        "vừa nhận được yêu cầu đặt lại Mã PIN bảo mật (6 số) cho tài khoản:\n\n"
+        f"  - Tên đăng nhập: {ten_dang_nhap}\n"
+        f"  - Email nội bộ : {email}\n"
+        f"  - Mã xác nhận đặt lại PIN: {ma_xac_nhan}\n\n"
+        "Mã xác nhận này có hiệu lực trong vòng 10 phút. Vui lòng nhập mã xác nhận trên giao diện "
+        "hệ thống để thiết lập mã PIN 6 chữ số mới.\n\n"
+        "Nếu thầy/cô không thực hiện yêu cầu này, vui lòng bỏ qua email và kiểm tra lại an toàn tài khoản.\n\n"
+        "Trân trọng,\nQuản trị viên IT - THPT Hoàng Văn Thụ"
+    )
+    return gui_email(email, "[THPT Hoàng Văn Thụ] Mã xác nhận đặt lại Mã PIN bảo mật (6 số)", noi_dung)

@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS TaiKhoan (
     -- CN_CapTaiKhoanMoi: Thời điểm hết khóa an ninh = NOW() + INTERVAL '15 minutes'
     -- (khi sai mật khẩu 5 lần hoặc sai OTP 3 lần). Đến hạn hệ thống tự mở lại bi_khoa = FALSE.
     khoa_den_thoi_diem   TIMESTAMPTZ NULL,
+    ma_pin               VARCHAR(255) NULL,
+    ma_xac_nhan_pin      VARCHAR(255) NULL,
+    han_xac_nhan_pin     TIMESTAMPTZ NULL,
     -- Ràng buộc kiểm tra đuôi email nội bộ của trường THPT Hoàng Văn Thụ
     CONSTRAINT chk_taikhoan_email_domain CHECK (email LIKE '%@thpthoangvanthu.edu.vn'),
     -- Ràng buộc kiểm tra công thức mã cán bộ "Tên viết tắt vai trò + 7 số ngẫu nhiên"
@@ -55,6 +58,10 @@ BEGIN
 END $$;
 
 ALTER TABLE TaiKhoan ADD COLUMN IF NOT EXISTS khoa_den_thoi_diem TIMESTAMPTZ NULL;
+ALTER TABLE TaiKhoan ADD COLUMN IF NOT EXISTS ma_pin VARCHAR(255) NULL;
+ALTER TABLE TaiKhoan ADD COLUMN IF NOT EXISTS ma_xac_nhan_pin VARCHAR(255) NULL;
+ALTER TABLE TaiKhoan ADD COLUMN IF NOT EXISTS han_xac_nhan_pin TIMESTAMPTZ NULL;
+COMMENT ON COLUMN TaiKhoan.ma_pin IS 'Mã PIN xác minh 6 chữ số đã mã băm (bcrypt) dùng khi tải hoặc niêm phong đề ôn tập, đề thi';
 
 -- Đồng bộ trạng thái khóa cũ: tài khoản đang có mốc khóa còn hiệu lực -> bi_khoa = TRUE
 UPDATE TaiKhoan
@@ -116,23 +123,34 @@ COMMENT ON COLUMN PhienDangNhap.da_xac_thuc_otp IS 'Kiểm soát cổng 2FA: ch�
 -- 3. BẢNG NhatKyLog (Nhật ký kiểm toán nối chuỗi băm SHA-256 bất biến)
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS NhatKyLog (
-    ma_nhat_ky         BIGSERIAL PRIMARY KEY,
-    ma_bam_truoc       CHAR(64) NOT NULL,
-    ma_tai_khoan       UUID NULL REFERENCES TaiKhoan(ma_tai_khoan) ON DELETE SET NULL,
-    hanh_dong          VARCHAR(50) NOT NULL,
-    ip_thiet_bi        INET NOT NULL,
-    ipv4               INET NOT NULL,
-    ket_qua            VARCHAR(30) NOT NULL,
-    chi_tiet           TEXT NOT NULL,
-    thoi_diem          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ma_bam_nhat_ky     CHAR(64) NOT NULL,
+    ma_nhat_ky          BIGSERIAL PRIMARY KEY,
+    ma_bam_truoc        CHAR(64) NOT NULL,
+    ma_tai_khoan        UUID NULL REFERENCES TaiKhoan(ma_tai_khoan) ON DELETE SET NULL,
+    hanh_dong           VARCHAR(50) NOT NULL,
+    ip_thiet_bi         INET NOT NULL,
+    ipv4                INET NOT NULL,
+    ket_qua             VARCHAR(30) NOT NULL,
+    ket_qua_goc         VARCHAR(30) NULL,
+    chi_tiet            TEXT NOT NULL,
+    thoi_diem           TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ma_bam_nhat_ky      CHAR(64) NOT NULL,
     -- Các trường thông tin bổ trợ hiển thị trên Giao diện Nhật ký Log (Mục 3)
-    thong_tin_thiet_bi TEXT NULL,
-    tai_lieu_thao_tac  VARCHAR(255) NULL DEFAULT ''
+    thong_tin_thiet_bi  TEXT NULL,
+    tai_lieu_thao_tac   VARCHAR(255) NULL DEFAULT '',
+    -- Các trường khóa cứng dữ liệu gốc & báo động tức thời khi có hành vi cố tình can thiệp
+    bi_can_thiep        BOOLEAN NOT NULL DEFAULT FALSE,
+    so_lan_can_thiep    INTEGER NOT NULL DEFAULT 0,
+    thoi_diem_can_thiep TIMESTAMPTZ NULL,
+    chi_tiet_can_thiep  TEXT NULL
 );
 
 -- Bỏ giá trị mặc định giả lập cũ: thiết bị truy cập luôn được ghi nhận thực tế từ request
 ALTER TABLE NhatKyLog ALTER COLUMN thong_tin_thiet_bi DROP DEFAULT;
+ALTER TABLE NhatKyLog ADD COLUMN IF NOT EXISTS ket_qua_goc VARCHAR(30) NULL;
+ALTER TABLE NhatKyLog ADD COLUMN IF NOT EXISTS bi_can_thiep BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE NhatKyLog ADD COLUMN IF NOT EXISTS so_lan_can_thiep INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE NhatKyLog ADD COLUMN IF NOT EXISTS thoi_diem_can_thiep TIMESTAMPTZ NULL;
+ALTER TABLE NhatKyLog ADD COLUMN IF NOT EXISTS chi_tiet_can_thiep TEXT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_nhatkylog_thoi_diem ON NhatKyLog(thoi_diem DESC);
 CREATE INDEX IF NOT EXISTS idx_nhatkylog_ma_tai_khoan ON NhatKyLog(ma_tai_khoan);
@@ -171,6 +189,84 @@ AS $$
     )::char(64);
 $$;
 
+-- Chuẩn hóa một lần các bản ghi cũ về đúng 4 giá trị ket_qua và hành động ngắn gọn trước khi khóa cứng bảng
+DO $$
+DECLARE
+    rec RECORD;
+    v_prev CHAR(64) := repeat('0', 64);
+    v_hash CHAR(64);
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'chk_nhat_ky_ket_qua'
+    ) THEN
+        DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_chinh_sua ON NhatKyLog;
+        DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_xoa ON NhatKyLog;
+
+        UPDATE NhatKyLog
+        SET ket_qua = CASE
+                WHEN ket_qua IN ('Thành công', 'Thất bại', 'Cảnh báo', 'Báo động') THEN ket_qua
+                WHEN ket_qua = 'Yêu cầu kích hoạt 2FA' THEN 'Thành công'
+                WHEN ket_qua = 'Từ chối' THEN 'Thất bại'
+                ELSE 'Cảnh báo'
+            END,
+            hanh_dong = CASE
+                WHEN hanh_dong = 'Đặt lại 2FA và Cấp lại mật khẩu' THEN 'Đặt lại 2FA'
+                WHEN hanh_dong = 'Tạo lịch thi và đề thi' THEN 'Thêm đề thi'
+                WHEN hanh_dong = 'Xác thực mã OTP' THEN 'Xác thực OTP'
+                WHEN hanh_dong = 'Chặn địa chỉ IP' THEN 'Chặn IP'
+                WHEN hanh_dong = 'Gỡ chặn địa chỉ IP' THEN 'Gỡ chặn IP'
+                WHEN hanh_dong = 'Tạm khóa tài khoản' THEN 'Khóa tài khoản'
+                WHEN hanh_dong = 'Cập nhật đề ôn tập' THEN 'Sửa đề ôn tập'
+                WHEN hanh_dong = 'Cập nhật đề thi' THEN 'Sửa đề thi'
+                WHEN hanh_dong = 'Niêm phong đề thi' THEN 'Niêm phong đề'
+                WHEN hanh_dong = 'Cảnh báo bẫy đề mồi' THEN 'Bẫy đề mồi'
+                WHEN hanh_dong = 'Phát hiện can thiệp đề thi' THEN 'Can thiệp tệp đề'
+                ELSE hanh_dong
+            END;
+
+        UPDATE NhatKyLog
+        SET ket_qua_goc = COALESCE(ket_qua_goc, ket_qua),
+            bi_can_thiep = FALSE,
+            so_lan_can_thiep = 0,
+            thoi_diem_can_thiep = NULL,
+            chi_tiet_can_thiep = NULL;
+
+        FOR rec IN
+            SELECT
+                ma_nhat_ky, ma_tai_khoan, hanh_dong, ip_thiet_bi, ipv4,
+                COALESCE(ket_qua_goc, ket_qua) AS kq_goc, chi_tiet, thoi_diem
+            FROM NhatKyLog
+            ORDER BY ma_nhat_ky ASC
+        LOOP
+            v_hash := fn_tinh_bam_nhat_ky_log(
+                rec.ma_nhat_ky,
+                v_prev,
+                rec.ma_tai_khoan,
+                rec.hanh_dong,
+                rec.ip_thiet_bi,
+                rec.ipv4,
+                rec.kq_goc,
+                rec.chi_tiet,
+                rec.thoi_diem
+            );
+            UPDATE NhatKyLog
+            SET ma_bam_truoc = v_prev,
+                ma_bam_nhat_ky = v_hash
+            WHERE ma_nhat_ky = rec.ma_nhat_ky;
+            v_prev := v_hash;
+        END LOOP;
+
+        ALTER TABLE NhatKyLog
+            ADD CONSTRAINT chk_nhat_ky_ket_qua
+            CHECK (ket_qua IN ('Thành công', 'Thất bại', 'Cảnh báo', 'Báo động'));
+
+        ALTER TABLE NhatKyLog
+            ADD CONSTRAINT chk_nhat_ky_ket_qua_goc
+            CHECK (ket_qua_goc IS NULL OR ket_qua_goc IN ('Thành công', 'Thất bại', 'Cảnh báo', 'Báo động'));
+    END IF;
+END;
+$$;
+
 -- Trigger tự động tính toán ma_bam_truoc và ma_bam_nhat_ky tuần tự khi INSERT
 CREATE OR REPLACE FUNCTION fn_nhat_ky_log_noi_chuoi()
 RETURNS TRIGGER
@@ -181,6 +277,10 @@ DECLARE
 BEGIN
     -- Khóa giao dịch tuần tự để đảm bảo thứ tự ma_nhat_ky và chuỗi băm không bị rẽ nhánh
     PERFORM pg_advisory_xact_lock(20261023);
+
+    IF NEW.ket_qua NOT IN ('Thành công', 'Thất bại', 'Cảnh báo', 'Báo động') THEN
+        RAISE EXCEPTION 'Giá trị ket_qua không hợp lệ (%): chỉ chấp nhận Thành công, Thất bại, Cảnh báo, Báo động.', NEW.ket_qua;
+    END IF;
 
     IF NEW.ma_nhat_ky IS NULL THEN
         NEW.ma_nhat_ky := nextval(pg_get_serial_sequence('nhatkylog', 'ma_nhat_ky'));
@@ -196,6 +296,11 @@ BEGIN
     END IF;
 
     NEW.thoi_diem := COALESCE(NEW.thoi_diem, clock_timestamp());
+    NEW.ket_qua_goc := NEW.ket_qua;
+    NEW.bi_can_thiep := FALSE;
+    NEW.so_lan_can_thiep := 0;
+    NEW.thoi_diem_can_thiep := NULL;
+    NEW.chi_tiet_can_thiep := NULL;
     NEW.ma_bam_truoc := v_bam_truoc;
     NEW.ma_bam_nhat_ky := fn_tinh_bam_nhat_ky_log(
         NEW.ma_nhat_ky,
@@ -204,7 +309,7 @@ BEGIN
         NEW.hanh_dong,
         NEW.ip_thiet_bi,
         NEW.ipv4,
-        NEW.ket_qua,
+        NEW.ket_qua_goc,
         NEW.chi_tiet,
         NEW.thoi_diem
     );
@@ -218,6 +323,115 @@ CREATE TRIGGER trg_nhat_ky_log_noi_chuoi
 BEFORE INSERT ON NhatKyLog
 FOR EACH ROW
 EXECUTE FUNCTION fn_nhat_ky_log_noi_chuoi();
+
+-- Trigger CHẶN TUYỆT ĐỐI chỉnh sửa dữ liệu gốc bảng NhatKyLog và BÁO ĐỘNG NGAY TẠI DÒNG ĐÓ
+CREATE OR REPLACE FUNCTION fn_chan_chinh_sua_nhat_ky_log()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_loai_can_thiep TEXT;
+    v_truong_sua TEXT;
+    v_thoi_gian_vn TEXT;
+BEGIN
+    v_loai_can_thiep := COALESCE(current_setting('nhatky.loai_can_thiep', true), '');
+    v_thoi_gian_vn := to_char(clock_timestamp() AT TIME ZONE 'Asia/Ho_Chi_Minh', 'DD/MM/YYYY HH24:MI:SS');
+
+    IF v_loai_can_thiep = 'XOA' THEN
+        PERFORM set_config('nhatky.loai_can_thiep', '', true);
+        v_truong_sua := 'lệnh xóa bản ghi';
+    ELSE
+        v_truong_sua := ARRAY_TO_STRING(ARRAY_REMOVE(ARRAY[
+            CASE WHEN NEW.ma_nhat_ky IS DISTINCT FROM OLD.ma_nhat_ky THEN 'mã nhật ký' END,
+            CASE WHEN NEW.ma_tai_khoan IS DISTINCT FROM OLD.ma_tai_khoan THEN 'người thực hiện' END,
+            CASE WHEN NEW.hanh_dong IS DISTINCT FROM OLD.hanh_dong THEN 'hành động' END,
+            CASE WHEN NEW.ip_thiet_bi IS DISTINCT FROM OLD.ip_thiet_bi OR NEW.ipv4 IS DISTINCT FROM OLD.ipv4 THEN 'địa chỉ IP' END,
+            CASE WHEN NEW.thong_tin_thiet_bi IS DISTINCT FROM OLD.thong_tin_thiet_bi THEN 'thiết bị' END,
+            CASE WHEN NEW.tai_lieu_thao_tac IS DISTINCT FROM OLD.tai_lieu_thao_tac THEN 'tài liệu' END,
+            CASE WHEN NEW.ket_qua IS DISTINCT FROM OLD.ket_qua THEN 'kết quả' END,
+            CASE WHEN NEW.chi_tiet IS DISTINCT FROM OLD.chi_tiet THEN 'thông tin chi tiết' END,
+            CASE WHEN NEW.thoi_diem IS DISTINCT FROM OLD.thoi_diem THEN 'thời gian' END,
+            CASE WHEN NEW.ma_bam_truoc IS DISTINCT FROM OLD.ma_bam_truoc OR NEW.ma_bam_nhat_ky IS DISTINCT FROM OLD.ma_bam_nhat_ky THEN 'mã băm niêm phong' END
+        ], NULL), ', ');
+        IF v_truong_sua IS NULL OR v_truong_sua = '' THEN
+            v_truong_sua := 'dữ liệu nhật ký';
+        END IF;
+    END IF;
+
+    -- Khóa cứng 100% nội dung gốc của bản ghi: mọi dữ liệu người sửa cố ghi đè đều bị hủy bỏ
+    NEW.ma_nhat_ky         := OLD.ma_nhat_ky;
+    NEW.ma_bam_truoc       := OLD.ma_bam_truoc;
+    NEW.ma_tai_khoan       := OLD.ma_tai_khoan;
+    NEW.hanh_dong          := OLD.hanh_dong;
+    NEW.ip_thiet_bi        := OLD.ip_thiet_bi;
+    NEW.ipv4               := OLD.ipv4;
+    NEW.thong_tin_thiet_bi := OLD.thong_tin_thiet_bi;
+    NEW.tai_lieu_thao_tac  := OLD.tai_lieu_thao_tac;
+    NEW.chi_tiet           := OLD.chi_tiet;
+    NEW.thoi_diem          := OLD.thoi_diem;
+    NEW.ma_bam_nhat_ky     := OLD.ma_bam_nhat_ky;
+    NEW.ket_qua_goc        := COALESCE(OLD.ket_qua_goc, OLD.ket_qua);
+
+    -- Kích hoạt Báo động ngay trên dòng bị cố tình can thiệp
+    NEW.ket_qua             := 'Báo động';
+    NEW.bi_can_thiep        := TRUE;
+    NEW.so_lan_can_thiep    := COALESCE(OLD.so_lan_can_thiep, 0) + 1;
+    NEW.thoi_diem_can_thiep := clock_timestamp();
+    NEW.chi_tiet_can_thiep  := format(
+        'Báo động an ninh: Phát hiện hành vi cố tình can thiệp trái phép (%s) tại dòng nhật ký #%s lúc %s. Hệ thống đã chặn chỉnh sửa và giữ nguyên dữ liệu gốc.',
+        v_truong_sua,
+        OLD.ma_nhat_ky,
+        v_thoi_gian_vn
+    );
+
+    RAISE WARNING 'BÁO ĐỘNG AN NINH: Bảng NhatKyLog không cho phép chỉnh sửa! Dòng #% đã chuyển sang trạng thái Báo động và giữ nguyên dữ liệu gốc.', OLD.ma_nhat_ky;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_chinh_sua ON NhatKyLog;
+CREATE TRIGGER trg_nhat_ky_log_chan_chinh_sua
+BEFORE UPDATE ON NhatKyLog
+FOR EACH ROW
+EXECUTE FUNCTION fn_chan_chinh_sua_nhat_ky_log();
+
+-- Trigger CHẶN TUYỆT ĐỐI xóa bản ghi trong NhatKyLog và BÁO ĐỘNG NGAY TẠI DÒNG ĐÓ
+CREATE OR REPLACE FUNCTION fn_chan_xoa_nhat_ky_log()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    PERFORM set_config('nhatky.loai_can_thiep', 'XOA', true);
+    UPDATE NhatKyLog
+    SET bi_can_thiep = TRUE
+    WHERE ma_nhat_ky = OLD.ma_nhat_ky;
+
+    RAISE WARNING 'BÁO ĐỘNG AN NINH: Bảng NhatKyLog không cho phép xóa! Dòng #% đã chuyển sang trạng thái Báo động và được giữ nguyên.', OLD.ma_nhat_ky;
+    RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_xoa ON NhatKyLog;
+CREATE TRIGGER trg_nhat_ky_log_chan_xoa
+BEFORE DELETE ON NhatKyLog
+FOR EACH ROW
+EXECUTE FUNCTION fn_chan_xoa_nhat_ky_log();
+
+-- Trigger CHẶN TUYỆT ĐỐI lệnh TRUNCATE trên NhatKyLog
+CREATE OR REPLACE FUNCTION fn_chan_truncate_nhat_ky_log()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RAISE EXCEPTION 'BÁO ĐỘNG AN NINH: Nghiêm cấm xóa trắng (TRUNCATE) bảng NhatKyLog!';
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_truncate ON NhatKyLog;
+CREATE TRIGGER trg_nhat_ky_log_chan_truncate
+BEFORE TRUNCATE ON NhatKyLog
+FOR EACH STATEMENT
+EXECUTE FUNCTION fn_chan_truncate_nhat_ky_log();
 
 -- -----------------------------------------------------------------------------
 -- 4. BẢNG KhoiLop (Danh mục khối lớp - CN_DeOnTap & CN_TaiLieu)
@@ -356,6 +570,40 @@ ALTER TABLE DeOnTap ALTER COLUMN thoi_diem_cap_nhat DROP NOT NULL;
 ALTER TABLE DeOnTap ALTER COLUMN thoi_diem_cap_nhat DROP DEFAULT;
 ALTER TABLE DeOnTap ALTER COLUMN nguoi_cap_nhat DROP NOT NULL;
 UPDATE DeOnTap SET thoi_diem_cap_nhat = NULL, nguoi_cap_nhat = NULL WHERE COALESCE(da_chinh_sua, FALSE) = FALSE;
+UPDATE DeOnTap
+SET da_chinh_sua = FALSE,
+    thoi_diem_cap_nhat = NULL,
+    nguoi_cap_nhat = NULL
+WHERE nguoi_cap_nhat IS NOT NULL
+  AND nguoi_cap_nhat IS DISTINCT FROM nguoi_tao;
+
+ALTER TABLE DeOnTap DROP CONSTRAINT IF EXISTS chk_deontap_chi_nguoi_tao_sua;
+ALTER TABLE DeOnTap ADD CONSTRAINT chk_deontap_chi_nguoi_tao_sua
+    CHECK (nguoi_cap_nhat IS NULL OR nguoi_cap_nhat = nguoi_tao);
+
+CREATE OR REPLACE FUNCTION fn_kiem_tra_chu_so_huu_de_on_tap()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.nguoi_tao IS DISTINCT FROM OLD.nguoi_tao THEN
+        RAISE EXCEPTION 'Không được phép thay đổi người tạo gốc của đề ôn tập.';
+    END IF;
+    IF NEW.nguoi_cap_nhat IS NOT NULL AND NEW.nguoi_cap_nhat IS DISTINCT FROM OLD.nguoi_tao THEN
+        RAISE EXCEPTION 'Đề của giáo viên nào tạo thì chỉ chính giáo viên đó mới được phép chỉnh sửa.';
+    END IF;
+    IF COALESCE(NEW.da_chinh_sua, FALSE) = TRUE AND NEW.nguoi_cap_nhat IS DISTINCT FROM OLD.nguoi_tao THEN
+        RAISE EXCEPTION 'Đề của giáo viên nào tạo thì chỉ chính giáo viên đó mới được phép chỉnh sửa.';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_deontap_chi_nguoi_tao_sua ON DeOnTap;
+CREATE TRIGGER trg_deontap_chi_nguoi_tao_sua
+BEFORE UPDATE ON DeOnTap
+FOR EACH ROW
+EXECUTE FUNCTION fn_kiem_tra_chu_so_huu_de_on_tap();
 
 CREATE INDEX IF NOT EXISTS idx_deontap_mon_khoi ON DeOnTap(ma_mon_hoc, ma_khoi);
 
@@ -399,8 +647,11 @@ CREATE TABLE IF NOT EXISTS DeThi (
     -- Các trường mở rộng tương thích CN_TaiLieu.docx:
     ma_mon_hoc            BIGINT NOT NULL REFERENCES MonHoc(ma_mon_hoc) ON DELETE CASCADE,
     ma_khoi               SMALLINT NOT NULL REFERENCES KhoiLop(ma_khoi) ON DELETE CASCADE,
+    loai                  VARCHAR(20) NOT NULL DEFAULT 'Đề thi' CHECK (loai IN ('Đề thi', 'Đáp án')),
     loai_de               VARCHAR(20) NOT NULL DEFAULT 'CHINH_THUC' CHECK (loai_de IN ('CHINH_THUC', 'ON_TAP', 'DE_MOI')),
-    da_nem_phong          BOOLEAN NOT NULL DEFAULT TRUE,
+    da_nem_phong          BOOLEAN NOT NULL DEFAULT FALSE,
+    thoi_diem_niem_phong  TIMESTAMPTZ NULL,
+    nguoi_niem_phong      UUID NULL REFERENCES TaiKhoan(ma_tai_khoan) ON DELETE SET NULL,
     duong_dan_tep_ma_hoa  VARCHAR(500) NOT NULL,
     ten_tep_goc           VARCHAR(255) NOT NULL,
     da_chinh_sua          BOOLEAN NOT NULL DEFAULT FALSE,
@@ -419,6 +670,72 @@ ALTER TABLE DeThi ALTER COLUMN thoi_diem_cap_nhat DROP NOT NULL;
 ALTER TABLE DeThi ALTER COLUMN thoi_diem_cap_nhat DROP DEFAULT;
 ALTER TABLE DeThi ALTER COLUMN nguoi_cap_nhat DROP NOT NULL;
 UPDATE DeThi SET thoi_diem_cap_nhat = NULL, nguoi_cap_nhat = NULL WHERE COALESCE(da_chinh_sua, FALSE) = FALSE;
+
+ALTER TABLE DeThi ALTER COLUMN da_nem_phong SET DEFAULT FALSE;
+ALTER TABLE DeThi ADD COLUMN IF NOT EXISTS loai VARCHAR(20) NOT NULL DEFAULT 'Đề thi';
+ALTER TABLE DeThi DROP CONSTRAINT IF EXISTS chk_dethi_loai;
+ALTER TABLE DeThi ADD CONSTRAINT chk_dethi_loai CHECK (loai IN ('Đề thi', 'Đáp án'));
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'dethi' AND column_name = 'thoi_diem_niem_phong'
+    ) THEN
+        ALTER TABLE DeThi ADD COLUMN thoi_diem_niem_phong TIMESTAMPTZ NULL;
+        ALTER TABLE DeThi ADD COLUMN IF NOT EXISTS nguoi_niem_phong UUID NULL REFERENCES TaiKhoan(ma_tai_khoan) ON DELETE SET NULL;
+        -- Đặt lại cờ niêm phong thủ công về FALSE cho các đề thi mẫu chưa bấm niêm phong (trừ đề mồi)
+        UPDATE DeThi SET da_nem_phong = FALSE WHERE loai_de != 'DE_MOI';
+    END IF;
+END $$;
+ALTER TABLE DeThi ADD COLUMN IF NOT EXISTS nguoi_niem_phong UUID NULL REFERENCES TaiKhoan(ma_tai_khoan) ON DELETE SET NULL;
+
+-- Hủy dấu vết cập nhật chéo cũ từ thời điểm trước khi khóa quyền chủ sở hữu (đề ai ra chỉ người đó được sửa)
+UPDATE DeThi
+SET da_chinh_sua = FALSE,
+    thoi_diem_cap_nhat = NULL,
+    nguoi_cap_nhat = NULL
+WHERE nguoi_cap_nhat IS NOT NULL
+  AND nguoi_cap_nhat IS DISTINCT FROM nguoi_ra_de;
+
+UPDATE DeThi
+SET nguoi_niem_phong = nguoi_ra_de
+WHERE nguoi_niem_phong IS NOT NULL
+  AND nguoi_niem_phong IS DISTINCT FROM nguoi_ra_de;
+
+ALTER TABLE DeThi DROP CONSTRAINT IF EXISTS chk_dethi_chi_nguoi_ra_de_sua;
+ALTER TABLE DeThi ADD CONSTRAINT chk_dethi_chi_nguoi_ra_de_sua
+    CHECK (
+        (nguoi_cap_nhat IS NULL OR nguoi_cap_nhat = nguoi_ra_de)
+        AND (nguoi_niem_phong IS NULL OR nguoi_niem_phong = nguoi_ra_de)
+    );
+
+CREATE OR REPLACE FUNCTION fn_kiem_tra_chu_so_huu_de_thi()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.nguoi_ra_de IS DISTINCT FROM OLD.nguoi_ra_de THEN
+        RAISE EXCEPTION 'Không được phép thay đổi người ra đề gốc của tài liệu thi.';
+    END IF;
+    IF NEW.nguoi_cap_nhat IS NOT NULL AND NEW.nguoi_cap_nhat IS DISTINCT FROM OLD.nguoi_ra_de THEN
+        RAISE EXCEPTION 'Đề của giáo viên nào ra thì chỉ chính giáo viên đó mới được phép chỉnh sửa.';
+    END IF;
+    IF COALESCE(NEW.da_chinh_sua, FALSE) = TRUE AND NEW.nguoi_cap_nhat IS DISTINCT FROM OLD.nguoi_ra_de THEN
+        RAISE EXCEPTION 'Đề của giáo viên nào ra thì chỉ chính giáo viên đó mới được phép chỉnh sửa.';
+    END IF;
+    IF NEW.nguoi_niem_phong IS NOT NULL AND NEW.nguoi_niem_phong IS DISTINCT FROM OLD.nguoi_ra_de THEN
+        RAISE EXCEPTION 'Đề của giáo viên nào ra thì chỉ chính giáo viên đó mới được phép niêm phong.';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_dethi_chi_nguoi_ra_de_sua ON DeThi;
+CREATE TRIGGER trg_dethi_chi_nguoi_ra_de_sua
+BEFORE UPDATE ON DeThi
+FOR EACH ROW
+EXECUTE FUNCTION fn_kiem_tra_chu_so_huu_de_thi();
 
 CREATE INDEX IF NOT EXISTS idx_dethi_mon_khoi ON DeThi(ma_mon_hoc, ma_khoi);
 

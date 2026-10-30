@@ -63,6 +63,30 @@ def kiem_tra_do_manh_mat_khau(mat_khau: str) -> Tuple[bool, str]:
     return True, "Hợp lệ"
 
 
+def kiem_tra_dinh_dang_ma_pin(ma_pin: str) -> Tuple[bool, str]:
+    """Kiểm tra mã PIN xác minh bắt buộc gồm đúng 6 chữ số (0-9)."""
+    pin = (ma_pin or "").strip()
+    if not re.fullmatch(r"\d{6}", pin):
+        return False, "Mã PIN bảo mật phải gồm đúng 6 chữ số (0-9)."
+    return True, "Hợp lệ"
+
+
+def bam_ma_pin(ma_pin_tho: str) -> str:
+    """Mã băm mã PIN 6 chữ số bằng thuật toán bcrypt trước khi lưu vào CSDL."""
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(ma_pin_tho.strip().encode("utf-8"), salt).decode("utf-8")
+
+
+def kiem_tra_ma_pin(ma_pin_tho: str, ma_pin_bam: Optional[str]) -> bool:
+    """So khớp mã PIN 6 chữ số người dùng nhập với mã băm trong CSDL."""
+    if not ma_pin_tho or not ma_pin_bam:
+        return False
+    try:
+        return bcrypt.checkpw(ma_pin_tho.strip().encode("utf-8"), ma_pin_bam.encode("utf-8"))
+    except Exception:
+        return False
+
+
 # =============================================================================
 # 2. MÃ HÓA AES-256 + MASTER KEY CHO KHÓA BÍ MẬT TOTP (bi_mat_otp_ma_hoa BYTEA)
 # =============================================================================
