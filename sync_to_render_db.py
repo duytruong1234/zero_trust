@@ -14,7 +14,6 @@ TABLES_IN_ORDER = [
     "lichthi",
     "deontap",
     "dethi",
-    "niemphongde",
     "tepbay",
     "chandiachiip",
     "nhatkylog",
@@ -29,6 +28,21 @@ def normalize_dsn(raw_url: str, require_ssl: bool = False) -> str:
         sep = "&" if "?" in url else "?"
         url = f"{url}{sep}sslmode=require"
     return url
+
+
+def table_exists(cur, table_name: str) -> bool:
+    cur.execute(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = %s
+        ) AS ok;
+        """,
+        (table_name,),
+    )
+    row = cur.fetchone()
+    return bool(row and row.get("ok"))
 
 
 def get_table_columns(cur, table_name: str) -> list[str]:
@@ -81,15 +95,20 @@ def main():
             dst_cur.execute("DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_chinh_sua ON NhatKyLog;")
             dst_cur.execute("DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_xoa ON NhatKyLog;")
             dst_cur.execute("DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_truncate ON NhatKyLog;")
+            dst_cur.execute("DROP TRIGGER IF EXISTS trg_deontap_chi_nguoi_tao_sua ON DeOnTap;")
             dst_cur.execute("DROP TRIGGER IF EXISTS trg_dethi_chi_nguoi_ra_de_sua ON DeThi;")
 
             # Xoa du lieu cu tren bang dich theo thu tu nguoc khoa ngoai
+            if table_exists(dst_cur, "phiendangnhap"):
+                dst_cur.execute("DELETE FROM PhienDangNhap;")
             for tbl in reversed(TABLES_IN_ORDER):
-                dst_cur.execute(f"DELETE FROM {tbl};")
-            dst_cur.execute("DELETE FROM PhienDangNhap;")
+                if table_exists(dst_cur, tbl):
+                    dst_cur.execute(f"DELETE FROM {tbl};")
 
             # Sao chep tung bang giu nguyen UUID, ma bam SHA-256 va moc thoi gian
             for tbl in TABLES_IN_ORDER:
+                if not table_exists(src_cur, tbl) or not table_exists(dst_cur, tbl):
+                    continue
                 src_cols = get_table_columns(src_cur, tbl)
                 dst_cols_set = set(get_table_columns(dst_cur, tbl))
                 cols = [c for c in src_cols if c in dst_cols_set]
@@ -120,12 +139,13 @@ def main():
                 ("monhoc", "ma_mon_hoc"),
                 ("phanquyentheokhoimon", "ma_phan_quyen"),
                 ("lichthi", "ma_lich_thi"),
-                ("niemphongde", "ma_niem_phong"),
                 ("tepbay", "ma_bay"),
                 ("chandiachiip", "ma_chan_ip"),
                 ("nhatkylog", "ma_nhat_ky"),
             ]
             for tbl, pk in serial_Targets:
+                if not table_exists(dst_cur, tbl):
+                    continue
                 dst_cur.execute(
                     f"""
                     SELECT setval(
@@ -136,8 +156,51 @@ def main():
                     """
                 )
 
-            # Khoi phuc toan bo Trigger bao mat Zero-Trust (chay lai schema.sql idempotent)
-            dst_cur.execute(schema_sql)
+            # Khoi phuc toan bo Trigger bao mat Zero-Trust va rang buoc email ma khong ghi de du lieu da sao chep
+            dst_cur.execute(
+                """
+                DROP TRIGGER IF EXISTS trg_nhat_ky_log_noi_chuoi ON NhatKyLog;
+                CREATE TRIGGER trg_nhat_ky_log_noi_chuoi
+                BEFORE INSERT ON NhatKyLog
+                FOR EACH ROW
+                EXECUTE FUNCTION fn_nhat_ky_log_noi_chuoi();
+
+                DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_chinh_sua ON NhatKyLog;
+                CREATE TRIGGER trg_nhat_ky_log_chan_chinh_sua
+                BEFORE UPDATE ON NhatKyLog
+                FOR EACH ROW
+                EXECUTE FUNCTION fn_chan_chinh_sua_nhat_ky_log();
+
+                DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_xoa ON NhatKyLog;
+                CREATE TRIGGER trg_nhat_ky_log_chan_xoa
+                BEFORE DELETE ON NhatKyLog
+                FOR EACH ROW
+                EXECUTE FUNCTION fn_chan_xoa_nhat_ky_log();
+
+                DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_truncate ON NhatKyLog;
+                CREATE TRIGGER trg_nhat_ky_log_chan_truncate
+                BEFORE TRUNCATE ON NhatKyLog
+                FOR EACH STATEMENT
+                EXECUTE FUNCTION fn_chan_truncate_nhat_ky_log();
+
+                DROP TRIGGER IF EXISTS trg_deontap_chi_nguoi_tao_sua ON DeOnTap;
+                CREATE TRIGGER trg_deontap_chi_nguoi_tao_sua
+                BEFORE UPDATE ON DeOnTap
+                FOR EACH ROW
+                EXECUTE FUNCTION fn_kiem_tra_chu_so_huu_de_on_tap();
+
+                DROP TRIGGER IF EXISTS trg_dethi_chi_nguoi_ra_de_sua ON DeThi;
+                CREATE TRIGGER trg_dethi_chi_nguoi_ra_de_sua
+                BEFORE UPDATE ON DeThi
+                FOR EACH ROW
+                EXECUTE FUNCTION fn_kiem_tra_chu_so_huu_de_thi();
+
+                ALTER TABLE TaiKhoan DROP CONSTRAINT IF EXISTS chk_taikhoan_email_domain;
+                ALTER TABLE TaiKhoan
+                ADD CONSTRAINT chk_taikhoan_email_domain
+                CHECK (email ~* '^[a-z0-9]+(\\.[a-z0-9]+)*\\.(thpthoangvanthu|thtphoangvanthu)@gmail\\.com$');
+                """
+            )
 
         dst_conn.commit()
     print("3. HOAN TAT! Toan bo du lieu va chuoi bam NhatKyLog da duoc dong bo len Render PostgreSQL.")
