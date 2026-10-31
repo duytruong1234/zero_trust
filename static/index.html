@@ -1303,14 +1303,6 @@
           Vui lòng nhập mã OTP được cung cấp qua ứng dụng Authenticator trên thiết bị của bạn
         </p>
 
-        <div id="verifyOtpAccountBox" class="hidden mt-4 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200/80 text-left text-xs sm:text-sm text-slate-600">
-          <div class="flex items-center justify-between gap-2 flex-wrap">
-            <span>Tài khoản: <strong id="verifyOtpUserLabel" class="text-slate-900"></strong></span>
-            <span id="verifyOtpKeyTagBadge" class="hidden px-2 py-0.5 rounded-md bg-blue-50 text-[#17337a] border border-blue-200 font-mono-code font-bold text-xs"></span>
-          </div>
-          <div id="verifyOtpEmailLabel" class="text-xs text-slate-500 mt-1 break-all"></div>
-        </div>
-
         <div id="verifyOtpAlert" class="hidden mt-4 p-3.5 rounded-xl text-base font-medium border text-left"></div>
 
         <form onsubmit="handleVerifyOtpSubmit(event)" class="mt-6 2xl:mt-8">
@@ -3671,30 +3663,6 @@
       });
     }
 
-    function populateVerifyOtpUserInfo(user) {
-      const box = document.getElementById("verifyOtpAccountBox");
-      const userLbl = document.getElementById("verifyOtpUserLabel");
-      const emailLbl = document.getElementById("verifyOtpEmailLabel");
-      const tagBadge = document.getElementById("verifyOtpKeyTagBadge");
-      if (!box || !userLbl || !emailLbl || !tagBadge) return;
-      if (!user || (!user.ten_dang_nhap && !user.ho_ten && !user.email)) {
-        box.classList.add("hidden");
-        return;
-      }
-      const nameStr = user.ho_ten
-        ? `${user.ho_ten}${user.ten_dang_nhap ? " (" + user.ten_dang_nhap + ")" : ""}`
-        : (user.ten_dang_nhap || user.email || "");
-      userLbl.textContent = nameStr;
-      emailLbl.textContent = user.email ? `Email trên Authenticator: ${user.email}` : "";
-      if (user.otp_key_tag) {
-        tagBadge.textContent = `Khóa: ${user.otp_key_tag}`;
-        tagBadge.classList.remove("hidden");
-      } else {
-        tagBadge.classList.add("hidden");
-      }
-      box.classList.remove("hidden");
-    }
-
     function getOtpValue(selector) {
       return Array.from(document.querySelectorAll(selector)).map(i => i.value.trim()).join("");
     }
@@ -3986,7 +3954,6 @@
         } else if (data.next_step === "VERIFY_OTP") {
           setOtpValue(".v-otp-input", "");
           hideAlert("verifyOtpAlert");
-          populateVerifyOtpUserInfo(data.user);
           showScreen("VERIFY_OTP");
         } else if (data.next_step === "SETUP_PIN") {
           await openExternalPinSetupScreen(data.user, data.message);
@@ -4072,7 +4039,6 @@
         } else if (data.next_step === "VERIFY_OTP") {
           setOtpValue(".v-otp-input", "");
           hideAlert("verifyOtpAlert");
-          populateVerifyOtpUserInfo(data.user);
           showScreen("VERIFY_OTP");
           const firstOtp = document.querySelector(".v-otp-input");
           if (firstOtp) firstOtp.focus();
@@ -8228,7 +8194,6 @@
           } else if (data.da_xac_thuc_otp) {
             await loadDashboardScreen();
           } else {
-            populateVerifyOtpUserInfo(data.user);
             showScreen("VERIFY_OTP");
           }
           return;

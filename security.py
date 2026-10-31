@@ -140,16 +140,8 @@ def lay_totp_uri(
     secret_clean = re.sub(r"\s+", "", str(secret_base32 or "")).upper()
     totp = pyotp.TOTP(secret_clean, digits=6, interval=30)
     issuer = "THPT Hoang Van Thu"
-    key_tag = secret_clean[:4]
-    acc_id = (ten_dang_nhap or "").strip()
     email_clean = (email or "").strip()
-    if acc_id and key_tag:
-        label = f"{acc_id} [{key_tag}] - {email_clean}"
-    elif key_tag:
-        label = f"{email_clean} [{key_tag}]"
-    else:
-        label = email_clean
-    return totp.provisioning_uri(name=label, issuer_name=issuer)
+    return totp.provisioning_uri(name=email_clean, issuer_name=issuer)
 
 
 def tao_anh_qr_base64(otpauth_uri: str) -> str:
