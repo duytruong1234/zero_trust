@@ -127,11 +127,29 @@ def giai_ma_bi_mat_otp(encrypted_bytes: bytes) -> str:
 # =============================================================================
 # 3. XÁC THỰC TOTP RFC 6238 & SINH MÃ QR
 # =============================================================================
-def lay_totp_uri(secret_base32: str, email: str, ho_ten: str = "") -> str:
+OTP_VALID_WINDOW = max(1, int(os.getenv("OTP_VALID_WINDOW", "6")))
+
+
+def lay_totp_uri(
+    secret_base32: str,
+    email: str,
+    ho_ten: str = "",
+    ten_dang_nhap: str = "",
+) -> str:
     """Tạo chuỗi URI otpauth://totp chuẩn để quét bằng Google/Microsoft Authenticator."""
-    totp = pyotp.TOTP(secret_base32, digits=6, interval=30)
+    secret_clean = re.sub(r"\s+", "", str(secret_base32 or "")).upper()
+    totp = pyotp.TOTP(secret_clean, digits=6, interval=30)
     issuer = "THPT Hoang Van Thu"
-    return totp.provisioning_uri(name=email, issuer_name=issuer)
+    key_tag = secret_clean[:4]
+    acc_id = (ten_dang_nhap or "").strip()
+    email_clean = (email or "").strip()
+    if acc_id and key_tag:
+        label = f"{acc_id} [{key_tag}] - {email_clean}"
+    elif key_tag:
+        label = f"{email_clean} [{key_tag}]"
+    else:
+        label = email_clean
+    return totp.provisioning_uri(name=label, issuer_name=issuer)
 
 
 def tao_anh_qr_base64(otpauth_uri: str) -> str:
@@ -153,14 +171,16 @@ def tao_anh_qr_base64(otpauth_uri: str) -> str:
 
 def xac_thuc_ma_otp(secret_base32: str, ma_otp: str) -> bool:
     """
-    Kiểm tra mã OTP 6 số từ Google Authenticator.
-    Cho phép độ lệch chuẩn (valid_window=1, tương ứng trong hạn 60 giây).
+    Kiểm tra mã OTP 6 số từ Google Authenticator (TOTP RFC 6238).
+    Bù độ lệch đồng hồ thực tế giữa điện thoại cá nhân và máy chủ (mặc định valid_window=6,
+    tương ứng biên độ +-3 phút), kết hợp giới hạn chống dò mã tối đa 3 lần sai liên tiếp.
     """
+    secret_clean = re.sub(r"\s+", "", str(secret_base32 or "")).upper()
     ma_otp_clean = re.sub(r"\s+|-", "", str(ma_otp or ""))
-    if not re.match(r"^\d{6}$", ma_otp_clean):
+    if not secret_clean or not re.match(r"^\d{6}$", ma_otp_clean):
         return False
-    totp = pyotp.TOTP(secret_base32, digits=6, interval=30)
-    return bool(totp.verify(ma_otp_clean, valid_window=1))
+    totp = pyotp.TOTP(secret_clean, digits=6, interval=30)
+    return bool(totp.verify(ma_otp_clean, valid_window=OTP_VALID_WINDOW))
 
 
 def lay_ma_otp_hien_tai(secret_base32: str) -> Tuple[str, int]:

@@ -994,13 +994,13 @@
 
           <!-- 6 ô nhập OTP -->
           <div class="flex items-center justify-center gap-2 sm:gap-2.5 mb-5" id="ftOtpContainer">
-            <input type="text" maxlength="1" inputmode="numeric" class="ft-otp-box ft-otp-input" />
-            <input type="text" maxlength="1" inputmode="numeric" class="ft-otp-box ft-otp-input" />
-            <input type="text" maxlength="1" inputmode="numeric" class="ft-otp-box ft-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="ft-otp-box ft-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="ft-otp-box ft-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="ft-otp-box ft-otp-input" />
             <span class="text-slate-300 font-bold text-lg px-0.5">-</span>
-            <input type="text" maxlength="1" inputmode="numeric" class="ft-otp-box ft-otp-input" />
-            <input type="text" maxlength="1" inputmode="numeric" class="ft-otp-box ft-otp-input" />
-            <input type="text" maxlength="1" inputmode="numeric" class="ft-otp-box ft-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="ft-otp-box ft-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="ft-otp-box ft-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="ft-otp-box ft-otp-input" />
           </div>
 
           <!-- Hộp đếm ngược 30 giây của mã TOTP -->
@@ -1303,16 +1303,24 @@
           Vui lòng nhập mã OTP được cung cấp qua ứng dụng Authenticator trên thiết bị của bạn
         </p>
 
+        <div id="verifyOtpAccountBox" class="hidden mt-4 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200/80 text-left text-xs sm:text-sm text-slate-600">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <span>Tài khoản: <strong id="verifyOtpUserLabel" class="text-slate-900"></strong></span>
+            <span id="verifyOtpKeyTagBadge" class="hidden px-2 py-0.5 rounded-md bg-blue-50 text-[#17337a] border border-blue-200 font-mono-code font-bold text-xs"></span>
+          </div>
+          <div id="verifyOtpEmailLabel" class="text-xs text-slate-500 mt-1 break-all"></div>
+        </div>
+
         <div id="verifyOtpAlert" class="hidden mt-4 p-3.5 rounded-xl text-base font-medium border text-left"></div>
 
         <form onsubmit="handleVerifyOtpSubmit(event)" class="mt-6 2xl:mt-8">
           <div class="flex items-center justify-center gap-2 sm:gap-3 mb-6 2xl:mb-8" id="verifyOtpContainer">
-            <input type="text" maxlength="1" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
-            <input type="text" maxlength="1" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
-            <input type="text" maxlength="1" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
-            <input type="text" maxlength="1" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
-            <input type="text" maxlength="1" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
-            <input type="text" maxlength="1" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
+            <input type="text" maxlength="6" autocomplete="off" inputmode="numeric" class="otp-box-screen4 v-otp-input" />
           </div>
 
           <button
@@ -3607,16 +3615,41 @@
     function setupOtpInputs(selector) {
       const inputs = Array.from(document.querySelectorAll(selector));
       inputs.forEach((input, idx) => {
+        input.addEventListener("focus", () => {
+          try { input.select(); } catch (_) {}
+        });
         input.addEventListener("input", (e) => {
-          const val = e.target.value.replace(/\D/g, "");
-          e.target.value = val ? val[0] : "";
-          if (val && idx < inputs.length - 1) {
+          const val = (e.target.value || "").replace(/\D/g, "");
+          if (!val) {
+            e.target.value = "";
+            return;
+          }
+          if (val.length > 1) {
+            const startIdx = val.length >= inputs.length ? 0 : idx;
+            const chars = val.slice(0, inputs.length - startIdx).split("");
+            chars.forEach((ch, offset) => {
+              if (inputs[startIdx + offset]) inputs[startIdx + offset].value = ch;
+            });
+            const nextIdx = Math.min(startIdx + chars.length, inputs.length - 1);
+            if (inputs[nextIdx]) inputs[nextIdx].focus();
+            return;
+          }
+          e.target.value = val[0];
+          if (idx < inputs.length - 1) {
             inputs[idx + 1].focus();
           }
         });
         input.addEventListener("keydown", (e) => {
           if (e.key === "Backspace" && !e.target.value && idx > 0) {
+            inputs[idx - 1].value = "";
             inputs[idx - 1].focus();
+            e.preventDefault();
+          } else if (e.key === "ArrowLeft" && idx > 0) {
+            inputs[idx - 1].focus();
+            e.preventDefault();
+          } else if (e.key === "ArrowRight" && idx < inputs.length - 1) {
+            inputs[idx + 1].focus();
+            e.preventDefault();
           } else if (e.key === "Enter" && selector === ".ft-otp-input") {
             e.preventDefault();
             handleVerifyFirstTimeOtp();
@@ -3624,15 +3657,42 @@
         });
         input.addEventListener("paste", (e) => {
           e.preventDefault();
-          const pasted = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, 6);
-          pasted.split("").forEach((ch, i) => {
-            if (inputs[i]) inputs[i].value = ch;
+          const pasted = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, inputs.length);
+          if (!pasted) return;
+          const startIdx = pasted.length >= inputs.length ? 0 : idx;
+          pasted.split("").slice(0, inputs.length - startIdx).forEach((ch, i) => {
+            if (inputs[startIdx + i]) inputs[startIdx + i].value = ch;
           });
-          if (inputs[Math.min(pasted.length, inputs.length - 1)]) {
-            inputs[Math.min(pasted.length, inputs.length - 1)].focus();
+          const focusIdx = Math.min(startIdx + pasted.length, inputs.length - 1);
+          if (inputs[focusIdx]) {
+            inputs[focusIdx].focus();
           }
         });
       });
+    }
+
+    function populateVerifyOtpUserInfo(user) {
+      const box = document.getElementById("verifyOtpAccountBox");
+      const userLbl = document.getElementById("verifyOtpUserLabel");
+      const emailLbl = document.getElementById("verifyOtpEmailLabel");
+      const tagBadge = document.getElementById("verifyOtpKeyTagBadge");
+      if (!box || !userLbl || !emailLbl || !tagBadge) return;
+      if (!user || (!user.ten_dang_nhap && !user.ho_ten && !user.email)) {
+        box.classList.add("hidden");
+        return;
+      }
+      const nameStr = user.ho_ten
+        ? `${user.ho_ten}${user.ten_dang_nhap ? " (" + user.ten_dang_nhap + ")" : ""}`
+        : (user.ten_dang_nhap || user.email || "");
+      userLbl.textContent = nameStr;
+      emailLbl.textContent = user.email ? `Email trên Authenticator: ${user.email}` : "";
+      if (user.otp_key_tag) {
+        tagBadge.textContent = `Khóa: ${user.otp_key_tag}`;
+        tagBadge.classList.remove("hidden");
+      } else {
+        tagBadge.classList.add("hidden");
+      }
+      box.classList.remove("hidden");
     }
 
     function getOtpValue(selector) {
@@ -3926,6 +3986,7 @@
         } else if (data.next_step === "VERIFY_OTP") {
           setOtpValue(".v-otp-input", "");
           hideAlert("verifyOtpAlert");
+          populateVerifyOtpUserInfo(data.user);
           showScreen("VERIFY_OTP");
         } else if (data.next_step === "SETUP_PIN") {
           await openExternalPinSetupScreen(data.user, data.message);
@@ -4011,6 +4072,7 @@
         } else if (data.next_step === "VERIFY_OTP") {
           setOtpValue(".v-otp-input", "");
           hideAlert("verifyOtpAlert");
+          populateVerifyOtpUserInfo(data.user);
           showScreen("VERIFY_OTP");
           const firstOtp = document.querySelector(".v-otp-input");
           if (firstOtp) firstOtp.focus();
@@ -8166,6 +8228,7 @@
           } else if (data.da_xac_thuc_otp) {
             await loadDashboardScreen();
           } else {
+            populateVerifyOtpUserInfo(data.user);
             showScreen("VERIFY_OTP");
           }
           return;

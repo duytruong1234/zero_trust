@@ -1156,6 +1156,7 @@ def api_login(req: LoginRequest, request: Request, response: Response):
                     "email": acc["email"],
                     "vai_tro": acc["vai_tro"],
                     "da_kich_hoat_otp": True,
+                    "otp_key_tag": _lay_ma_dinh_danh_khoa_otp(acc.get("bi_mat_otp_ma_hoa")),
                     "ip_may": ip_may,
                     "dia_chi_ipv4": dia_chi_ipv4,
                 },
@@ -1322,6 +1323,16 @@ def api_ip_access_status(request: Request):
     }
 
 
+def _lay_ma_dinh_danh_khoa_otp(bi_mat_ma_hoa) -> str:
+    if not bi_mat_ma_hoa:
+        return ""
+    try:
+        sec = giai_ma_bi_mat_otp(bi_mat_ma_hoa)
+        return (sec or "").strip()[:4].upper()
+    except Exception:
+        return ""
+
+
 @app.get("/api/auth/session-status")
 def api_session_status(request: Request):
     """Lấy trạng thái phiên hiện tại và phân quyền môn học từ CSDL PostgreSQL."""
@@ -1344,6 +1355,7 @@ def api_session_status(request: Request):
             "email": phien["email"],
             "vai_tro": phien["vai_tro"],
             "da_co_ma_pin": da_co_pin,
+            "otp_key_tag": _lay_ma_dinh_danh_khoa_otp(phien.get("bi_mat_otp_ma_hoa")),
             "ip_may": phien["phien_ip_thiet_bi"],
             "dia_chi_ipv4": phien["phien_ipv4"],
             "thong_tin_thiet_bi": phien["thong_tin_thiet_bi"],
@@ -1366,16 +1378,23 @@ def api_get_2fa_setup_info(request: Request):
         )
 
     secret_base32 = _lay_hoac_sinh_bi_mat_otp(phien)
-    otpauth_uri = lay_totp_uri(secret_base32, phien["email"], phien["ho_ten"])
+    otpauth_uri = lay_totp_uri(
+        secret_base32,
+        phien["email"],
+        phien["ho_ten"],
+        phien.get("ten_dang_nhap", ""),
+    )
     qr_data_url = tao_anh_qr_base64(otpauth_uri)
 
     so_lan_sai_otp = int(phien["so_lan_sai_otp"] or 0)
     return {
         "ho_ten": phien["ho_ten"],
         "ma_can_bo": phien["ma_can_bo"],
+        "ten_dang_nhap": phien.get("ten_dang_nhap", ""),
         "email": phien["email"],
         "vai_tro": phien["vai_tro"],
         "secret_base32": secret_base32,
+        "otp_key_tag": (secret_base32 or "")[:4].upper(),
         "otpauth_uri": otpauth_uri,
         "qr_data_url": qr_data_url,
         "ip_may": phien["phien_ip_thiet_bi"],

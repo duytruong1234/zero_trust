@@ -25,5 +25,7 @@ services:
         value: 486f616e6756616e5468755f5a65726f54727573745f4d617374657232303236
       - key: IDLE_TIMEOUT_MINUTES
         value: "5"
+      - key: OTP_VALID_WINDOW
+        value: "6"
       - key: INITIAL_ADMIN_PASSWORD
         value: Admin@2026!
