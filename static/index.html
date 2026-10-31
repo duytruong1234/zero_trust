@@ -184,14 +184,16 @@
        KHU VỰC QUẢN TRỊ (DASHBOARD) - HAI CHẾ ĐỘ SÁNG / TỐI
        Toàn bộ màu lấy từ biến; đổi chế độ bằng html[data-theme="light|dark"].
        ===================================================================== */
-    #viewDashboard, #createModal, #permModal, #logDetailModal, #adDialog, #rowMenu, #adToasts {
+    #viewDashboard, .ad-overlay, #createModal, #gmailModal, #permModal, #adminPinModal, #logDetailModal, #adDialog, #rowMenu, #adToasts {
       --bg: #0b1220;
       --surface: #111a2c;
       --surface-2: #0e1626;
       --surface-3: #16213a;
       --line: #1e2a42;
       --line-2: #2a3856;
+      --border: #1e2a42;
       --text: #d5dce8;
+      --text-2: #aab5c8;
       --strong: #f3f6fb;
       --muted: #8a97ad;
       --dim: #5f6c84;
@@ -215,7 +217,8 @@
       --mute-fg: #97a3b8;  --mute-bg: rgba(138, 151, 173, .1);  --mute-bd: rgba(138, 151, 173, .22);
       color-scheme: dark;
     }
-    html[data-theme="light"] #viewDashboard, html[data-theme="light"] #createModal, html[data-theme="light"] #permModal, html[data-theme="light"] #logDetailModal,
+    html[data-theme="light"] #viewDashboard, html[data-theme="light"] .ad-overlay, html[data-theme="light"] #createModal, html[data-theme="light"] #gmailModal,
+    html[data-theme="light"] #permModal, html[data-theme="light"] #adminPinModal, html[data-theme="light"] #logDetailModal,
     html[data-theme="light"] #adDialog, html[data-theme="light"] #rowMenu, html[data-theme="light"] #adToasts {
       --bg: #f3f5f9;
       --surface: #ffffff;
@@ -223,7 +226,9 @@
       --surface-3: #eef2f7;
       --line: #e3e8ef;
       --line-2: #d2dae5;
+      --border: #e3e8ef;
       --text: #334155;
+      --text-2: #475569;
       --strong: #0f172a;
       --muted: #64748b;
       --dim: #94a3b8;
@@ -509,7 +514,8 @@
     .ad-menu hr { border: 0; border-top: 1px solid var(--line); margin: 0.3rem 0; }
     .ad-menu .ad-menu-title { padding: 0.45rem 0.65rem 0.35rem; font-size: 0.78rem; color: var(--muted); }
 
-    .ad-overlay { position: fixed; inset: 0; background: var(--overlay); z-index: 70; display: flex; align-items: flex-start; justify-content: center; padding: 6vh 1rem 1rem; overflow-y: auto; }
+    .ad-overlay { position: fixed; inset: 0; background: var(--overlay); backdrop-filter: blur(2px); z-index: 70; display: flex; align-items: flex-start; justify-content: center; padding: 6vh 1rem 1rem; overflow-y: auto; }
+    .ad-overlay.hidden { display: none !important; }
     .ad-dialog { width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: var(--shadow); }
     .ad-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
     .ad-dialog-head h3 { color: var(--strong); font-weight: 700; font-size: 1.12rem; }
@@ -1329,6 +1335,93 @@
   </div>
 
   <!-- ===================================================================== -->
+  <!-- MÀN HÌNH 3B: THIẾT LẬP MÃ PIN BẢO MẬT 6 SỐ BÊN NGOÀI HỆ THỐNG         -->
+  <!-- ===================================================================== -->
+  <div id="viewSetupPin" class="hidden flex-1 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-slate-100 via-blue-50/40 to-slate-200">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+      <div class="hvt-navy px-7 py-6 text-white text-center">
+        <div class="w-12 h-12 rounded-2xl bg-white/15 border border-white/25 mx-auto flex items-center justify-center mb-3">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="11" width="16" height="10" rx="2"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-extrabold tracking-tight">Thiết lập Mã PIN Bảo mật</h2>
+        <p class="text-xs text-blue-100/85 mt-1">Bắt buộc hoàn tất đặt mã PIN 6 chữ số trước khi truy cập vào hệ thống</p>
+      </div>
+
+      <div class="p-6 sm:p-7">
+        <div class="bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 mb-4 text-xs text-slate-600 space-y-1">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-slate-400 font-semibold">Tài khoản xác thực:</span>
+            <span id="extPinUserHoTen" class="font-bold text-slate-800">—</span>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-slate-400 font-semibold">Hộp thư:</span>
+            <span id="extPinUserEmail" class="font-medium text-slate-700 truncate">—</span>
+          </div>
+        </div>
+
+        <div id="extPinAlert" class="hidden mb-4 p-3.5 rounded-xl text-sm font-medium border"></div>
+
+        <form id="extPinSetupForm" onsubmit="handleExternalPinSetupSubmit(event)" class="space-y-4">
+          <div>
+            <label for="extPinNew" class="block text-sm font-bold text-slate-700 mb-1.5">
+              Đặt mã PIN bảo mật (6 chữ số) <span class="text-rose-600">*</span>
+            </label>
+            <input
+              id="extPinNew"
+              type="password"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="off"
+              placeholder="••••••"
+              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+              class="w-full px-4 py-3 rounded-xl border border-slate-300 text-center font-mono text-xl tracking-[0.55em] text-slate-900 focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15"
+            />
+          </div>
+
+          <div>
+            <label for="extPinConfirm" class="block text-sm font-bold text-slate-700 mb-1.5">
+              Xác nhận lại mã PIN (6 chữ số) <span class="text-rose-600">*</span>
+            </label>
+            <input
+              id="extPinConfirm"
+              type="password"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="off"
+              placeholder="••••••"
+              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+              class="w-full px-4 py-3 rounded-xl border border-slate-300 text-center font-mono text-xl tracking-[0.55em] text-slate-900 focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15"
+            />
+          </div>
+
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Mã PIN 6 chữ số được dùng để xác minh mọi thao tác tải lên, chỉnh sửa, tải xuống, niêm phong tài liệu và thao tác quản trị trong hệ thống.
+          </p>
+
+          <button
+            id="extPinSubmitBtn"
+            type="submit"
+            class="w-full hvt-navy hvt-navy-hover text-white font-bold text-base py-3.5 rounded-xl shadow-sm transition"
+          >
+            Thiết lập mã PIN và Vào hệ thống
+          </button>
+
+          <button
+            type="button"
+            onclick="handleLogout()"
+            class="w-full bg-white hover:bg-slate-50 text-slate-600 font-medium text-sm py-3 rounded-xl border border-slate-200 transition"
+          >
+            Đăng xuất / Quay lại Đăng nhập
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
   <!-- MÀN HÌNH 4: HỆ THỐNG QUẢN TRỊ SAU ĐĂNG NHẬP (MỤC 3, 4, 7, 8)          -->
   <!-- ===================================================================== -->
   <div id="viewDashboard" class="hidden flex-1 flex min-h-screen">
@@ -1345,7 +1438,7 @@
           <span class="font-bold text-[1.05rem] tracking-wide text-white">THPT Hoàng Văn Thụ</span>
         </div>
 
-        <!-- Menu điều hướng 3 mục Quản trị bên Sidebar -->
+        <!-- Menu điều hướng 4 mục Quản trị bên Sidebar -->
         <nav class="p-3.5 space-y-1.5 mt-2">
           <button
             id="navTabLogs"
@@ -1392,20 +1485,23 @@
             <span id="countSessions" class="px-2 py-0.5 text-xs font-bold rounded-full bg-white/15 text-blue-100 shrink-0"></span>
           </button>
 
-          <div class="my-3 border-t border-white/10"></div>
-
           <button
-            id="adNavPinManage"
+            id="navTabPins"
             type="button"
-            onclick="openPinManageModal()"
-            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-[0.93rem] text-blue-100/85 hover:bg-white/10 hover:text-white transition"
+            onclick="switchDashboardTab('PINS')"
+            class="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl font-medium text-[0.95rem] text-blue-100/80 hover:bg-white/10 hover:text-white transition"
           >
-            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="4" y="11" width="16" height="10" rx="2"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
-            </svg>
-            <span>Mã PIN bảo mật (6 số)</span>
+            <span class="flex items-center gap-3 min-w-0">
+              <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="4" y="11" width="16" height="10" rx="2"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
+              </svg>
+              <span class="truncate">Quản lý mã PIN</span>
+            </span>
+            <span id="countPins" class="px-2 py-0.5 text-xs font-bold rounded-full bg-white/15 text-blue-100 shrink-0"></span>
           </button>
+
+          <div class="my-3 border-t border-white/10"></div>
 
           <button
             type="button"
@@ -1581,7 +1677,11 @@
             <h1>Tài khoản</h1>
             <p>Cấp tài khoản cho cán bộ, theo dõi tình trạng bảo mật và xử lý khi tài khoản bị khóa hoặc giáo viên đổi điện thoại.</p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="ad-btn-ghost" onclick="openGmailStatusModal()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              Kiểm tra Gmail
+            </button>
             <button type="button" class="ad-btn-ghost" onclick="loadAccounts()">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
               Làm mới
@@ -1668,6 +1768,52 @@
           </div>
         </div>
       </section>
+
+      <!-- ================================================================= -->
+      <!-- TAB 4: QUẢN LÝ MÃ PIN GIÁO VIÊN (Bảng TaiKhoan.ma_pin)            -->
+      <!-- ================================================================= -->
+      <section id="dashSectionPins" class="hidden">
+        <div class="ad-pagehead">
+          <div>
+            <h1>Quản lý mã PIN giáo viên</h1>
+            <p>Giáo viên không tự thay đổi mã PIN qua Gmail. Khi giáo viên quên hoặc cần đổi mã PIN 6 chữ số, giáo viên liên hệ Quản trị viên để được đổi trực tiếp hoặc mở đặt lại mã PIN tại đây.</p>
+          </div>
+          <button type="button" class="ad-btn-ghost" onclick="loadAccounts()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Làm mới
+          </button>
+        </div>
+
+        <div class="ad-card">
+          <div class="ad-toolbar">
+            <div class="ad-search">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
+              <input id="pinAccSearch" type="search" class="ad-input" placeholder="Tìm theo họ tên giáo viên, mã cán bộ, tên đăng nhập, email..." oninput="renderAdminPins()" />
+            </div>
+            <select id="pinRoleFilter" class="ad-input" style="width: auto" onchange="renderAdminPins()">
+              <option value="GIAO_VIEN">Giáo viên</option>
+              <option value="">Tất cả vai trò (kể cả Quản trị viên)</option>
+            </select>
+            <div id="pinChips" class="ad-chips"></div>
+          </div>
+          <div class="ad-scroll">
+            <table class="ad-table">
+              <thead>
+                <tr>
+                  <th>Giáo viên / Cán bộ</th>
+                  <th>Tên đăng nhập &amp; Email</th>
+                  <th>Vai trò &amp; Chuyên môn</th>
+                  <th>Bảo mật 2FA</th>
+                  <th>Trạng thái mã PIN (6 số)</th>
+                  <th>Trạng thái tài khoản</th>
+                  <th class="text-right">Thao tác quản lý PIN</th>
+                </tr>
+              </thead>
+              <tbody id="pinsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
       </main>
     </div>
   </div>
@@ -1717,16 +1863,17 @@
             <div class="ad-field">
               <label for="caTenDangNhap">Tên đăng nhập <span class="t-bad">(*)</span></label>
               <input id="caTenDangNhap" type="text" class="ad-input" placeholder="gv.minh" autocomplete="off"
-                oninput="sanitizeUsernameInput(); syncEmailFromUsername()"
+                oninput="sanitizeUsernameInput()"
                 onblur="checkUniqueField('ten_dang_nhap', 'caTenDangNhap', 'caTenDangNhapHint')" />
               <div id="caTenDangNhapHint" class="ad-hint">Viết thường, không có dấu, không dấu cách</div>
             </div>
 
             <div class="ad-field">
-              <label for="caEmail">Email nội bộ <span class="t-bad">(*)</span></label>
-              <input id="caEmail" type="email" class="ad-input" placeholder="Bắt buộc có đuôi @thpthoangvanthu.edu.vn" autocomplete="off"
+              <label for="caEmail">Email giáo viên / cán bộ <span class="t-bad">(*)</span></label>
+              <input id="caEmail" type="email" class="ad-input" placeholder="nguyenvanminh.thpthoangvanthu@gmail.com" autocomplete="off"
+                oninput="window._userEditedEmail = true"
                 onblur="checkUniqueField('email', 'caEmail', 'caEmailHint')" />
-              <div id="caEmailHint" class="ad-hint">Bắt buộc sử dụng tên miền trường học để nhận thông báo kích hoạt.</div>
+              <div id="caEmailHint" class="ad-hint">Định dạng bắt buộc: &lt;têngiáoviên&gt;.thpthoangvanthu@gmail.com</div>
             </div>
 
             <div class="ad-field sm:col-span-2">
@@ -1837,6 +1984,72 @@
   </div>
 
   <!-- ===================================================================== -->
+  <!-- HỘP THOẠI KIỂM TRA DỊCH VỤ GMAIL SMTP                                 -->
+  <!-- ===================================================================== -->
+  <div id="gmailModal" class="ad-overlay hidden" onmousedown="if (event.target === this) closeGmailStatusModal()">
+    <div class="ad-dialog" style="max-width: 38rem">
+      <div class="ad-dialog-head">
+        <div>
+          <h3>Kiểm tra kết nối dịch vụ Gmail</h3>
+          <div class="t-muted t-xs mt-0.5">Gửi mật khẩu khởi tạo, đặt lại 2FA và cảnh báo an ninh bẫy đề mồi</div>
+        </div>
+        <button type="button" onclick="closeGmailStatusModal()" class="ad-close" aria-label="Đóng">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="gmailTestForm" onsubmit="handleSendTestGmail(event)" novalidate>
+        <div class="ad-dialog-body space-y-4">
+          <div class="p-3.5 rounded-xl space-y-2 text-[0.9rem]" style="background: var(--surface-2); border: 1px solid var(--border);">
+            <div class="flex items-center justify-between gap-2">
+              <span class="t-muted">Hộp thư gửi hệ thống</span>
+              <span id="gmSenderEmail" class="t-strong">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="t-muted">Máy chủ SMTP</span>
+              <span id="gmSmtpHost" class="t-text">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="t-muted">Trạng thái xác thực</span>
+              <span id="gmConnBadge"><span class="ad-pill muted">Đang kiểm tra...</span></span>
+            </div>
+            <div id="gmStatusMsg" class="text-[0.84rem] pt-1.5 leading-relaxed" style="border-top: 1px dashed var(--border); color: var(--text-2);"></div>
+          </div>
+
+          <div class="p-3.5 rounded-xl space-y-3" style="background: var(--surface-2); border: 1px solid var(--border);">
+            <div class="text-[0.86rem] font-bold t-strong">Cập nhật nhanh hộp thư gửi &amp; Mật khẩu ứng dụng (16 ký tự)</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="ad-field">
+                <label for="gmCfgUser">GMAIL_USER</label>
+                <input id="gmCfgUser" type="email" class="ad-input" placeholder="tai_khoan@gmail.com" autocomplete="off" />
+              </div>
+              <div class="ad-field">
+                <label for="gmCfgPass">GMAIL_APP_PASSWORD</label>
+                <input id="gmCfgPass" type="text" class="ad-input" placeholder="xxxx xxxx xxxx xxxx" autocomplete="off" />
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="ad-hint">Tạo tại <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" class="underline text-[#1d4ed8] font-semibold">myaccount.google.com/apppasswords</a> (chọn đúng avatar Gmail gửi).</span>
+              <button id="gmSaveCfgBtn" type="button" class="ad-btn-ghost shrink-0" onclick="handleUpdateGmailConfig()">Lưu cấu hình</button>
+            </div>
+          </div>
+
+          <div class="ad-field">
+            <label for="gmTestRecipient">Hộp thư nhận email kiểm tra <span class="t-bad">(*)</span></label>
+            <input id="gmTestRecipient" type="email" class="ad-input" placeholder="happyrice1111@gmail.com" required />
+            <div class="ad-hint">Nhập địa chỉ Gmail thực tế để nhận thư xác nhận kết nối (yêu cầu mã PIN Quản trị viên khi gửi).</div>
+          </div>
+
+          <div id="gmailModalAlert" class="hidden"></div>
+        </div>
+        <div class="ad-dialog-foot">
+          <button type="button" class="ad-btn-ghost" onclick="refreshGmailStatus(true)">Kiểm tra lại kết nối</button>
+          <button id="gmSendTestBtn" type="submit" class="ad-btn">Gửi email kiểm tra</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
   <!-- HỘP THOẠI PHÂN CÔNG CHUYÊN MÔN CHO GIÁO VIÊN                          -->
   <!-- ===================================================================== -->
   <div id="permModal" class="ad-overlay hidden" onmousedown="if (event.target === this) closePermModal()">
@@ -1886,6 +2099,88 @@
         <div class="ad-dialog-foot">
           <button type="button" class="ad-btn-ghost" onclick="closePermModal()">Hủy bỏ</button>
           <button id="pmSubmitBtn" type="submit" class="ad-btn">Lưu phân công</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- HỘP THOẠI QUẢN TRỊ VIÊN ĐỔI / CẤP MÃ PIN CHO GIÁO VIÊN                -->
+  <!-- ===================================================================== -->
+  <div id="adminPinModal" class="ad-overlay hidden" onmousedown="if (event.target === this) closeAdminPinModal()">
+    <div class="ad-dialog" style="max-width: 34rem">
+      <div class="ad-dialog-head">
+        <div>
+          <h3>Đổi / Cấp mã PIN bảo mật (6 số)</h3>
+          <div id="apmTeacherSubtitle" class="t-muted t-xs mt-0.5"></div>
+        </div>
+        <button type="button" onclick="closeAdminPinModal()" class="ad-close" aria-label="Đóng">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="adminPinForm" onsubmit="handleSaveAdminPin(event)" novalidate>
+        <div class="ad-dialog-body space-y-4">
+          <div id="adminPinAlert" class="hidden"></div>
+          <input id="apmMaTaiKhoan" type="hidden" />
+
+          <div class="p-3.5 rounded-xl text-[0.88rem] space-y-2" style="background: var(--surface-2); border: 1px solid var(--line);">
+            <div class="flex items-center justify-between gap-2">
+              <span class="t-muted">Cán bộ / Giáo viên</span>
+              <span id="apmInfoName" class="t-strong">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="t-muted">Email nội bộ</span>
+              <span id="apmInfoEmail" class="t-text">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="t-muted">Trạng thái PIN hiện tại</span>
+              <span id="apmInfoStatus">—</span>
+            </div>
+          </div>
+
+          <div class="ad-field">
+            <label for="apmPinNew" class="flex items-center justify-between gap-2">
+              <span>Mã PIN mới (6 chữ số) <span class="t-bad">(*)</span></span>
+              <span class="flex items-center gap-3 font-normal">
+                <button type="button" class="ad-link" onclick="generateRandomAdminPin()">Sinh ngẫu nhiên 6 số</button>
+                <button id="apmToggleVisBtn" type="button" class="ad-link" onclick="toggleAdminPinVisibility()">Hiện</button>
+                <button type="button" class="ad-link" onclick="copyText(document.getElementById('apmPinNew').value)">Sao chép</button>
+              </span>
+            </label>
+            <input
+              id="apmPinNew"
+              type="password"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="off"
+              placeholder="••••••"
+              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+              class="ad-input text-center font-mono text-xl"
+              style="letter-spacing: 0.45em; padding-top: 0.65rem; padding-bottom: 0.65rem;"
+            />
+          </div>
+
+          <div class="ad-field">
+            <label for="apmPinConfirm">Nhập lại mã PIN mới (6 chữ số) <span class="t-bad">(*)</span></label>
+            <input
+              id="apmPinConfirm"
+              type="password"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="off"
+              placeholder="••••••"
+              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
+              class="ad-input text-center font-mono text-xl"
+              style="letter-spacing: 0.45em; padding-top: 0.65rem; padding-bottom: 0.65rem;"
+            />
+            <div class="ad-hint">Mã PIN gồm đúng 6 chữ số (0-9) và được băm bảo mật ngay trên máy chủ. Quản trị viên cần xác minh mã PIN 6 số của chính mình trước khi lưu thay đổi.</div>
+          </div>
+        </div>
+
+        <div class="ad-dialog-foot">
+          <button type="button" class="ad-btn-ghost" onclick="closeAdminPinModal()">Hủy bỏ</button>
+          <button id="apmSubmitBtn" type="submit" class="ad-btn">Lưu mã PIN mới</button>
         </div>
       </form>
     </div>
@@ -2077,19 +2372,6 @@
           <div class="my-3 border-t border-white/10"></div>
 
           <button
-            id="tpNavPinManage"
-            type="button"
-            onclick="openPinManageModal()"
-            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-[0.93rem] text-blue-100/85 hover:bg-white/10 hover:text-white transition"
-          >
-            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="4" y="11" width="16" height="10" rx="2"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 018 0v4"/>
-            </svg>
-            <span>Mã PIN bảo mật (6 số)</span>
-          </button>
-
-          <button
             type="button"
             onclick="handleLogout()"
             class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-[0.95rem] text-blue-100/80 hover:bg-white/10 hover:text-white transition"
@@ -2202,7 +2484,7 @@
                   <th class="py-3.5 px-4 w-28 text-center">Khối lớp</th>
                   <th class="py-3.5 px-4 w-36 text-center">Loại đề</th>
                   <th class="py-3.5 px-4 w-44">Thời gian tải lên</th>
-                  <th class="py-3.5 px-4 w-44">Cập nhật lần cuối</th>
+                  <th class="py-3.5 px-4 w-48">Người tải lên</th>
                   <th class="py-3.5 px-4 w-36 text-center">Thao tác</th>
                 </tr>
               </thead>
@@ -3217,7 +3499,7 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- MODAL 4: XÁC MINH / THIẾT LẬP / QUÊN MÃ PIN BẢO MẬT (6 CHỮ SỐ)        -->
+  <!-- MODAL 4: XÁC MINH MÃ PIN BẢO MẬT (6 CHỮ SỐ)                           -->
   <!-- ===================================================================== -->
   <div id="pinModal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-[2px] z-[95] hidden flex items-center justify-center p-4" onmousedown="if (event.target === this) closePinModal(null)">
     <div class="bg-white w-full max-w-[460px] rounded-2xl shadow-2xl border border-slate-100 overflow-hidden text-slate-800">
@@ -3244,7 +3526,7 @@
       <div class="p-6">
         <div id="pinModalAlert" class="hidden mb-4 p-3 rounded-xl text-sm font-medium border"></div>
 
-        <!-- PANEL 1: NHẬP MÃ PIN 6 SỐ ĐỂ XÁC MINH THAO TÁC -->
+        <!-- PANEL: NHẬP MÃ PIN 6 SỐ ĐỂ XÁC MINH THAO TÁC -->
         <form id="pinVerifyPanel" onsubmit="handlePinVerifySubmit(event)" class="space-y-4">
           <div class="bg-[#f4f8ff] border border-blue-100 rounded-xl px-4 py-3 text-xs text-slate-700">
             <div class="text-slate-500 font-semibold">Thao tác yêu cầu xác minh:</div>
@@ -3258,10 +3540,10 @@
               </label>
               <button
                 type="button"
-                onclick="switchPinModalMode('FORGOT')"
+                onclick="togglePinContactAdminNotice()"
                 class="text-xs font-bold text-[#2563eb] hover:underline"
               >
-                Quên mã PIN?
+                Quên / Đổi mã PIN?
               </button>
             </div>
             <input
@@ -3274,6 +3556,9 @@
               oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
               class="w-full px-4 py-3 rounded-xl border border-slate-300 text-center font-mono text-xl tracking-[0.55em] text-slate-900 focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15"
             />
+            <div id="pinContactAdminNotice" class="hidden mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+              Vui lòng liên hệ trực tiếp <b>Quản trị viên hệ thống</b> để được đổi hoặc mở đặt lại mã PIN.
+            </div>
           </div>
 
           <div class="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100">
@@ -3290,162 +3575,6 @@
               class="px-5 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-sm shadow-sm transition"
             >
               Xác nhận mã PIN
-            </button>
-          </div>
-        </form>
-
-        <!-- PANEL 2: THIẾT LẬP MÃ PIN 6 SỐ LẦN ĐẦU (CHO TÀI KHOẢN CŨ CHƯA CÓ PIN) -->
-        <form id="pinSetupPanel" onsubmit="handlePinSetupSubmit(event)" class="hidden space-y-4">
-          <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-900 leading-relaxed">
-            Tài khoản của bạn chưa thiết lập <b>mã PIN 6 số</b>. Vui lòng tạo mã PIN bảo mật ngay bây giờ để tiếp tục thực hiện thao tác tải hoặc niêm phong tài liệu.
-          </div>
-
-          <div>
-            <label for="pinSetupNew" class="block text-sm font-bold text-slate-700 mb-1.5">
-              Mã PIN mới (6 chữ số) <span class="text-rose-600">*</span>
-            </label>
-            <input
-              id="pinSetupNew"
-              type="password"
-              inputmode="numeric"
-              maxlength="6"
-              autocomplete="off"
-              placeholder="••••••"
-              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
-              class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-lg tracking-[0.45em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
-            />
-          </div>
-
-          <div>
-            <label for="pinSetupConfirm" class="block text-sm font-bold text-slate-700 mb-1.5">
-              Xác nhận lại mã PIN <span class="text-rose-600">*</span>
-            </label>
-            <input
-              id="pinSetupConfirm"
-              type="password"
-              inputmode="numeric"
-              maxlength="6"
-              autocomplete="off"
-              placeholder="••••••"
-              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
-              class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-lg tracking-[0.45em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
-            />
-          </div>
-
-          <div class="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100">
-            <button
-              type="button"
-              onclick="closePinModal(null)"
-              class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-sm transition"
-            >
-              Hủy
-            </button>
-            <button
-              id="pinSetupSubmitBtn"
-              type="submit"
-              class="px-5 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-sm shadow-sm transition"
-            >
-              Thiết lập mã PIN
-            </button>
-          </div>
-        </form>
-
-        <!-- PANEL 3: QUÊN MÃ PIN - GỬI MÃ XÁC NHẬN VỀ EMAIL ĐỂ ĐỔI MÃ PIN -->
-        <form id="pinForgotPanel" onsubmit="handlePinResetSubmit(event)" class="hidden space-y-4">
-          <div class="bg-[#f8fafc] border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 space-y-2.5">
-            <div>
-              Hệ thống sẽ gửi mã xác nhận gồm <b>6 chữ số</b> (hiệu lực 10 phút) tới hộp thư nội bộ:
-              <div id="pinForgotEmailText" class="font-bold text-slate-900 mt-0.5">—</div>
-            </div>
-            <button
-              id="btnSendPinResetCode"
-              type="button"
-              onclick="handleSendPinForgotEmail()"
-              class="w-full py-2 px-3.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#1d4ed8] border border-blue-200 font-bold text-xs transition"
-            >
-              Gửi mã xác nhận về Email
-            </button>
-          </div>
-
-          <!-- Hộp mã xác nhận dự phòng khi máy chủ chưa cấu hình SMTP -->
-          <div id="pinForgotFallbackWrap" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900">
-            <div class="font-bold mb-1">Mã xác nhận khôi phục PIN (hiệu lực 10 phút):</div>
-            <div class="flex items-center justify-between bg-white border border-amber-200 rounded-lg px-3 py-2">
-              <span id="pinForgotFallbackCode" class="font-mono font-extrabold text-base tracking-[0.25em] text-slate-900"></span>
-              <button
-                type="button"
-                onclick="copyText(document.getElementById('pinForgotFallbackCode').textContent)"
-                class="text-xs font-bold text-[#2563eb] hover:underline"
-              >
-                Sao chép
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label for="pinResetCode" class="block text-sm font-bold text-slate-700 mb-1">
-              Mã xác nhận từ Email (6 số) <span class="text-rose-600">*</span>
-            </label>
-            <input
-              id="pinResetCode"
-              type="text"
-              inputmode="numeric"
-              maxlength="6"
-              autocomplete="off"
-              placeholder="Nhập 6 chữ số xác nhận"
-              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-[0.35em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label for="pinResetNew" class="block text-sm font-bold text-slate-700 mb-1">
-                Mã PIN mới (6 số) <span class="text-rose-600">*</span>
-              </label>
-              <input
-                id="pinResetNew"
-                type="password"
-                inputmode="numeric"
-                maxlength="6"
-                autocomplete="off"
-                placeholder="••••••"
-                oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
-                class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-[0.35em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
-              />
-            </div>
-            <div>
-              <label for="pinResetConfirm" class="block text-sm font-bold text-slate-700 mb-1">
-                Nhập lại PIN mới <span class="text-rose-600">*</span>
-              </label>
-              <input
-                id="pinResetConfirm"
-                type="password"
-                inputmode="numeric"
-                maxlength="6"
-                autocomplete="off"
-                placeholder="••••••"
-                oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
-                class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-[0.35em] text-slate-900 focus:outline-none focus:border-[#2563eb]"
-              />
-            </div>
-          </div>
-
-          <div class="pt-2 flex items-center justify-between gap-2.5 border-t border-slate-100">
-            <button
-              id="pinForgotBackBtn"
-              type="button"
-              onclick="switchPinModalMode('VERIFY')"
-              class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-sm transition"
-            >
-              Quay lại
-            </button>
-            <button
-              id="pinResetSubmitBtn"
-              type="submit"
-              class="px-5 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-sm shadow-sm transition"
-            >
-              Đổi mã PIN
             </button>
           </div>
         </form>
@@ -3519,15 +3648,198 @@
     }
 
     let _currentActiveScreen = "LOGIN";
+    const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+    const IDLE_HEARTBEAT_INTERVAL_MS = 60 * 1000;
+    const ACTIVE_SESSION_SCREENS = new Set([
+      "DASHBOARD",
+      "TEACHER_PORTAL",
+      "FIRST_TIME_2FA",
+      "VERIFY_OTP",
+      "SETUP_PIN",
+    ]);
+    let _lastUserActivityAt = Date.now();
+    let _lastHeartbeatSentAt = 0;
+    let _idleWatcherTimer = null;
+    let _idleLogoutInProgress = false;
+
+    function recordUserScreenActivity(fromTrustedEvent = false, evt = null) {
+      if (fromTrustedEvent && evt && evt.isTrusted === false) return;
+      if (_idleLogoutInProgress) return;
+      const now = Date.now();
+      _lastUserActivityAt = now;
+      if (
+        fromTrustedEvent &&
+        ACTIVE_SESSION_SCREENS.has(_currentActiveScreen) &&
+        now - _lastHeartbeatSentAt >= IDLE_HEARTBEAT_INTERVAL_MS
+      ) {
+        _lastHeartbeatSentAt = now;
+        fetch("/api/auth/heartbeat", { method: "POST" }).catch(() => {});
+      }
+    }
+
+    function closeAllOpenOverlaysForLogout() {
+      try { closeRowMenu(); } catch (_) {}
+      try { closeOnTapRowMenu(); } catch (_) {}
+      try { closeDeThiRowMenu(); } catch (_) {}
+      try { closePinModal(null); } catch (_) {}
+      try { closeAdDialog(false); } catch (_) {}
+      try { closeDeThiDetailModal(); } catch (_) {}
+      try { closeDeThiFormModal(); } catch (_) {}
+      try { closeOnTapDetailModal(); } catch (_) {}
+      try { closeOnTapFormModal(); } catch (_) {}
+      try { closeLogDetailModal(); } catch (_) {}
+      try { closePermModal(); } catch (_) {}
+      try { closeAdminPinModal(); } catch (_) {}
+      try { closeGmailStatusModal(); } catch (_) {}
+      try { closeCreateModal(); } catch (_) {}
+      try { document.getElementById("userMenu")?.classList.add("hidden"); } catch (_) {}
+      try { stopFirstTimeOtpTimer(); } catch (_) {}
+    }
+
+    async function handleIdleAutoLogout(customMessage = "") {
+      if (_idleLogoutInProgress) return;
+      if (!ACTIVE_SESSION_SCREENS.has(_currentActiveScreen)) return;
+      _idleLogoutInProgress = true;
+      try {
+        closeAllOpenOverlaysForLogout();
+        await fetch("/api/auth/logout?reason=idle", { method: "POST" }).catch(() => {});
+        window.currentUser = null;
+        window._preVerifiedOnTapEditPin = null;
+        window._preVerifiedDeThiEditPin = null;
+        showScreen("LOGIN");
+        showAlert(
+          "loginAlert",
+          customMessage || "Phiên làm việc đã tự động đăng xuất do màn hình không có thao tác trong 5 phút. Vui lòng đăng nhập lại để tiếp tục.",
+          "warning"
+        );
+      } finally {
+        _idleLogoutInProgress = false;
+      }
+    }
+
+    function initIdleSessionWatcher() {
+      if (_idleWatcherTimer) return;
+      const activityEvents = [
+        "mousemove",
+        "mousedown",
+        "keydown",
+        "touchstart",
+        "wheel",
+        "scroll",
+        "click",
+        "input",
+        "change",
+      ];
+      activityEvents.forEach(evtName => {
+        window.addEventListener(
+          evtName,
+          e => recordUserScreenActivity(true, e),
+          { passive: true, capture: true }
+        );
+      });
+
+      _idleWatcherTimer = setInterval(() => {
+        if (!ACTIVE_SESSION_SCREENS.has(_currentActiveScreen)) return;
+        if (_idleLogoutInProgress) return;
+        if (Date.now() - _lastUserActivityAt >= IDLE_TIMEOUT_MS) {
+          handleIdleAutoLogout();
+        }
+      }, 1000);
+    }
 
     function showScreen(screenName) {
       _currentActiveScreen = screenName;
+      if (ACTIVE_SESSION_SCREENS.has(screenName)) {
+        _lastUserActivityAt = Date.now();
+      }
       document.getElementById("viewIpBlocked")?.classList.toggle("hidden", screenName !== "IP_BLOCKED");
       document.getElementById("viewLogin").classList.toggle("hidden", screenName !== "LOGIN");
       document.getElementById("viewFirstTime2FA").classList.toggle("hidden", screenName !== "FIRST_TIME_2FA");
       document.getElementById("viewVerifyOtp").classList.toggle("hidden", screenName !== "VERIFY_OTP");
+      document.getElementById("viewSetupPin")?.classList.toggle("hidden", screenName !== "SETUP_PIN");
       document.getElementById("viewDashboard").classList.toggle("hidden", screenName !== "DASHBOARD");
       document.getElementById("viewTeacherPortal")?.classList.toggle("hidden", screenName !== "TEACHER_PORTAL");
+    }
+
+    async function openExternalPinSetupScreen(userInfo = null, infoMessage = "") {
+      hideAlert("extPinAlert");
+      const pinNewEl = document.getElementById("extPinNew");
+      const pinCfmEl = document.getElementById("extPinConfirm");
+      if (pinNewEl) pinNewEl.value = "";
+      if (pinCfmEl) pinCfmEl.value = "";
+
+      let u = userInfo || window.currentUser || null;
+      if (!u || !u.ho_ten) {
+        try {
+          const res = await fetch("/api/auth/session-status");
+          if (res.ok) {
+            const st = await res.json();
+            u = st.user || u;
+          }
+        } catch (_) {}
+      }
+      const nameEl = document.getElementById("extPinUserHoTen");
+      const emailEl = document.getElementById("extPinUserEmail");
+      if (nameEl) nameEl.textContent = u?.ho_ten ? `${u.ho_ten} (${u.ma_can_bo || u.ten_dang_nhap || ""})` : "—";
+      if (emailEl) emailEl.textContent = u?.email || "—";
+
+      if (infoMessage) {
+        showAlert("extPinAlert", infoMessage, "warning");
+      }
+      showScreen("SETUP_PIN");
+      setTimeout(() => document.getElementById("extPinNew")?.focus(), 40);
+    }
+
+    async function handleExternalPinSetupSubmit(e) {
+      e.preventDefault();
+      hideAlert("extPinAlert");
+      const ma_pin = (document.getElementById("extPinNew")?.value || "").trim();
+      const xac_nhan_ma_pin = (document.getElementById("extPinConfirm")?.value || "").trim();
+
+      if (!/^\d{6}$/.test(ma_pin)) {
+        showAlert("extPinAlert", "Mã PIN bảo mật phải gồm đúng 6 chữ số (0-9).");
+        return;
+      }
+      if (ma_pin !== xac_nhan_ma_pin) {
+        showAlert("extPinAlert", "Mã PIN xác nhận nhập lại không khớp.");
+        return;
+      }
+
+      const btn = document.getElementById("extPinSubmitBtn");
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch("/api/auth/pin/setup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ma_pin, xac_nhan_ma_pin }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = typeof data.detail === "string"
+            ? data.detail
+            : (data.detail?.message || "Không thể thiết lập mã PIN.");
+          showAlert("extPinAlert", msg, "error");
+          return;
+        }
+        await loadDashboardScreen(data.message || "Thiết lập mã PIN bảo mật 6 số thành công!");
+      } catch (err) {
+        showAlert("extPinAlert", "Lỗi kết nối máy chủ: " + err.message, "error");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function forceLockoutToLoginScreen(message) {
+      closeAllOpenOverlaysForLogout();
+      window.currentUser = null;
+      window._preVerifiedOnTapEditPin = null;
+      window._preVerifiedDeThiEditPin = null;
+      showScreen("LOGIN");
+      showAlert(
+        "loginAlert",
+        message || "BÁO ĐỘNG AN NINH: Tài khoản đã bị khóa và phiên làm việc đã bị thu hồi ngay lập tức!",
+        "error"
+      );
     }
 
     function renderAndShowIpBlockedScreen(info = {}) {
@@ -3543,7 +3855,7 @@
 
     async function checkAndEnforceIpFirewall() {
       try {
-        const res = await fetch("/api/auth/ip-status");
+        const res = await fetch("/api/auth/ip-status", { headers: { "X-Background-Poll": "1" } });
         if (!res.ok) return false;
         const st = await res.json();
         if (st.blocked && !st.is_admin_session) {
@@ -3615,6 +3927,8 @@
           setOtpValue(".v-otp-input", "");
           hideAlert("verifyOtpAlert");
           showScreen("VERIFY_OTP");
+        } else if (data.next_step === "SETUP_PIN") {
+          await openExternalPinSetupScreen(data.user, data.message);
         } else {
           await loadDashboardScreen("Đăng nhập Quản trị viên thành công. Bạn có thể gỡ chặn IP tại mục Quản lý tài khoản hoặc Nhật ký hoạt động.");
         }
@@ -3700,9 +4014,15 @@
           showScreen("VERIFY_OTP");
           const firstOtp = document.querySelector(".v-otp-input");
           if (firstOtp) firstOtp.focus();
+        } else if (data.next_step === "SETUP_PIN") {
+          await openExternalPinSetupScreen(data.user, data.message);
         } else {
           showAlert("loginAlert", data.message || "Đăng nhập thành công!", "success");
-          await loadDashboardScreen(data.message || "Đăng nhập thành công!");
+          if (data.next_step === "SETUP_PIN") {
+        await openExternalPinSetupScreen(null, data.message);
+        return;
+      }
+      await loadDashboardScreen(data.message || "Đăng nhập thành công!");
         }
       } catch (err) {
         showAlert("loginAlert", "Lỗi kết nối máy chủ: " + err.message);
@@ -4041,7 +4361,11 @@
 
         window._lastLoginTempPassword = "";
         stopFirstTimeOtpTimer();
-        await loadDashboardScreen(data.message || "Đăng nhập thành công!");
+        if (data.next_step === "SETUP_PIN") {
+        await openExternalPinSetupScreen(null, data.message);
+        return;
+      }
+      await loadDashboardScreen(data.message || "Đăng nhập thành công!");
       } finally {
         if (btn) btn.disabled = false;
       }
@@ -4079,6 +4403,10 @@
         return;
       }
 
+      if (data.next_step === "SETUP_PIN") {
+        await openExternalPinSetupScreen(null, data.message);
+        return;
+      }
       await loadDashboardScreen(data.message || "Đăng nhập thành công!");
     }
 
@@ -4099,6 +4427,7 @@
       logFilter: "",
       accFilter: "",
       sesFilter: "active",
+      pinFilter: "",
     };
 
     function nhanVaiTro(ma) {
@@ -4180,13 +4509,30 @@
     }
 
     async function apiJson(url, options = {}) {
-      const res = await fetch(url, { headers: { "Content-Type": "application/json" }, ...options });
+      const res = await fetch(url, { headers: { "Content-Type": "application/json", ...(options.headers || {}) }, ...options });
       let data = {};
       try { data = await res.json(); } catch (_) {}
-      if (res.status === 403 && data?.detail?.code === "IP_BLOCKED") {
-        renderAndShowIpBlockedScreen(data.detail);
-      }
+      const code = data?.detail?.code || "";
       const msg = typeof data.detail === "string" ? data.detail : (data.detail?.message || data.message || "");
+      if (res.status === 403 && code === "IP_BLOCKED") {
+        renderAndShowIpBlockedScreen(data.detail);
+      } else if ((res.status === 403 || res.status === 401) && (code === "HONEYTRAP_ACCOUNT_LOCKED" || code === "ACCOUNT_LOCKED")) {
+        forceLockoutToLoginScreen(msg);
+        return { ok: false, status: res.status, data, msg, lockedOut: true };
+      } else if (res.status === 401 && code === "IDLE_SESSION_EXPIRED") {
+        closeAllOpenOverlaysForLogout();
+        window.currentUser = null;
+        showScreen("LOGIN");
+        showAlert(
+          "loginAlert",
+          msg || "Phiên làm việc đã tự động đăng xuất do màn hình không có thao tác trong 5 phút. Vui lòng đăng nhập lại.",
+          "warning"
+        );
+        return { ok: false, status: res.status, data, msg, idleExpired: true };
+      } else if (res.status === 403 && code === "PIN_SETUP_REQUIRED") {
+        openExternalPinSetupScreen(window.currentUser, msg);
+        return { ok: false, status: res.status, data, msg, pinSetupRedirect: true };
+      }
       return { ok: res.ok, status: res.status, data, msg };
     }
 
@@ -4223,6 +4569,10 @@
         showScreen("VERIFY_OTP");
         return;
       }
+      if (!data.da_co_ma_pin) {
+        await openExternalPinSetupScreen(data.user);
+        return;
+      }
 
       const u = data.user;
       window.currentUser = u;
@@ -4255,6 +4605,8 @@
         renderAndShowIpBlockedScreen(data.detail);
         return;
       }
+      closeAllOpenOverlaysForLogout();
+      window.currentUser = null;
       const msg = data?.detail?.message || data?.detail || "Phiên làm việc đã kết thúc.";
       showScreen("LOGIN");
       showAlert("loginAlert", msg, "warning");
@@ -4270,10 +4622,11 @@
         LOGS: ["dashSectionLogs", "navTabLogs", loadLogs],
         ACCOUNTS: ["dashSectionAccounts", "navTabAccounts", loadAccounts],
         SESSIONS: ["dashSectionSessions", "navTabSessions", loadSessions],
+        PINS: ["dashSectionPins", "navTabPins", loadAccounts],
       };
       Object.entries(map).forEach(([key, [secId, btnId]]) => {
         const active = key === tab;
-        document.getElementById(secId).classList.toggle("hidden", !active);
+        document.getElementById(secId)?.classList.toggle("hidden", !active);
         const btn = document.getElementById(btnId);
         if (btn) {
           btn.className = active
@@ -4281,7 +4634,7 @@
             : "w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl font-medium text-[0.95rem] text-blue-100/80 hover:bg-white/10 hover:text-white transition";
         }
       });
-      map[tab][2]();
+      if (map[tab]) map[tab][2]();
     }
 
     function renderChips(containerId, items, current, onPick) {
@@ -4378,7 +4731,12 @@
         if (DASH._pollingLogs) return;
         DASH._pollingLogs = true;
         try {
-          const res = await fetch("/api/logs");
+          const res = await fetch("/api/logs", { headers: { "X-Background-Poll": "1" } });
+          if (res.status === 401 || res.status === 403) {
+            const errData = await res.json().catch(() => ({}));
+            handleSessionError(errData);
+            return;
+          }
           if (!res.ok) return;
           const data = await res.json();
           const newLogs = data.logs || [];
@@ -4715,9 +5073,11 @@
           false
         );
         if (!ok) return;
+        const pin = await requestPinVerification(`Mở khóa an ninh tài khoản: ${lg.ho_ten} (${lg.ma_can_bo || lg.ten_dang_nhap})`);
+        if (!pin) return;
         const r = await apiJson(`/api/accounts/${lg.ma_tai_khoan}/unlock`, {
           method: "POST",
-          body: JSON.stringify({ cap_lai_mat_khau_tam: false }),
+          body: JSON.stringify({ cap_lai_mat_khau_tam: false, ma_pin: pin }),
         });
         if (!r.ok) {
           toast(r.msg || "Không thể mở khóa tài khoản.", "bad");
@@ -4727,7 +5087,7 @@
       } else {
         const ok = await openAdDialog({
           title: "Tạm khóa tài khoản giáo viên",
-          okText: "Tạm khóa ngay",
+          okText: "Tiếp tục nhập PIN",
           danger: true,
           html: `
             <p class="mb-3">Tạm khóa tài khoản của <b>${escapeHtml(lg.ho_ten)}</b> (${escapeHtml(lg.ma_can_bo || lg.ten_dang_nhap)}) và thu hồi toàn bộ phiên đăng nhập hiện hành:</p>
@@ -4743,11 +5103,14 @@
         if (!ok) return;
         const sel = document.getElementById("tempLockMinutes");
         const soPhut = sel ? parseInt(sel.value, 10) : 15;
+        const pin = await requestPinVerification(`Tạm khóa tài khoản: ${lg.ho_ten} (${lg.ma_can_bo || lg.ten_dang_nhap})`);
+        if (!pin) return;
         const r = await apiJson(`/api/accounts/${lg.ma_tai_khoan}/temp-lock`, {
           method: "POST",
           body: JSON.stringify({
             so_phut: Number.isNaN(soPhut) ? 15 : soPhut,
             ly_do: `Khóa điều tra từ nhật ký #${lg.ma_nhat_ky}`,
+            ma_pin: pin,
           }),
         });
         if (!r.ok) {
@@ -4775,11 +5138,14 @@
           false
         );
         if (!ok) return;
+        const pin = await requestPinVerification(`Gỡ chặn địa chỉ IP: ${targetIp}`);
+        if (!pin) return;
         const r = await apiJson("/api/ips/unblock", {
           method: "POST",
           body: JSON.stringify({
             dia_chi_ip: targetIp,
             danh_sach_ip: [lg.dia_chi_ipv4, lg.ip_may].filter(Boolean),
+            ma_pin: pin,
           }),
         });
         if (!r.ok) {
@@ -4795,11 +5161,14 @@
           true
         );
         if (!ok) return;
+        const pin = await requestPinVerification(`Chặn địa chỉ IP: ${targetIp}`);
+        if (!pin) return;
         const r = await apiJson("/api/ips/block", {
           method: "POST",
           body: JSON.stringify({
             dia_chi_ip: targetIp,
             ly_do: `Chặn từ điều tra nhật ký #${lg.ma_nhat_ky}`,
+            ma_pin: pin,
           }),
         });
         if (!r.ok) {
@@ -4863,13 +5232,24 @@
       return `${prefix}.${ten}`;
     }
 
+    function goiYEmailTheoTen(hoTen) {
+      const joined = String(hoTen || "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d").replace(/Đ/g, "d")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+      return joined ? `${joined}.thpthoangvanthu@gmail.com` : "";
+    }
+
     function handleHoTenInput() {
       window._userEditedUsername = false;
+      window._userEditedEmail = false;
       const hoTen = document.getElementById("caHoTen").value;
       const vaiTro = document.getElementById("caVaiTro").value;
       const goiY = goiYTenDangNhapTheoTen(hoTen, vaiTro);
+      const goiYEmail = goiYEmailTheoTen(hoTen);
       document.getElementById("caTenDangNhap").value = goiY;
-      document.getElementById("caEmail").value = goiY ? `${goiY}@thpthoangvanthu.edu.vn` : "";
+      document.getElementById("caEmail").value = goiYEmail;
       setHint("caTenDangNhapHint", "", false);
       setHint("caEmailHint", "", false);
       scheduleFormulaUpdate();
@@ -4984,7 +5364,10 @@
       const goiY = goiYTenDangNhapTheoTen(hoTen, vaiTro);
       if (goiY) {
         document.getElementById("caTenDangNhap").value = goiY;
-        document.getElementById("caEmail").value = `${goiY}@thpthoangvanthu.edu.vn`;
+      }
+      if (!window._userEditedEmail) {
+        const goiYEmail = goiYEmailTheoTen(hoTen);
+        if (goiYEmail) document.getElementById("caEmail").value = goiYEmail;
       }
       syncCreatePhanQuyenVisibility();
       updateAccountFormFormula(true);
@@ -5044,16 +5427,20 @@
       if (!window._userEditedPassword && !document.getElementById("caMatKhau").value) {
         document.getElementById("caMatKhau").value = data.mat_khau_khoi_tao;
       }
+      const hasHoTen = Boolean(document.getElementById("caHoTen").value.trim());
       if (!window._userEditedUsername) {
-        if (document.getElementById("caHoTen").value.trim()) {
-          if (data.ten_dang_nhap) {
-            document.getElementById("caTenDangNhap").value = data.ten_dang_nhap;
-            document.getElementById("caEmail").value = data.email;
-            setHint("caTenDangNhapHint", "", false);
-            setHint("caEmailHint", "", false);
-          }
-        } else {
+        if (hasHoTen && data.ten_dang_nhap) {
+          document.getElementById("caTenDangNhap").value = data.ten_dang_nhap;
+          setHint("caTenDangNhapHint", "", false);
+        } else if (!hasHoTen) {
           document.getElementById("caTenDangNhap").value = "";
+        }
+      }
+      if (!window._userEditedEmail) {
+        if (hasHoTen && data.email) {
+          document.getElementById("caEmail").value = data.email;
+          setHint("caEmailHint", "", false);
+        } else if (!hasHoTen) {
           document.getElementById("caEmail").value = "";
         }
       }
@@ -5072,11 +5459,6 @@
       if (data) document.getElementById("caMatKhau").value = data.mat_khau_khoi_tao;
     }
 
-    function syncEmailFromUsername() {
-      const u = document.getElementById("caTenDangNhap").value.trim().toLowerCase();
-      document.getElementById("caEmail").value = u ? `${u}@thpthoangvanthu.edu.vn` : "";
-    }
-
     function validateCreateForm(payload) {
       const prefix = { GIAO_VIEN: "GV", QUAN_TRI: "AD" }[payload.vai_tro];
       if (!prefix) return "Vai trò tài khoản không hợp lệ (chỉ hỗ trợ Giáo viên hoặc Quản trị viên IT).";
@@ -5087,8 +5469,8 @@
       if (!/^[a-z0-9.]+$/.test(payload.ten_dang_nhap)) {
         return "Tên đăng nhập chỉ gồm chữ thường không dấu, số và dấu chấm.";
       }
-      if (!/^[a-z0-9._%+-]+@thpthoangvanthu\.edu\.vn$/.test(payload.email)) {
-        return "Email phải có đuôi @thpthoangvanthu.edu.vn.";
+      if (!/^[a-z0-9]+(\.[a-z0-9]+)*\.(thpthoangvanthu|thtphoangvanthu)@gmail\.com$/.test(payload.email)) {
+        return "Email phải theo định dạng <têngiáoviên>.thpthoangvanthu@gmail.com (ví dụ: nguyenvanminh.thpthoangvanthu@gmail.com).";
       }
       if (!payload.mat_khau_khoi_tao || payload.mat_khau_khoi_tao.length < 6) {
         return "Vui lòng nhập mật khẩu khởi tạo (tối thiểu 6 ký tự).";
@@ -5115,6 +5497,7 @@
 
     async function resetCreateForm(regenerate) {
       window._userEditedUsername = false;
+      window._userEditedEmail = false;
       window._userEditedPassword = false;
       ["caHoTen", "caTenDangNhap", "caEmail", "caMatKhau", "caMaCanBo"].forEach(id => (document.getElementById(id).value = ""));
       document.getElementById("caVaiTro").value = "GIAO_VIEN";
@@ -5215,6 +5598,147 @@
       loadLogs();
     }
 
+    // ---------- Kiểm tra kết nối Gmail SMTP ----------
+    function linkifySafeText(rawText) {
+      const escaped = escapeHtml(String(rawText || ""));
+      return escaped.replace(
+        /(https:\/\/[^\s)<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline font-semibold text-[#1d4ed8]">$1</a>'
+      );
+    }
+
+    function showGmailModalMsg(text, tone = "bad") {
+      const box = document.getElementById("gmailModalAlert");
+      if (!box) return;
+      if (!text) {
+        box.className = "hidden";
+        box.innerHTML = "";
+        return;
+      }
+      box.className = `ad-banner ${tone} text-[0.88rem]`;
+      box.innerHTML = `<div class="flex-1 leading-relaxed">${linkifySafeText(text)}</div>`;
+    }
+
+    async function refreshGmailStatus(verifyConn = true) {
+      const badgeEl = document.getElementById("gmConnBadge");
+      const msgEl = document.getElementById("gmStatusMsg");
+      if (badgeEl) badgeEl.innerHTML = '<span class="ad-pill muted">Đang kiểm tra...</span>';
+      if (msgEl) msgEl.textContent = "Đang kiểm tra xác thực với máy chủ smtp.gmail.com...";
+      const r = await apiJson(`/api/admin/gmail-status?verify=${verifyConn ? "true" : "false"}`);
+      if (!r.ok) {
+        if (badgeEl) badgeEl.innerHTML = '<span class="ad-pill bad">Không kiểm tra được</span>';
+        if (msgEl) msgEl.innerHTML = linkifySafeText(r.msg || "Không đọc được trạng thái Gmail.");
+        return;
+      }
+      const d = r.data;
+      document.getElementById("gmSenderEmail").textContent = d.sender_email || "Chưa cấu hình";
+      document.getElementById("gmSmtpHost").textContent = d.smtp_host ? `${d.smtp_host}:${d.smtp_port}` : "—";
+      const recInput = document.getElementById("gmTestRecipient");
+      if (recInput && !recInput.value && d.sender_email) {
+        recInput.value = d.sender_email;
+      }
+      const cfgUserInput = document.getElementById("gmCfgUser");
+      if (cfgUserInput && d.sender_email) {
+        cfgUserInput.value = d.sender_email;
+      }
+      if (!d.configured) {
+        badgeEl.innerHTML = '<span class="ad-pill warn">Chưa cấu hình</span>';
+      } else if (d.connected === true) {
+        badgeEl.innerHTML = '<span class="ad-pill ok">Đã kết nối Gmail</span>';
+      } else if (d.connected === false) {
+        badgeEl.innerHTML = '<span class="ad-pill warn">Cần xác nhận Google</span>';
+      } else {
+        badgeEl.innerHTML = '<span class="ad-pill ok">Đã nạp cấu hình</span>';
+      }
+      if (msgEl) msgEl.innerHTML = linkifySafeText(d.message || "");
+    }
+
+    function openGmailStatusModal() {
+      showGmailModalMsg("");
+      document.getElementById("gmailModal")?.classList.remove("hidden");
+      refreshGmailStatus(true);
+    }
+
+    function closeGmailStatusModal() {
+      document.getElementById("gmailModal")?.classList.add("hidden");
+    }
+
+    async function handleUpdateGmailConfig() {
+      showGmailModalMsg("");
+      const gUser = (document.getElementById("gmCfgUser")?.value || "").trim().toLowerCase();
+      const gPass = (document.getElementById("gmCfgPass")?.value || "").trim();
+      if (!gUser || !/^[^@\s]+@gmail\.com$/.test(gUser)) {
+        showGmailModalMsg("Vui lòng nhập GMAIL_USER hợp lệ có đuôi @gmail.com.", "bad");
+        return;
+      }
+      if (gPass.replace(/\s+/g, "").length !== 16) {
+        showGmailModalMsg("Mật khẩu ứng dụng Google (GMAIL_APP_PASSWORD) phải gồm đúng 16 ký tự.", "bad");
+        return;
+      }
+      const pin = await requestPinVerification(`Cập nhật cấu hình Gmail hệ thống: ${gUser}`);
+      if (!pin) return;
+
+      const btn = document.getElementById("gmSaveCfgBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Đang lưu...";
+      }
+      const r = await apiJson("/api/admin/gmail-config", {
+        method: "POST",
+        body: JSON.stringify({ gmail_user: gUser, gmail_app_password: gPass, ma_pin: pin }),
+      });
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Lưu cấu hình";
+      }
+      if (!r.ok) {
+        showGmailModalMsg(r.msg || "Không lưu được cấu hình Gmail.", "bad");
+        return;
+      }
+      document.getElementById("gmCfgPass").value = "";
+      const recInput = document.getElementById("gmTestRecipient");
+      if (recInput) recInput.value = gUser;
+      showGmailModalMsg(r.data.message, r.data.connected ? "ok" : "warn");
+      refreshGmailStatus(true);
+      loadLogs();
+    }
+
+    async function handleSendTestGmail(e) {
+      e.preventDefault();
+      showGmailModalMsg("");
+      const emailNhan = (document.getElementById("gmTestRecipient")?.value || "").trim();
+      if (!emailNhan || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(emailNhan)) {
+        showGmailModalMsg("Vui lòng nhập địa chỉ email nhận thư kiểm tra hợp lệ.", "bad");
+        return;
+      }
+      const pin = await requestPinVerification(`Gửi email kiểm tra Gmail tới: ${emailNhan}`);
+      if (!pin) return;
+
+      const btn = document.getElementById("gmSendTestBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Đang gửi...";
+      }
+      const r = await apiJson("/api/admin/gmail-test", {
+        method: "POST",
+        body: JSON.stringify({ email_nhan: emailNhan, ma_pin: pin }),
+      });
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Gửi email kiểm tra";
+      }
+      if (!r.ok) {
+        showGmailModalMsg(r.msg || "Gửi email kiểm tra thất bại.", "bad");
+        refreshGmailStatus(false);
+        loadLogs();
+        return;
+      }
+      showGmailModalMsg(r.data.message || `Đã gửi email kiểm tra tới ${emailNhan}.`, "ok");
+      toast(r.data.message || `Đã gửi email kiểm tra tới ${emailNhan}.`, "ok", 5000);
+      refreshGmailStatus(true);
+      loadLogs();
+    }
+
     // ---------- Tài khoản ----------
     function trangThaiTaiKhoan(acc) {
       if (!acc.dang_hoat_dong) return { key: "disabled", html: `<span class="ad-pill muted">Đã vô hiệu hóa</span>` };
@@ -5235,7 +5759,13 @@
       }
       DASH.accounts = data.accounts || [];
       document.getElementById("countAccounts").textContent = DASH.accounts.length;
+      const countPinsEl = document.getElementById("countPins");
+      if (countPinsEl) {
+        const dsGiaoVien = DASH.accounts.filter(a => a.vai_tro === "GIAO_VIEN");
+        countPinsEl.textContent = dsGiaoVien.length;
+      }
       renderAccounts();
+      renderAdminPins();
     }
 
     function pickAccFilter(key) {
@@ -5331,9 +5861,14 @@
       const a = DASH.accounts.find(x => x.ma_tai_khoan === id);
       if (!a) return;
       const targetIp = a.ipv4_gan_nhat || a.ip_thiet_bi_gan_nhat || "";
+      const laToi = window.currentUser && String(a.ma_tai_khoan) === String(window.currentUser.ma_tai_khoan);
       const items = [`<div class="ad-menu-title">${escapeHtml(a.ho_ten)}</div>`];
       if (a.vai_tro === "GIAO_VIEN") {
         items.push(`<button type="button" onclick="openPermModal('${id}')">${svg("shield")}Phân công chuyên môn</button>`);
+      }
+      items.push(`<button type="button" onclick="openAdminPinModal('${id}')">${svg("lock")}Đổi / Cấp mã PIN (6 số)</button>`);
+      if (a.da_co_ma_pin && !laToi) {
+        items.push(`<button type="button" onclick="handleAdminResetTeacherPin('${id}')">${svg("unlock")}Mở đặt lại mã PIN</button>`);
       }
       items.push(`<button type="button" onclick="handleUnlockAccount('${id}', true)">${svg("key")}Cấp lại mật khẩu tạm thời</button>`);
       items.push(`<button type="button" onclick="handleReset2FA('${id}')">${svg("phone")}Đặt lại 2FA</button>`);
@@ -5450,14 +5985,263 @@
       await Promise.all([loadAccounts(), loadLogs()]);
     }
 
+    // ---------- Quản lý mã PIN giáo viên (Trục Quản trị viên) ----------
+    function pickPinFilter(key) {
+      DASH.pinFilter = key;
+      renderAdminPins();
+    }
+
+    function renderAdminPins() {
+      const tbody = document.getElementById("pinsTableBody");
+      const chipsEl = document.getElementById("pinChips");
+      if (!tbody || !chipsEl) return;
+
+      const all = DASH.accounts || [];
+      const roleEl = document.getElementById("pinRoleFilter");
+      const role = roleEl ? roleEl.value : "GIAO_VIEN";
+      const scoped = all.filter(a => !role || a.vai_tro === role);
+
+      renderChips(
+        "pinChips",
+        [
+          ["", "Tất cả", scoped.length],
+          ["has_pin", "Đã thiết lập PIN", scoped.filter(a => Boolean(a.da_co_ma_pin)).length],
+          ["no_pin", "Chưa thiết lập PIN", scoped.filter(a => !a.da_co_ma_pin).length],
+        ],
+        DASH.pinFilter,
+        "pickPinFilter"
+      );
+
+      const q = (document.getElementById("pinAccSearch")?.value || "").trim().toLowerCase();
+      const rows = scoped.filter(a => {
+        if (DASH.pinFilter === "has_pin" && !a.da_co_ma_pin) return false;
+        if (DASH.pinFilter === "no_pin" && a.da_co_ma_pin) return false;
+        if (
+          q &&
+          ![a.ho_ten, a.ma_can_bo, a.ten_dang_nhap, a.email, a.ten_mon_hoc, a.danh_sach_khoi_ten].some(v =>
+            String(v || "").toLowerCase().includes(q)
+          )
+        ) {
+          return false;
+        }
+        return true;
+      });
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="ad-empty">${scoped.length ? "Không có tài khoản nào khớp bộ lọc mã PIN." : "Chưa có tài khoản giáo viên nào."}</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(a => {
+        const laToi = window.currentUser && String(a.ma_tai_khoan) === String(window.currentUser.ma_tai_khoan);
+        const s = trangThaiTaiKhoan(a);
+        const otpBadge = a.da_kich_hoat_otp
+          ? `<span class="ad-pill ok">Đã kích hoạt</span>`
+          : `<span class="ad-pill muted">Chưa kích hoạt</span>`;
+        const pinBadge = a.da_co_ma_pin
+          ? `<span class="ad-pill ok">Đã thiết lập (6 số)</span>`
+          : `<span class="ad-pill warn">Chưa thiết lập (đặt ngoài hệ thống)</span>`;
+
+        let chuyenMonHtml = "";
+        if (a.vai_tro !== "GIAO_VIEN") {
+          chuyenMonHtml = `<span class="ad-pill info">${escapeHtml(nhanVaiTro(a.vai_tro))}</span>`;
+        } else if (a.ten_mon_hoc) {
+          chuyenMonHtml = `
+            <div class="t-strong whitespace-nowrap">${escapeHtml(a.ten_mon_hoc)}</div>
+            <div class="t-muted t-xs whitespace-nowrap">${escapeHtml(a.danh_sach_khoi_ten || "")}</div>`;
+        } else {
+          chuyenMonHtml = `<span class="t-dim t-xs">Chưa phân công môn</span>`;
+        }
+
+        const btnDoiPin = `<button type="button" class="ad-btn" style="padding: 0.42rem 0.78rem; font-size: 0.82rem;" onclick="openAdminPinModal('${a.ma_tai_khoan}')">${a.da_co_ma_pin ? "Đổi mã PIN" : "Cấp mã PIN"}</button>`;
+        const btnMoDatLai = (a.da_co_ma_pin && !laToi)
+          ? `<button type="button" class="ad-btn-ghost" style="padding: 0.42rem 0.75rem; font-size: 0.82rem;" onclick="handleAdminResetTeacherPin('${a.ma_tai_khoan}')" title="Xóa mã PIN cũ để giáo viên tự đặt mã PIN mới ở màn hình ngoài hệ thống khi đăng nhập lại">Mở đặt lại PIN</button>`
+          : "";
+
+        return `
+          <tr>
+            <td>
+              <div class="t-strong whitespace-nowrap">${escapeHtml(a.ho_ten)}${laToi ? ' <span class="t-dim t-xs font-normal">(bạn)</span>' : ""}</div>
+              <div class="t-muted t-xs whitespace-nowrap"><span class="t-code">${escapeHtml(a.ma_can_bo)}</span></div>
+            </td>
+            <td class="whitespace-nowrap">
+              <div class="t-strong">${escapeHtml(a.ten_dang_nhap)}</div>
+              <div class="t-muted t-xs">${escapeHtml(a.email)}</div>
+            </td>
+            <td>${chuyenMonHtml}</td>
+            <td class="whitespace-nowrap">${otpBadge}</td>
+            <td class="whitespace-nowrap">${pinBadge}</td>
+            <td class="whitespace-nowrap">${s.html}</td>
+            <td class="text-right whitespace-nowrap">
+              <div class="inline-flex items-center justify-end gap-2">
+                ${btnDoiPin}
+                ${btnMoDatLai}
+              </div>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    function openAdminPinModal(maTaiKhoan) {
+      closeRowMenu();
+      const a = (DASH.accounts || []).find(x => String(x.ma_tai_khoan) === String(maTaiKhoan));
+      if (!a) return;
+
+      document.getElementById("apmMaTaiKhoan").value = a.ma_tai_khoan;
+      document.getElementById("apmTeacherSubtitle").textContent = `${a.ho_ten} (${a.ma_can_bo} · ${a.ten_dang_nhap})`;
+      document.getElementById("apmInfoName").textContent = `${a.ho_ten} (${a.ma_can_bo})`;
+      document.getElementById("apmInfoEmail").textContent = a.email || "—";
+      document.getElementById("apmInfoStatus").innerHTML = a.da_co_ma_pin
+        ? `<span class="ad-pill ok">Đã thiết lập (6 số)</span>`
+        : `<span class="ad-pill warn">Chưa thiết lập</span>`;
+
+      const alertEl = document.getElementById("adminPinAlert");
+      if (alertEl) {
+        alertEl.className = "hidden";
+        alertEl.textContent = "";
+      }
+
+      const inpNew = document.getElementById("apmPinNew");
+      const inpCfm = document.getElementById("apmPinConfirm");
+      const visBtn = document.getElementById("apmToggleVisBtn");
+      if (inpNew) {
+        inpNew.value = "";
+        inpNew.type = "password";
+      }
+      if (inpCfm) {
+        inpCfm.value = "";
+        inpCfm.type = "password";
+      }
+      if (visBtn) visBtn.textContent = "Hiện";
+
+      document.getElementById("adminPinModal")?.classList.remove("hidden");
+      setTimeout(() => inpNew?.focus(), 40);
+    }
+
+    function closeAdminPinModal() {
+      document.getElementById("adminPinModal")?.classList.add("hidden");
+    }
+
+    function toggleAdminPinVisibility(forceShow = null) {
+      const inpNew = document.getElementById("apmPinNew");
+      const inpCfm = document.getElementById("apmPinConfirm");
+      const visBtn = document.getElementById("apmToggleVisBtn");
+      if (!inpNew || !inpCfm) return;
+      const shouldShow = forceShow !== null ? Boolean(forceShow) : inpNew.type === "password";
+      inpNew.type = shouldShow ? "text" : "password";
+      inpCfm.type = shouldShow ? "text" : "password";
+      if (visBtn) visBtn.textContent = shouldShow ? "Ẩn" : "Hiện";
+    }
+
+    function generateRandomAdminPin() {
+      const arr = new Uint32Array(1);
+      window.crypto.getRandomValues(arr);
+      const pin6 = String(100000 + (arr[0] % 900000));
+      const inpNew = document.getElementById("apmPinNew");
+      const inpCfm = document.getElementById("apmPinConfirm");
+      if (inpNew) inpNew.value = pin6;
+      if (inpCfm) inpCfm.value = pin6;
+      toggleAdminPinVisibility(true);
+    }
+
+    async function handleSaveAdminPin(e) {
+      e.preventDefault();
+      const maTaiKhoan = document.getElementById("apmMaTaiKhoan").value;
+      const alertEl = document.getElementById("adminPinAlert");
+      const ma_pin_moi = (document.getElementById("apmPinNew")?.value || "").trim();
+      const xac_nhan_ma_pin_moi = (document.getElementById("apmPinConfirm")?.value || "").trim();
+
+      if (!/^\d{6}$/.test(ma_pin_moi)) {
+        alertEl.className = "ad-msg bad";
+        alertEl.textContent = "Mã PIN mới phải gồm đúng 6 chữ số (0-9).";
+        return;
+      }
+      if (ma_pin_moi !== xac_nhan_ma_pin_moi) {
+        alertEl.className = "ad-msg bad";
+        alertEl.textContent = "Mã PIN mới nhập lại không khớp.";
+        return;
+      }
+
+      const accTarget = (DASH.accounts || []).find(x => String(x.ma_tai_khoan) === String(maTaiKhoan));
+      const nhanTarget = accTarget ? `${accTarget.ho_ten} (${accTarget.ma_can_bo})` : "giáo viên";
+      const adminPin = await requestPinVerification(`Đổi / Cấp mã PIN 6 số cho ${nhanTarget}`);
+      if (!adminPin) return;
+
+      const btn = document.getElementById("apmSubmitBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Đang lưu...";
+      }
+      const r = await apiJson(`/api/accounts/${maTaiKhoan}/admin-set-pin`, {
+        method: "POST",
+        body: JSON.stringify({
+          ma_pin_moi,
+          xac_nhan_ma_pin_moi,
+          ma_pin: adminPin,
+        }),
+      });
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Lưu mã PIN mới";
+      }
+
+      if (!r.ok) {
+        if (!r.lockedOut && !r.idleExpired) {
+          alertEl.className = "ad-msg bad";
+          alertEl.textContent = r.msg || "Không thể cập nhật mã PIN mới.";
+        }
+        return;
+      }
+
+      closeAdminPinModal();
+      toast(r.data.message || `Đã cập nhật mã PIN 6 số cho ${nhanTarget}.`, "ok", 5000);
+      await Promise.all([loadAccounts(), loadLogs()]);
+    }
+
+    async function handleAdminResetTeacherPin(maTaiKhoan) {
+      closeRowMenu();
+      const a = (DASH.accounts || []).find(x => String(x.ma_tai_khoan) === String(maTaiKhoan));
+      if (!a) return;
+
+      const ok = await askConfirm(
+        "Mở đặt lại mã PIN cho giáo viên?",
+        `Hệ thống sẽ xóa mã PIN 6 số cũ của <b>${escapeHtml(a.ho_ten)}</b> (${escapeHtml(a.ma_can_bo)}) và thu hồi các phiên đang mở.<br><br>Ở lần đăng nhập tiếp theo, giáo viên sẽ tự đặt mã PIN 6 chữ số mới tại màn hình xác thực bên ngoài hệ thống.`,
+        "Tiếp tục nhập PIN Quản trị viên",
+        true
+      );
+      if (!ok) return;
+
+      const adminPin = await requestPinVerification(`Mở đặt lại mã PIN cho ${a.ho_ten} (${a.ma_can_bo})`);
+      if (!adminPin) return;
+
+      const r = await apiJson(`/api/accounts/${maTaiKhoan}/admin-reset-pin`, {
+        method: "POST",
+        body: JSON.stringify({ ma_pin: adminPin }),
+      });
+      if (!r.ok) {
+        if (!r.lockedOut && !r.idleExpired) {
+          toast(r.msg || "Không thể mở đặt lại mã PIN cho giáo viên.", "bad");
+        }
+        return;
+      }
+
+      toast(r.data.message || `Đã mở đặt lại mã PIN cho ${a.ho_ten}.`, "ok", 5500);
+      await Promise.all([loadAccounts(), loadLogs(), loadSessions()]);
+    }
+
     const timTaiKhoan = id => DASH.accounts.find(x => x.ma_tai_khoan === id) || { ho_ten: "tài khoản này" };
 
     async function handleClearTrustedIp(id) {
       closeRowMenu();
       const a = timTaiKhoan(id);
       if (!(await askConfirm("Quên thiết bị tin cậy?",
-        `Lần đăng nhập tới, <b>${escapeHtml(a.ho_ten)}</b> sẽ được coi như đăng nhập từ thiết bị lạ và phải nhập mã OTP 6 số.`, "Quên thiết bị"))) return;
-      const r = await apiJson(`/api/accounts/${id}/clear-trusted-ip`, { method: "POST" });
+        `Lần đăng nhập tới, <b>${escapeHtml(a.ho_ten)}</b> sẽ được coi như đăng nhập từ thiết bị lạ và phải nhập mã OTP 6 số.`, "Tiếp tục nhập PIN"))) return;
+      const pin = await requestPinVerification(`Quên thiết bị tin cậy: ${a.ho_ten}`);
+      if (!pin) return;
+      const r = await apiJson(`/api/accounts/${id}/clear-trusted-ip`, {
+        method: "POST",
+        body: JSON.stringify({ ma_pin: pin }),
+      });
       toast(r.ok ? `Đã quên thiết bị tin cậy của ${a.ho_ten}.` : (r.msg || "Thao tác thất bại."), r.ok ? "ok" : "bad");
       loadAccounts();
       loadLogs();
@@ -5466,10 +6250,27 @@
     async function handleReset2FA(id) {
       closeRowMenu();
       const a = timTaiKhoan(id);
-      if (!(await askConfirm("Đặt lại 2FA?",
-        `Dùng khi <b>${escapeHtml(a.ho_ten)}</b> mất hoặc đổi điện thoại. Mã cũ trên điện thoại sẽ ngừng hoạt động, các phiên đang mở bị đăng xuất và lần đăng nhập tới sẽ hiện mã QR mới để quét lại.`, "Đặt lại 2FA"))) return;
-      const r = await apiJson(`/api/accounts/${id}/reset-2fa`, { method: "POST" });
-      toast(r.ok ? (r.data.message || `Đã đặt lại 2FA cho ${a.ho_ten}.`) : (r.msg || "Thao tác thất bại."), r.ok ? "ok" : "bad", 6000);
+      if (!(await askConfirm("Đặt lại 2FA & Cấp lại mật khẩu mới?",
+        `Dùng khi <b>${escapeHtml(a.ho_ten)}</b> mất hoặc đổi điện thoại. Hệ thống sẽ hủy mã 2FA cũ, <b>cấp mật khẩu khởi tạo mới</b>, thu hồi toàn bộ phiên đang mở và yêu cầu cán bộ quét mã QR mới, đổi mật khẩu và đặt lại mã PIN ở lần đăng nhập tới.`, "Tiếp tục nhập PIN"))) return;
+      const pin = await requestPinVerification(`Đặt lại 2FA và cấp mật khẩu mới: ${a.ho_ten}`);
+      if (!pin) return;
+      const r = await apiJson(`/api/accounts/${id}/reset-2fa`, {
+        method: "POST",
+        body: JSON.stringify({ ma_pin: pin }),
+      });
+      if (!r.ok) {
+        toast(r.msg || "Thao tác thất bại.", "bad", 6000);
+      } else {
+        const msg = r.data.message || `Đã đặt lại 2FA và cấp mật khẩu mới cho ${a.ho_ten}.`;
+        toast(msg, "ok", 6000);
+        if (r.data.mat_khau_khoi_tao) {
+          await showSecret(
+            "Đặt lại 2FA & Cấp mật khẩu mới thành công",
+            `${escapeHtml(msg)}<br><span class="t-muted t-sm">Mật khẩu khởi tạo mới của <b>${escapeHtml(a.ho_ten)}</b> (hãy sao chép để bàn giao cho cán bộ):</span>`,
+            r.data.mat_khau_khoi_tao
+          );
+        }
+      }
       loadAccounts();
       loadLogs();
     }
@@ -5478,10 +6279,17 @@
       closeRowMenu();
       const a = timTaiKhoan(id);
       const dongY = kichHoat
-        ? await askConfirm("Kích hoạt lại tài khoản?", `<b>${escapeHtml(a.ho_ten)}</b> sẽ có thể đăng nhập trở lại.`, "Kích hoạt lại")
-        : await askConfirm("Ngừng hoạt động tài khoản?", `<b>${escapeHtml(a.ho_ten)}</b> sẽ không thể đăng nhập và mọi phiên đang mở sẽ bị đăng xuất ngay. Bạn có thể kích hoạt lại sau.`, "Ngừng hoạt động", true);
+        ? await askConfirm("Kích hoạt lại tài khoản?", `<b>${escapeHtml(a.ho_ten)}</b> sẽ có thể đăng nhập trở lại.`, "Tiếp tục nhập PIN")
+        : await askConfirm("Ngừng hoạt động tài khoản?", `<b>${escapeHtml(a.ho_ten)}</b> sẽ không thể đăng nhập và mọi phiên đang mở sẽ bị đăng xuất ngay. Bạn có thể kích hoạt lại sau.`, "Tiếp tục nhập PIN", true);
       if (!dongY) return;
-      const r = await apiJson(`/api/accounts/${id}/${kichHoat ? "activate" : "deactivate"}`, { method: "POST" });
+      const pin = await requestPinVerification(
+        kichHoat ? `Kích hoạt lại tài khoản: ${a.ho_ten}` : `Ngừng hoạt động tài khoản: ${a.ho_ten}`
+      );
+      if (!pin) return;
+      const r = await apiJson(`/api/accounts/${id}/${kichHoat ? "activate" : "deactivate"}`, {
+        method: "POST",
+        body: JSON.stringify({ ma_pin: pin }),
+      });
       toast(r.ok ? (r.data.message || (kichHoat ? `Đã kích hoạt lại ${a.ho_ten}.` : `Đã ngừng hoạt động tài khoản ${a.ho_ten}.`)) : (r.msg || "Thao tác thất bại."), r.ok ? "ok" : "bad", 6000);
       loadAccounts();
       loadLogs();
@@ -5491,14 +6299,21 @@
       closeRowMenu();
       const a = timTaiKhoan(id);
       const dongY = capLaiMatKhau
-        ? await askConfirm("Cấp lại mật khẩu tạm thời?", `Hệ thống sẽ tạo mật khẩu tạm thời mới cho <b>${escapeHtml(a.ho_ten)}</b>. Mật khẩu cũ hết hiệu lực và các phiên đang mở bị đăng xuất.`, "Cấp lại mật khẩu tạm thời")
-        : await askConfirm("Mở khóa tài khoản?", `<b>${escapeHtml(a.ho_ten)}</b> sẽ đăng nhập lại được ngay, không cần chờ hết thời gian khóa.`, "Mở khóa");
+        ? await askConfirm("Cấp lại mật khẩu tạm thời?", `Hệ thống sẽ tạo mật khẩu tạm thời mới cho <b>${escapeHtml(a.ho_ten)}</b>. Mật khẩu cũ hết hiệu lực và các phiên đang mở bị đăng xuất.`, "Tiếp tục nhập PIN")
+        : await askConfirm("Mở khóa tài khoản?", `<b>${escapeHtml(a.ho_ten)}</b> sẽ đăng nhập lại được ngay, không cần chờ hết thời gian khóa.`, "Tiếp tục nhập PIN");
       if (!dongY) return;
-      const r = await apiJson(`/api/accounts/${id}/unlock`, { method: "POST", body: JSON.stringify({ cap_lai_mat_khau_tam: !!capLaiMatKhau }) });
+      const pin = await requestPinVerification(
+        capLaiMatKhau ? `Cấp lại mật khẩu tạm thời: ${a.ho_ten}` : `Mở khóa tài khoản: ${a.ho_ten}`
+      );
+      if (!pin) return;
+      const r = await apiJson(`/api/accounts/${id}/unlock`, {
+        method: "POST",
+        body: JSON.stringify({ cap_lai_mat_khau_tam: !!capLaiMatKhau, ma_pin: pin }),
+      });
       if (!r.ok) {
         toast(r.msg || "Thao tác thất bại.", "bad", 6000);
       } else if (r.data.mat_khau_khoi_tao) {
-        const msg = r.data.message || "Cấp lại mật khẩu tạm thời thành công! Mật khẩu khởi tạo ngẫu nhiên mới đã được gửi đến email nội bộ của cán bộ.";
+        const msg = r.data.message || "Cấp lại mật khẩu tạm thời thành công! Mật khẩu khởi tạo ngẫu nhiên mới đã được gửi đến email của cán bộ.";
         toast(msg, "ok", 6000);
         await showSecret(
           "Cấp lại mật khẩu tạm thời thành công",
@@ -5521,7 +6336,7 @@
       }
       const ok = await openAdDialog({
         title: "Tạm khóa tài khoản",
-        okText: "Tạm khóa ngay",
+        okText: "Tiếp tục nhập PIN",
         danger: true,
         html: `
           <p class="mb-3">Tạm khóa tài khoản của <b>${escapeHtml(a.ho_ten)}</b> (${escapeHtml(a.ma_can_bo || a.ten_dang_nhap || "")}) và thu hồi toàn bộ phiên đăng nhập hiện hành:</p>
@@ -5537,11 +6352,14 @@
       if (!ok) return;
       const sel = document.getElementById("rowTempLockMinutes");
       const soPhut = sel ? parseInt(sel.value, 10) : 15;
+      const pin = await requestPinVerification(`Tạm khóa tài khoản: ${a.ho_ten}`);
+      if (!pin) return;
       const r = await apiJson(`/api/accounts/${id}/temp-lock`, {
         method: "POST",
         body: JSON.stringify({
           so_phut: Number.isNaN(soPhut) ? 15 : soPhut,
           ly_do: "Tạm khóa trực tiếp từ bảng Quản lý tài khoản",
+          ma_pin: pin,
         }),
       });
       if (!r.ok) {
@@ -5564,15 +6382,18 @@
         const ok = await askConfirm(
           "Gỡ chặn địa chỉ IP?",
           `Cho phép các thiết bị sử dụng địa chỉ IP <b>${escapeHtml(targetIp)}</b> (gắn với tài khoản <b>${escapeHtml(a.ho_ten)}</b>) truy cập trở lại hệ thống?`,
-          "Gỡ chặn IP",
+          "Tiếp tục nhập PIN",
           false
         );
         if (!ok) return;
+        const pin = await requestPinVerification(`Gỡ chặn địa chỉ IP: ${targetIp} (${a.ho_ten})`);
+        if (!pin) return;
         const r = await apiJson("/api/ips/unblock", {
           method: "POST",
           body: JSON.stringify({
             dia_chi_ip: targetIp,
             danh_sach_ip: [a.ipv4_gan_nhat, a.ip_thiet_bi_gan_nhat].filter(Boolean),
+            ma_pin: pin,
           }),
         });
         if (!r.ok) {
@@ -5584,15 +6405,18 @@
         const ok = await askConfirm(
           "Chặn địa chỉ IP truy cập?",
           `Xác nhận chặn địa chỉ IP <b>${escapeHtml(targetIp)}</b> của tài khoản <b>${escapeHtml(a.ho_ten)}</b>? Toàn bộ phiên làm việc của giáo viên từ địa chỉ IP này sẽ bị thu hồi ngay lập tức.`,
-          "Chặn địa chỉ IP",
+          "Tiếp tục nhập PIN",
           true
         );
         if (!ok) return;
+        const pin = await requestPinVerification(`Chặn địa chỉ IP: ${targetIp} (${a.ho_ten})`);
+        if (!pin) return;
         const r = await apiJson("/api/ips/block", {
           method: "POST",
           body: JSON.stringify({
             dia_chi_ip: targetIp,
             ly_do: `Chặn từ bảng Quản lý tài khoản (${a.ho_ten} - ${a.ma_can_bo || a.ten_dang_nhap || ""})`,
+            ma_pin: pin,
           }),
         });
         if (!r.ok) {
@@ -5792,7 +6616,7 @@
         if (hintEl) {
           hintEl.textContent = coQuyenDeChinhThuc
             ? "mà bạn có thể thêm mới, xem chi tiết và tải về."
-            : "mà bạn có thể xem chi tiết và tải về.";
+            : "đã đến giờ thi và các đáp án đã được mở mà bạn có thể xem chi tiết và tải về.";
         }
       }
       renderDeOnTap();
@@ -5839,9 +6663,15 @@
             </td>
           </tr>`;
       } else {
+        const myId = window.currentUser?.ma_tai_khoan;
         tbody.innerHTML = pageItems.map((item, idx) => {
           const stt = startIdx + idx + 1;
           const id = escapeHtml(item.ma_de_on_tap);
+          const laDeCuaToi = Boolean(
+            item.la_nguoi_tao === true || (myId && String(item.nguoi_tao) === String(myId))
+          );
+          const tenNguoiTai = item.ho_ten_nguoi_tao || item.nguoi_tai_len_hien_thi || "—";
+          const monNguoiTai = item.ten_mon_ngan || item.ten_mon_hoc || "";
           return `
             <tr class="hover:bg-slate-50/80 transition">
               <td class="py-4 px-4 text-center text-slate-600 font-medium">${stt}</td>
@@ -5863,8 +6693,12 @@
               <td class="py-4 px-4 text-slate-500 text-[0.9rem] whitespace-nowrap">
                 ${escapeHtml(item.thoi_gian_tai_len || "")}
               </td>
-              <td class="py-4 px-4 ${item.da_chinh_sua ? 'text-slate-600 font-medium' : 'text-slate-400 italic'} text-[0.9rem] whitespace-nowrap">
-                ${escapeHtml(item.da_chinh_sua ? (item.cap_nhat_lan_cuoi || "Chưa có chỉnh sửa nào") : "Chưa có chỉnh sửa nào")}
+              <td class="py-4 px-4 whitespace-nowrap">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-semibold text-slate-800">${escapeHtml(tenNguoiTai)}</span>
+                  ${laDeCuaToi ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[0.68rem] font-bold bg-blue-50 text-[#2563eb] border border-blue-200">Của bạn</span>' : ""}
+                </div>
+                ${monNguoiTai ? `<div class="text-xs text-slate-400 mt-0.5">GV. ${escapeHtml(monNguoiTai)}</div>` : ""}
               </td>
               <td class="py-4 px-4 text-center whitespace-nowrap">
                 <div class="inline-flex items-center justify-center gap-1.5">
@@ -5951,67 +6785,24 @@
       renderDeOnTap();
     }
 
-    // ---------- CƠ CHẾ XÁC MINH / THIẾT LẬP / QUÊN MÃ PIN 6 SỐ ----------
+    // ---------- CƠ CHẾ XÁC MINH MÃ PIN 6 SỐ (ĐẶT PIN LẦN ĐẦU NGOÀI HỆ THỐNG; ĐỔI PIN LIÊN HỆ QUẢN TRỊ VIÊN) ----------
     const PIN_STATE = {
       resolve: null,
       actionLabel: "",
-      manageOnly: false,
-      mode: "VERIFY",
     };
 
     function resetPinModalFields() {
-      ["pinVerifyInput", "pinSetupNew", "pinSetupConfirm", "pinResetCode", "pinResetNew", "pinResetConfirm"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = "";
-      });
+      const inp = document.getElementById("pinVerifyInput");
+      if (inp) inp.value = "";
       hideAlert("pinModalAlert");
-      document.getElementById("pinForgotFallbackWrap")?.classList.add("hidden");
-      const fbCode = document.getElementById("pinForgotFallbackCode");
-      if (fbCode) fbCode.textContent = "";
+      document.getElementById("pinContactAdminNotice")?.classList.add("hidden");
     }
 
-    function switchPinModalMode(mode) {
-      PIN_STATE.mode = mode;
-      hideAlert("pinModalAlert");
-
-      const verifyPanel = document.getElementById("pinVerifyPanel");
-      const setupPanel = document.getElementById("pinSetupPanel");
-      const forgotPanel = document.getElementById("pinForgotPanel");
-      const titleEl = document.getElementById("pinModalTitle");
-      const subEl = document.getElementById("pinModalSubtitle");
-
-      verifyPanel?.classList.toggle("hidden", mode !== "VERIFY");
-      setupPanel?.classList.toggle("hidden", mode !== "SETUP");
-      forgotPanel?.classList.toggle("hidden", mode !== "FORGOT");
-
-      if (mode === "SETUP") {
-        if (titleEl) titleEl.textContent = "Thiết lập mã PIN 6 số";
-        if (subEl) subEl.textContent = "Khởi tạo mã PIN bảo mật cho tài khoản của bạn";
-        setTimeout(() => document.getElementById("pinSetupNew")?.focus(), 40);
-      } else if (mode === "FORGOT") {
-        if (titleEl) titleEl.textContent = "Quên / Đổi mã PIN 6 số";
-        if (subEl) subEl.textContent = "Nhận mã xác nhận qua email nội bộ để đặt lại mã PIN";
-        const emailEl = document.getElementById("pinForgotEmailText");
-        if (emailEl) emailEl.textContent = window.currentUser?.email || "Email nội bộ";
-        const backBtn = document.getElementById("pinForgotBackBtn");
-        if (backBtn) {
-          if (PIN_STATE.manageOnly || !window.currentUser?.da_co_ma_pin) {
-            backBtn.textContent = "Đóng";
-            backBtn.onclick = () => closePinModal(null);
-          } else {
-            backBtn.textContent = "Quay lại";
-            backBtn.onclick = () => switchPinModalMode("VERIFY");
-          }
-        }
-        setTimeout(() => document.getElementById("pinResetCode")?.focus(), 40);
-      } else {
-        if (titleEl) titleEl.textContent = "Xác minh mã PIN 6 số";
-        if (subEl) subEl.textContent = "Xác thực bảo mật cho thao tác quan trọng trên hệ thống";
-        setTimeout(() => document.getElementById("pinVerifyInput")?.focus(), 40);
-      }
+    function togglePinContactAdminNotice() {
+      document.getElementById("pinContactAdminNotice")?.classList.toggle("hidden");
     }
 
-    function requestPinVerification(actionLabel = "Xác minh thao tác tài liệu") {
+    function requestPinVerification(actionLabel = "Xác minh thao tác bảo mật") {
       closeRowMenu();
       closeOnTapRowMenu();
       closeDeThiRowMenu();
@@ -6022,40 +6813,26 @@
         prev(null);
       }
 
+      if (window.currentUser && window.currentUser.da_co_ma_pin === false) {
+        openExternalPinSetupScreen(
+          window.currentUser,
+          "Vui lòng thiết lập mã PIN bảo mật 6 chữ số ở bước xác thực bên ngoài trước khi thao tác trong hệ thống."
+        );
+        return Promise.resolve(null);
+      }
+
       PIN_STATE.actionLabel = actionLabel;
-      PIN_STATE.manageOnly = false;
       resetPinModalFields();
 
       const descEl = document.getElementById("pinActionDesc");
       if (descEl) descEl.textContent = actionLabel;
 
-      const hasPin = Boolean(window.currentUser?.da_co_ma_pin);
-      switchPinModalMode(hasPin ? "VERIFY" : "SETUP");
       document.getElementById("pinModal")?.classList.remove("hidden");
+      setTimeout(() => document.getElementById("pinVerifyInput")?.focus(), 40);
 
       return new Promise(resolve => {
         PIN_STATE.resolve = resolve;
       });
-    }
-
-    function openPinManageModal() {
-      closeRowMenu();
-      closeOnTapRowMenu();
-      closeDeThiRowMenu();
-
-      if (PIN_STATE.resolve) {
-        const prev = PIN_STATE.resolve;
-        PIN_STATE.resolve = null;
-        prev(null);
-      }
-
-      PIN_STATE.actionLabel = "Quản lý mã PIN bảo mật";
-      PIN_STATE.manageOnly = true;
-      resetPinModalFields();
-
-      const hasPin = Boolean(window.currentUser?.da_co_ma_pin);
-      switchPinModalMode(hasPin ? "FORGOT" : "SETUP");
-      document.getElementById("pinModal")?.classList.remove("hidden");
     }
 
     function closePinModal(resolvedPin = null) {
@@ -6091,10 +6868,19 @@
           const msg = typeof data.detail === "string"
             ? data.detail
             : (data.detail?.message || "Mã PIN xác minh không chính xác.");
+          if (code === "HONEYTRAP_ACCOUNT_LOCKED" || code === "ACCOUNT_LOCKED") {
+            forceLockoutToLoginScreen(msg);
+            return;
+          }
+          if (code === "IDLE_SESSION_EXPIRED") {
+            closePinModal(null);
+            handleSessionError(data);
+            return;
+          }
           if (code === "PIN_SETUP_REQUIRED") {
             if (window.currentUser) window.currentUser.da_co_ma_pin = false;
-            switchPinModalMode("SETUP");
-            showAlert("pinModalAlert", msg, "warning");
+            closePinModal(null);
+            await openExternalPinSetupScreen(window.currentUser, msg);
             return;
           }
           showAlert("pinModalAlert", msg, "error");
@@ -6113,134 +6899,6 @@
       }
     }
 
-    async function handlePinSetupSubmit(e) {
-      e.preventDefault();
-      hideAlert("pinModalAlert");
-      const pinNew = (document.getElementById("pinSetupNew")?.value || "").trim();
-      const pinConfirm = (document.getElementById("pinSetupConfirm")?.value || "").trim();
-
-      if (!/^\d{6}$/.test(pinNew)) {
-        showAlert("pinModalAlert", "Mã PIN bảo mật phải gồm đúng 6 chữ số (0-9).");
-        return;
-      }
-      if (pinNew !== pinConfirm) {
-        showAlert("pinModalAlert", "Mã PIN xác nhận nhập lại không khớp.");
-        return;
-      }
-
-      const btn = document.getElementById("pinSetupSubmitBtn");
-      if (btn) btn.disabled = true;
-      try {
-        const res = await fetch("/api/auth/pin/setup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ma_pin: pinNew, xac_nhan_ma_pin: pinConfirm }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          const msg = typeof data.detail === "string"
-            ? data.detail
-            : (data.detail?.message || "Không thể thiết lập mã PIN.");
-          showAlert("pinModalAlert", msg, "error");
-          return;
-        }
-        if (window.currentUser) window.currentUser.da_co_ma_pin = true;
-        toast(data.message || "Thiết lập mã PIN 6 số thành công!", "ok");
-        closePinModal(PIN_STATE.manageOnly ? null : pinNew);
-      } catch (err) {
-        showAlert("pinModalAlert", "Lỗi kết nối máy chủ: " + err.message, "error");
-      } finally {
-        if (btn) btn.disabled = false;
-      }
-    }
-
-    async function handleSendPinForgotEmail() {
-      hideAlert("pinModalAlert");
-      const btn = document.getElementById("btnSendPinResetCode");
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "Đang gửi mã xác nhận...";
-      }
-      try {
-        const res = await fetch("/api/auth/pin/forgot", { method: "POST" });
-        const data = await res.json();
-        if (!res.ok) {
-          const msg = typeof data.detail === "string"
-            ? data.detail
-            : (data.detail?.message || "Không thể gửi mã xác nhận qua email.");
-          showAlert("pinModalAlert", msg, "error");
-          return;
-        }
-
-        if (data.email_sent === false && data.ma_xac_nhan_ban_giao) {
-          document.getElementById("pinForgotFallbackCode").textContent = data.ma_xac_nhan_ban_giao;
-          document.getElementById("pinForgotFallbackWrap")?.classList.remove("hidden");
-          showAlert("pinModalAlert", data.message, "warning");
-        } else {
-          document.getElementById("pinForgotFallbackWrap")?.classList.add("hidden");
-          showAlert("pinModalAlert", data.message || "Đã gửi mã xác nhận về email nội bộ.", "success");
-        }
-        document.getElementById("pinResetCode")?.focus();
-      } catch (err) {
-        showAlert("pinModalAlert", "Lỗi kết nối máy chủ: " + err.message, "error");
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "Gửi lại mã xác nhận về Email";
-        }
-      }
-    }
-
-    async function handlePinResetSubmit(e) {
-      e.preventDefault();
-      hideAlert("pinModalAlert");
-      const code = (document.getElementById("pinResetCode")?.value || "").trim();
-      const pinNew = (document.getElementById("pinResetNew")?.value || "").trim();
-      const pinConfirm = (document.getElementById("pinResetConfirm")?.value || "").trim();
-
-      if (!/^\d{6}$/.test(code)) {
-        showAlert("pinModalAlert", "Vui lòng nhập đúng mã xác nhận gồm 6 chữ số từ email.");
-        return;
-      }
-      if (!/^\d{6}$/.test(pinNew)) {
-        showAlert("pinModalAlert", "Mã PIN mới phải gồm đúng 6 chữ số (0-9).");
-        return;
-      }
-      if (pinNew !== pinConfirm) {
-        showAlert("pinModalAlert", "Mã PIN mới nhập lại không khớp.");
-        return;
-      }
-
-      const btn = document.getElementById("pinResetSubmitBtn");
-      if (btn) btn.disabled = true;
-      try {
-        const res = await fetch("/api/auth/pin/reset", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ma_xac_nhan: code,
-            ma_pin_moi: pinNew,
-            xac_nhan_ma_pin_moi: pinConfirm,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          const msg = typeof data.detail === "string"
-            ? data.detail
-            : (data.detail?.message || "Không thể đặt lại mã PIN.");
-          showAlert("pinModalAlert", msg, "error");
-          return;
-        }
-        if (window.currentUser) window.currentUser.da_co_ma_pin = true;
-        toast(data.message || "Đặt lại mã PIN 6 số thành công!", "ok");
-        closePinModal(PIN_STATE.manageOnly ? null : pinNew);
-      } catch (err) {
-        showAlert("pinModalAlert", "Lỗi kết nối máy chủ: " + err.message, "error");
-      } finally {
-        if (btn) btn.disabled = false;
-      }
-    }
-
     async function triggerProtectedFileDownload(url, pin, fallbackFilename = "Tai_Lieu.pdf") {
       try {
         const res = await fetch(url, {
@@ -6249,9 +6907,18 @@
         if (!res.ok) {
           let data = {};
           try { data = await res.json(); } catch (_) {}
+          const code = data?.detail?.code || "";
           const msg = typeof data.detail === "string"
             ? data.detail
             : (data.detail?.message || "Không thể tải xuống tài liệu.");
+          if (code === "HONEYTRAP_ACCOUNT_LOCKED" || code === "ACCOUNT_LOCKED") {
+            forceLockoutToLoginScreen(msg);
+            return false;
+          }
+          if (code === "IDLE_SESSION_EXPIRED") {
+            handleSessionError(data);
+            return false;
+          }
           await openAdDialog({
             title: "Cảnh báo An ninh Tài liệu",
             html: `<p class="text-rose-600 font-semibold">${escapeHtml(msg)}</p>`,
@@ -6381,8 +7048,9 @@
       }
     }
 
-    function openOnTapFormModal(editMaDe = null) {
+    async function openOnTapFormModal(editMaDe = null) {
       hideAlert("otFormAlert");
+      window._preVerifiedOnTapEditPin = null;
       const fileInp = document.getElementById("otFileInput");
       if (fileInp) fileInp.value = "";
       updateSelectedOnTapFile();
@@ -6394,6 +7062,10 @@
           toast("Bạn chỉ có quyền xem tài liệu đề ôn tập của giáo viên khác, không được phép chỉnh sửa.", "bad");
           return;
         }
+        const pin = await requestPinVerification(`Chỉnh sửa / Cập nhật đề ôn tập: ${item.ten_de_on_tap}`);
+        if (!pin) return;
+        window._preVerifiedOnTapEditPin = { id: String(item.ma_de_on_tap), pin };
+
         document.getElementById("otEditId").value = String(item.ma_de_on_tap);
         document.getElementById("otFormModalTitle").textContent = "Chỉnh sửa / Cập nhật đề ôn tập";
         document.getElementById("otTenDe").value = item.ten_de_on_tap || "";
@@ -6418,6 +7090,7 @@
     }
 
     function closeOnTapFormModal() {
+      window._preVerifiedOnTapEditPin = null;
       document.getElementById("onTapFormModal")?.classList.add("hidden");
     }
 
@@ -6441,11 +7114,21 @@
         return;
       }
 
-      const pin = await requestPinVerification(
-        editId
-          ? `Cập nhật đề ôn tập: ${tenDe}`
-          : `Tải đề ôn tập mới lên hệ thống: ${tenDe}`
-      );
+      let pin = null;
+      if (
+        editId &&
+        window._preVerifiedOnTapEditPin &&
+        String(window._preVerifiedOnTapEditPin.id) === String(editId) &&
+        window._preVerifiedOnTapEditPin.pin
+      ) {
+        pin = window._preVerifiedOnTapEditPin.pin;
+      } else {
+        pin = await requestPinVerification(
+          editId
+            ? `Cập nhật đề ôn tập: ${tenDe}`
+            : `Tải đề ôn tập mới lên hệ thống: ${tenDe}`
+        );
+      }
       if (!pin) return;
 
       const fd = new FormData();
@@ -6466,7 +7149,15 @@
         const res = await fetch(url, { method, body: fd });
         const data = await res.json();
         if (!res.ok) {
+          const code = data?.detail?.code || "";
           const msg = typeof data.detail === "string" ? data.detail : (data.detail?.message || "Không thể lưu đề ôn tập.");
+          if (code === "HONEYTRAP_ACCOUNT_LOCKED" || code === "ACCOUNT_LOCKED") {
+            forceLockoutToLoginScreen(msg);
+            return;
+          }
+          if (code.startsWith("PIN_")) {
+            window._preVerifiedOnTapEditPin = null;
+          }
           showAlert("otFormAlert", msg, "error");
           return;
         }
@@ -6570,13 +7261,18 @@
       const ok = await askConfirm(
         "Xóa đề ôn tập?",
         `Bạn có chắc chắn muốn xóa đề <b>${escapeHtml(item.ten_de_on_tap)}</b> khỏi Kho đề ôn tập không?`,
-        "Xóa đề",
+        "Tiếp tục nhập PIN",
         true
       );
       if (!ok) return;
-      const r = await apiJson(`/api/de-on-tap/${maDe}`, { method: "DELETE" });
+      const pin = await requestPinVerification(`Xóa đề ôn tập: ${item.ten_de_on_tap}`);
+      if (!pin) return;
+      const r = await apiJson(`/api/de-on-tap/${maDe}`, {
+        method: "DELETE",
+        headers: { "X-Pin-Code": pin },
+      });
       if (!r.ok) {
-        toast(r.msg || "Không thể xóa đề ôn tập.", "bad");
+        if (!r.lockedOut) toast(r.msg || "Không thể xóa đề ôn tập.", "bad");
         return;
       }
       toast(r.data.message || "Đã xóa đề ôn tập.", "ok");
@@ -6656,7 +7352,7 @@
       if (hintEl) {
         hintEl.textContent = coQuyenDeChinhThuc
           ? "mà bạn có thể thêm mới, xem chi tiết và tải về."
-          : "mà bạn có thể xem chi tiết và tải về.";
+          : "đã đến giờ thi và các đáp án đã được mở mà bạn có thể xem chi tiết và tải về.";
       }
       syncNamHocFilterOptions(TP.deThi);
       renderDeThi();
@@ -6747,7 +7443,10 @@
 
       const tbody = document.getElementById("deThiTableBody");
       if (!pageItems.length) {
-        tbody.innerHTML = `<tr><td colspan="10" class="py-10 text-center text-slate-400 text-sm">Không có kỳ thi / tài liệu nào phù hợp với bộ lọc hiện tại.</td></tr>`;
+        const emptyMsg = coQuyenThemDeThi()
+          ? "Không có kỳ thi / tài liệu nào phù hợp với bộ lọc hiện tại."
+          : "Hiện chưa có đề thi nào đã đến giờ thi hoặc đáp án đã được mở phù hợp với bộ lọc hiện tại.";
+        tbody.innerHTML = `<tr><td colspan="10" class="py-10 text-center text-slate-400 text-sm">${escapeHtml(emptyMsg)}</td></tr>`;
       } else {
         const myId = window.currentUser?.ma_tai_khoan;
         tbody.innerHTML = pageItems.map((item, idx) => {
@@ -7013,7 +7712,7 @@
       const item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi));
       const url = `/api/de-thi/${maDeThi}/file?mode=${mode}`;
 
-      if (mode === "attachment" && !item?.dang_niem_phong) {
+      if (mode === "attachment" && !item?.dang_niem_phong && item?.loai_de !== "DE_MOI") {
         const phanLoai = item?.loai || "Đề thi";
         const pin = await requestPinVerification(
           `Tải xuống ${phanLoai.toLowerCase()}: ${item?.ten_de_thi || ""}`
@@ -7024,7 +7723,7 @@
           pin,
           item?.ten_tep_goc || "De_Thi.pdf"
         );
-        if (!ok) await loadDeThi();
+        if (!ok && window.currentUser) await loadDeThi();
         return;
       }
 
@@ -7032,9 +7731,14 @@
       if (!res.ok) {
         let data = {};
         try { data = await res.json(); } catch (_) {}
+        const code = data?.detail?.code || "";
         const msg = typeof data.detail === "string"
           ? data.detail
           : (data.detail?.message || "Truy cập tài liệu thi bị từ chối.");
+        if (code === "HONEYTRAP_ACCOUNT_LOCKED" || code === "ACCOUNT_LOCKED") {
+          forceLockoutToLoginScreen(msg);
+          return;
+        }
         await openAdDialog({
           title: "Cảnh báo An ninh Kho đề thi",
           html: `<p class="text-rose-600 font-semibold">${escapeHtml(msg)}</p>`,
@@ -7088,7 +7792,8 @@
       }
     }
 
-    function openDeThiFormModal(editMaDeThi = null) {
+    async function openDeThiFormModal(editMaDeThi = null) {
+      window._preVerifiedDeThiEditPin = null;
       if (!coQuyenThemDeThi()) {
         toast("Tài khoản của bạn không có quyền thêm hoặc chỉnh sửa đề thi chính thức.", "bad");
         return;
@@ -7100,6 +7805,13 @@
       if (editMaDeThi && (!editItem || !coQuyenSuaDeThi(editItem))) {
         toast("Bạn không có quyền chỉnh sửa tài liệu này (hoặc tài liệu đang trong thời gian niêm phong).", "bad");
         return;
+      }
+      if (editItem) {
+        const pin = await requestPinVerification(
+          `Chỉnh sửa ${(editItem.loai || "Đề thi").toLowerCase()}: ${editItem.ten_de_thi}`
+        );
+        if (!pin) return;
+        window._preVerifiedDeThiEditPin = { id: String(editItem.ma_de_thi), pin };
       }
 
       const tenMon = TP.monHoc?.ten_mon_ngan || TP.monHoc?.ten_mon_hoc || "Toán";
@@ -7162,6 +7874,7 @@
     }
 
     function closeDeThiFormModal() {
+      window._preVerifiedDeThiEditPin = null;
       document.getElementById("deThiCreateView")?.classList.add("hidden");
       document.getElementById("deThiListView")?.classList.remove("hidden");
     }
@@ -7191,11 +7904,21 @@
         return;
       }
 
-      const pin = await requestPinVerification(
-        editId
-          ? `Cập nhật ${phanLoai.toLowerCase()}: ${tenDe}`
-          : `Tải ${phanLoai.toLowerCase()} mới lên hệ thống: ${tenDe}`
-      );
+      let pin = null;
+      if (
+        editId &&
+        window._preVerifiedDeThiEditPin &&
+        String(window._preVerifiedDeThiEditPin.id) === String(editId) &&
+        window._preVerifiedDeThiEditPin.pin
+      ) {
+        pin = window._preVerifiedDeThiEditPin.pin;
+      } else {
+        pin = await requestPinVerification(
+          editId
+            ? `Cập nhật ${phanLoai.toLowerCase()}: ${tenDe}`
+            : `Tải ${phanLoai.toLowerCase()} mới lên hệ thống: ${tenDe}`
+        );
+      }
       if (!pin) return;
 
       const fd = new FormData();
@@ -7222,9 +7945,17 @@
         const res = await fetch(url, { method, body: fd });
         const data = await res.json();
         if (!res.ok) {
+          const code = data?.detail?.code || "";
           const msg = typeof data.detail === "string"
             ? data.detail
             : (data.detail?.message || "Không thể lưu thông tin lịch thi và tài liệu.");
+          if (code === "HONEYTRAP_ACCOUNT_LOCKED" || code === "ACCOUNT_LOCKED") {
+            forceLockoutToLoginScreen(msg);
+            return;
+          }
+          if (code.startsWith("PIN_")) {
+            window._preVerifiedDeThiEditPin = null;
+          }
           showAlert("dtFormAlert", msg);
           return;
         }
@@ -7241,7 +7972,7 @@
     async function openDeThiDetailModal(maDeThi) {
       const r = await apiJson(`/api/de-thi/${maDeThi}`);
       if (!r.ok) {
-        toast(r.msg || "Không thể tải thông tin chi tiết đề thi.", "bad");
+        if (!r.lockedOut) toast(r.msg || "Không thể tải thông tin chi tiết đề thi.", "bad");
         return;
       }
       const d = r.data.item;
@@ -7362,13 +8093,18 @@
       const ok = await askConfirm(
         "Xóa lịch thi & tài liệu?",
         `Bạn có chắc chắn muốn xóa <b>${escapeHtml(item.ten_de_thi)}</b> (${escapeHtml(item.loai || "Đề thi")} · ${escapeHtml(item.ten_ky_thi || item.ten_lich_thi || "")}) khỏi hệ thống không?`,
-        "Xóa tài liệu",
+        "Tiếp tục nhập PIN",
         true
       );
       if (!ok) return;
-      const r = await apiJson(`/api/de-thi/${maDeThi}`, { method: "DELETE" });
+      const pin = await requestPinVerification(`Xóa ${(item.loai || "Đề thi").toLowerCase()}: ${item.ten_de_thi}`);
+      if (!pin) return;
+      const r = await apiJson(`/api/de-thi/${maDeThi}`, {
+        method: "DELETE",
+        headers: { "X-Pin-Code": pin },
+      });
       if (!r.ok) {
-        toast(r.msg || "Không thể xóa tài liệu thi.", "bad");
+        if (!r.lockedOut) toast(r.msg || "Không thể xóa tài liệu thi.", "bad");
         return;
       }
       toast(r.data.message || "Đã xóa lịch thi và tài liệu.", "ok");
@@ -7397,7 +8133,9 @@
       closeDeThiFormModal();
       if (!document.getElementById("adDialog").classList.contains("hidden")) closeAdDialog(false);
       else if (!document.getElementById("logDetailModal").classList.contains("hidden")) closeLogDetailModal();
+      else if (!document.getElementById("adminPinModal")?.classList.contains("hidden")) closeAdminPinModal();
       else if (!document.getElementById("permModal").classList.contains("hidden")) closePermModal();
+      else if (!document.getElementById("gmailModal")?.classList.contains("hidden")) closeGmailStatusModal();
       else closeCreateModal();
     });
     window.addEventListener("scroll", () => { closeRowMenu(); closeOnTapRowMenu(); closeDeThiRowMenu(); }, true);
@@ -7413,6 +8151,7 @@
       setupOtpInputs(".ft-otp-input");
       setupOtpInputs(".v-otp-input");
       ensureIpFirewallWatcher();
+      initIdleSessionWatcher();
 
       if (await checkAndEnforceIpFirewall()) {
         return;
@@ -7434,6 +8173,15 @@
         const errData = await res.json().catch(() => ({}));
         if (errData?.detail?.code === "IP_BLOCKED") {
           renderAndShowIpBlockedScreen(errData.detail);
+          return;
+        }
+        if (errData?.detail?.code === "IDLE_SESSION_EXPIRED") {
+          showScreen("LOGIN");
+          showAlert(
+            "loginAlert",
+            errData?.detail?.message || "Phiên làm việc đã tự động đăng xuất do màn hình không có thao tác trong 5 phút. Vui lòng đăng nhập lại.",
+            "warning"
+          );
           return;
         }
       } catch (_) {}

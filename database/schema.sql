@@ -32,8 +32,10 @@ CREATE TABLE IF NOT EXISTS TaiKhoan (
     ma_pin               VARCHAR(255) NULL,
     ma_xac_nhan_pin      VARCHAR(255) NULL,
     han_xac_nhan_pin     TIMESTAMPTZ NULL,
-    -- Ràng buộc kiểm tra đuôi email nội bộ của trường THPT Hoàng Văn Thụ
-    CONSTRAINT chk_taikhoan_email_domain CHECK (email LIKE '%@thpthoangvanthu.edu.vn'),
+    -- Ràng buộc kiểm tra đuôi email giáo viên/cán bộ trường THPT Hoàng Văn Thụ
+    CONSTRAINT chk_taikhoan_email_domain CHECK (
+        email ~* '^[a-z0-9]+(\.[a-z0-9]+)*\.(thpthoangvanthu|thtphoangvanthu)@gmail\.com$'
+    ),
     -- Ràng buộc kiểm tra công thức mã cán bộ "Tên viết tắt vai trò + 7 số ngẫu nhiên"
     CONSTRAINT chk_taikhoan_ma_can_bo CHECK (
         ma_can_bo ~ '^(GV|AD|HT)[0-9]{7}$'
@@ -74,6 +76,9 @@ WHERE khoa_den_thoi_diem IS NOT NULL
 ALTER TABLE TaiKhoan DROP CONSTRAINT IF EXISTS chk_taikhoan_ten_dang_nhap;
 ALTER TABLE TaiKhoan ADD CONSTRAINT chk_taikhoan_ten_dang_nhap CHECK (ten_dang_nhap ~ '^[a-z0-9.]+$');
 
+-- Gỡ ràng buộc đuôi email cũ để hàm khởi động đồng bộ email theo công thức mới trước khi khóa lại CHECK constraint
+ALTER TABLE TaiKhoan DROP CONSTRAINT IF EXISTS chk_taikhoan_email_domain;
+
 -- Vai trò hệ thống: chuẩn hóa về 3 mã phân cấp GIAO_VIEN / BAN_GIAM_HIEU / QUAN_TRI
 UPDATE TaiKhoan SET vai_tro = 'GIAO_VIEN'
 WHERE vai_tro IN ('Giáo viên', 'Giao vien', 'giáo viên');
@@ -92,7 +97,7 @@ COMMENT ON COLUMN TaiKhoan.ma_tai_khoan IS 'Mã định danh duy nhất của t�
 COMMENT ON COLUMN TaiKhoan.ma_can_bo IS 'Mã quản lý hiển thị: Tên viết tắt vai trò (GV/AD/HT) + 7 số ngẫu nhiên';
 COMMENT ON COLUMN TaiKhoan.ten_dang_nhap IS 'Tên đăng nhập viết thường, không dấu, chỉ gồm chữ, số và dấu chấm (^[a-z0-9.]+$)';
 COMMENT ON COLUMN TaiKhoan.mat_khau IS 'Mật khẩu đã được mã băm (bcrypt)';
-COMMENT ON COLUMN TaiKhoan.email IS 'Địa chỉ email nội bộ trường (@thpthoangvanthu.edu.vn)';
+COMMENT ON COLUMN TaiKhoan.email IS 'Địa chỉ email giáo viên/cán bộ (<têngiáoviên>.thpthoangvanthu@gmail.com)';
 COMMENT ON COLUMN TaiKhoan.bi_mat_otp_ma_hoa IS 'Khóa bí mật TOTP đã mã hóa AES-256 + Master Key';
 COMMENT ON COLUMN TaiKhoan.da_kich_hoat_otp IS 'Trạng thái kích hoạt 2FA (FALSE: hiện QR lần đầu; TRUE: khóa QR vĩnh viễn)';
 
@@ -107,10 +112,14 @@ CREATE TABLE IF NOT EXISTS PhienDangNhap (
     ipv4               INET NOT NULL,
     thong_tin_thiet_bi TEXT NULL,
     da_xac_thuc_otp    BOOLEAN NOT NULL DEFAULT FALSE,
-    da_thu_hoi         BOOLEAN NOT NULL DEFAULT FALSE,
-    thoi_diem_het_han  TIMESTAMPTZ NOT NULL,
-    thoi_diem_tao      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    da_thu_hoi               BOOLEAN NOT NULL DEFAULT FALSE,
+    thoi_diem_het_han        TIMESTAMPTZ NOT NULL,
+    thoi_diem_hoat_dong_cuoi TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    thoi_diem_tao            TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE PhienDangNhap
+    ADD COLUMN IF NOT EXISTS thoi_diem_hoat_dong_cuoi TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 CREATE INDEX IF NOT EXISTS idx_phiendangnhap_ma_tai_khoan ON PhienDangNhap(ma_tai_khoan);
 CREATE INDEX IF NOT EXISTS idx_phiendangnhap_ma_phien_bam ON PhienDangNhap(ma_phien_bam);

@@ -38,13 +38,13 @@ Truy cập trình duyệt tại địa chỉ: **http://127.0.0.1:8000**
 
 | STT | Mã cán bộ | Họ và tên | Tên đăng nhập | Email | Vai trò | Trạng thái 2FA mẫu |
 |---|---|---|---|---|---|---|
-| 1 | `GV1000458` | Nguyễn Văn Minh | `gv.minh` | `gv.minh@thpthoangvanthu.edu.vn` | Giáo viên | `FALSE` (Lần đầu truy cập: Hiện mã QR + Khóa `JBSWY3DPEHPK3PXP` + Bắt buộc đổi mật khẩu) |
-| 2 | `GV1324570` | Trần Thị Lan | `gv.lan` | `gv.lan@thpthoangvanthu.edu.vn` | Giáo viên | `TRUE` (Vào thẳng khi ở mạng trường `14.232.110.45`, hoặc hỏi 6 số OTP khi đổi sang IP/mạng lạ) |
-| 3 | `GV1456278` | Lê Hoàng Nam | `gv.nam` | `gv.nam@thpthoangvanthu.edu.vn` | Giáo viên | `FALSE` |
-| 4 | `GV7869077` | Phạm Thị Hoa | `gv.hoa` | `gv.hoa@thpthoangvanthu.edu.vn` | Giáo viên | `FALSE` |
-| 5 | `GV6790839` | Võ Quốc Huy | `gv.huy` | `gv.huy@thpthoangvanthu.edu.vn` | Giáo viên | `FALSE` |
-| 6 | `GV1780839` | Nguyễn Thị Mai | `gv.mai` | `gv.mai@thpthoangvanthu.edu.vn` | Giáo viên | `FALSE` |
-| 7 | `GV1428003` | Đặng Minh Tuấn | `gv.tuan` | `gv.tuan@thpthoangvanthu.edu.vn` | Giáo viên | `FALSE` |
-| 8 | `GV7802740` | Bùi Thị Ngọc | `gv.ngoc` | `gv.ngoc@thpthoangvanthu.edu.vn` | Giáo viên | `FALSE` |
-| 9 | `GV1562839` | Hoàng Đức Anh | `gv.anh` | `gv.anh@thpthoangvanthu.edu.vn` | Giáo viên | `FALSE` |
-| 10 | `AD1568920` | Trần Văn Phúc | `admin.phuc` | `admin.phuc@thpthoangvanthu.edu.vn` | Quản trị viên | `TRUE` (Quyền Admin quản lý tài khoản, Reset 2FA, Mở khóa, Kiểm toán Nhật ký Log) |
+| 1 | `GV1000458` | Nguyễn Văn Minh | `gv.minh` | `nguyenvanminh.thpthoangvanthu@gmail.com` | Giáo viên | `FALSE` (Lần đầu truy cập: Hiện mã QR + Khóa `JBSWY3DPEHPK3PXP` + Bắt buộc đổi mật khẩu) |
+| 2 | `GV1324570` | Trần Thị Lan | `gv.lan` | `tranthilan.thpthoangvanthu@gmail.com` | Giáo viên | `TRUE` (Vào thẳng khi ở mạng trường `14.232.110.45`, hoặc hỏi 6 số OTP khi đổi sang IP/mạng lạ) |
+| 3 | `GV1456278` | Lê Hoàng Nam | `gv.nam` | `lehoangnam.thpthoangvanthu@gmail.com` | Giáo viên | `FALSE` |
+| 4 | `GV7869077` | Phạm Thị Hoa | `gv.hoa` | `phamthihoa.thpthoangvanthu@gmail.com` | Giáo viên | `FALSE` |
+| 5 | `GV6790839` | Võ Quốc Huy | `gv.huy` | `voquochuy.thpthoangvanthu@gmail.com` | Giáo viên | `FALSE` |
+| 6 | `GV1780839` | Nguyễn Thị Mai | `gv.mai` | `nguyenthimai.thpthoangvanthu@gmail.com` | Giáo viên | `FALSE` |
+| 7 | `GV1428003` | Đặng Minh Tuấn | `gv.tuan` | `dangminhtuan.thpthoangvanthu@gmail.com` | Giáo viên | `FALSE` |
+| 8 | `GV7802740` | Bùi Thị Ngọc | `gv.ngoc` | `buithingoc.thpthoangvanthu@gmail.com` | Giáo viên | `FALSE` |
+| 9 | `GV1562839` | Hoàng Đức Anh | `gv.anh` | `hoangducanh.thpthoangvanthu@gmail.com` | Giáo viên | `FALSE` |
+| 10 | `AD1568920` | Trần Văn Phúc | `admin.phuc` | `tranvanphuc.thpthoangvanthu@gmail.com` | Quản trị viên | `TRUE` (Quyền Admin quản lý tài khoản, Reset 2FA, Mở khóa, Kiểm toán Nhật ký Log) |

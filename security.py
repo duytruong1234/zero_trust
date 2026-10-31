@@ -327,6 +327,38 @@ def tao_ten_dang_nhap_tu_ho_ten(ho_ten: str, vai_tro: str) -> str:
     return f"{role_prefix}.{first_name}"
 
 
+EMAIL_TRUONG_SUFFIX = ".thpthoangvanthu@gmail.com"
+EMAIL_TRUONG_REGEX = re.compile(
+    r"^[a-z0-9]+(\.[a-z0-9]+)*\.(thpthoangvanthu|thtphoangvanthu)@gmail\.com$"
+)
+
+
+def tao_tien_to_email_tu_ho_ten(ho_ten: str) -> str:
+    """
+    Chuyển họ và tên thành tiền tố email viết thường không dấu nối liền.
+    Ví dụ: 'Nguyễn Văn Minh' -> 'nguyenvanminh'
+    """
+    clean_name = unidecode(str(ho_ten or "")).strip().lower()
+    parts = [re.sub(r"[^a-z0-9]", "", p) for p in clean_name.split() if p]
+    joined = "".join(parts)
+    return joined or "giaovien"
+
+
+def tao_email_tu_ho_ten(ho_ten: str, so_thu_tu: int = 1) -> str:
+    """
+    Công thức tạo email giáo viên/cán bộ: '<têngiáoviên>.thpthoangvanthu@gmail.com'
+    Ví dụ: 'Nguyễn Văn Minh' -> 'nguyenvanminh.thpthoangvanthu@gmail.com'
+    """
+    base = tao_tien_to_email_tu_ho_ten(ho_ten)
+    suffix_num = "" if so_thu_tu <= 1 else str(so_thu_tu)
+    return f"{base}{suffix_num}{EMAIL_TRUONG_SUFFIX}"
+
+
+def kiem_tra_email_truong_hop_le(email: str) -> bool:
+    """Kiểm tra email đúng định dạng <têngiáoviên>.thpthoangvanthu@gmail.com."""
+    return bool(EMAIL_TRUONG_REGEX.fullmatch((email or "").strip().lower()))
+
+
 def _lay_os_that_tren_may_chu() -> str:
     """Đọc trực tiếp phiên bản Hệ điều hành, bản dựng (Build) và tên máy chủ thực tế từ hệ thống."""
     hostname = socket.gethostname()

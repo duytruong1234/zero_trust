@@ -4,6 +4,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from security import (
+    bam_mat_khau,
     tinh_sha256_bytes,
     ma_hoa_tep_de,
     ma_hoa_tep_de_thi_envelope,
@@ -11,15 +12,26 @@ from security import (
 
 load_dotenv()
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:123@localhost:5432/cn_dang_nhap",
+
+def _chuan_hoa_database_url(raw_url: str) -> str:
+    url = (raw_url or "").strip()
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://") :]
+    return url
+
+
+DATABASE_URL = _chuan_hoa_database_url(
+    os.getenv(
+        "DATABASE_URL",
+        "postgresql://postgres:123@localhost:5432/cn_dang_nhap",
+    )
 )
 
 
 def get_conn():
-    """Tạo kết nối trực tiếp tới CSDL PostgreSQL."""
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    """Tạo kết nối trực tiếp tới CSDL PostgreSQL (hỗ trợ cả Local và Render/Neon Cloud)."""
+    dsn = _chuan_hoa_database_url(os.getenv("DATABASE_URL", DATABASE_URL))
+    return psycopg2.connect(dsn, cursor_factory=RealDictCursor, connect_timeout=15)
 
 
 def _tao_pdf_mau(tieu_de_ascii: str, mon_ascii: str, khoi: int, loai_ascii: str) -> bytes:
@@ -253,6 +265,42 @@ def _seed_du_lieu_de_on_tap_va_de_thi(conn):
         )
 
 
+def _bootstrap_tai_khoan_mac_dinh_neu_trong(conn):
+    """
+    Khi triển khai lên cơ sở dữ liệu mới hoàn toàn trên đám mây (ví dụ Render PostgreSQL)
+    mà bảng TaiKhoan chưa có bất kỳ tài khoản nào, tự động khởi tạo tài khoản Quản trị viên
+    mặc định (admin.phuc) ở trạng thái chờ kích hoạt 2FA + đổi mật khẩu + đặt mã PIN 6 số.
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) AS cnt FROM TaiKhoan;")
+        cnt = (cur.fetchone() or {}).get("cnt", 0)
+        if cnt and int(cnt) > 0:
+            return
+        init_pw = (os.getenv("INITIAL_ADMIN_PASSWORD") or "Admin@2026!").strip()
+        cur.execute(
+            """
+            INSERT INTO TaiKhoan (
+                ma_can_bo, ten_dang_nhap, mat_khau, ho_ten,
+                email, vai_tro, da_kich_hoat_otp, ma_pin, dang_hoat_dong, bi_khoa
+            )
+            VALUES (
+                'AD1568920',
+                'admin.phuc',
+                %s,
+                'Trần Văn Phúc',
+                'tranvanphuc.thpthoangvanthu@gmail.com',
+                'QUAN_TRI',
+                FALSE,
+                NULL,
+                TRUE,
+                FALSE
+            )
+            ON CONFLICT (ten_dang_nhap) DO NOTHING;
+            """,
+            (bam_mat_khau(init_pw),),
+        )
+
+
 def init_db_schema():
     """Đảm bảo cấu trúc bảng và Trigger trong database/schema.sql đã được khởi tạo trên PostgreSQL."""
     schema_path = os.path.join(os.path.dirname(__file__), "database", "schema.sql")
@@ -262,6 +310,7 @@ def init_db_schema():
         with conn.cursor() as cur:
             with open(schema_path, "r", encoding="utf-8") as f:
                 cur.execute(f.read())
+        _bootstrap_tai_khoan_mac_dinh_neu_trong(conn)
         _seed_du_lieu_de_on_tap_va_de_thi(conn)
         conn.commit()
 

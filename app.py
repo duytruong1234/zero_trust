@@ -19,7 +19,17 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 
 from db import get_conn, init_db_schema, ghi_nhat_ky
-from mailer import gui_mat_khau_khoi_tao, gui_ma_xac_nhan_quen_pin
+from mailer import (
+    cap_nhat_cau_hinh_gmail_env,
+    gui_canh_bao_bay_de_moi,
+    gui_email_kiem_tra,
+    gui_ma_xac_nhan_quen_pin,
+    gui_mat_khau_cap_lai,
+    gui_mat_khau_khoi_tao,
+    gui_thong_bao_dat_lai_2fa,
+    kiem_tra_ket_noi_smtp,
+    lay_cau_hinh_smtp,
+)
 from security import (
     bam_mat_khau,
     kiem_tra_mat_khau,
@@ -38,6 +48,8 @@ from security import (
     la_mang_noi_bo_truong,
     sinh_ma_can_bo_ngau_nhien,
     tao_ten_dang_nhap_tu_ho_ten,
+    tao_email_tu_ho_ten,
+    kiem_tra_email_truong_hop_le,
     lay_tien_to_vai_tro,
     phan_tich_thiet_bi,
     chuan_hoa_vai_tro,
@@ -55,6 +67,7 @@ from security import (
 load_dotenv()
 
 SESSION_EXPIRE_MINUTES = int(os.getenv("SESSION_EXPIRE_MINUTES", "120"))
+IDLE_TIMEOUT_MINUTES = int(os.getenv("IDLE_TIMEOUT_MINUTES", "5"))
 COOKIE_NAME = "hvt_session_token"
 THOI_GIAN_KHOA_PHUT = 15
 MUI_GIO_VN = timezone(timedelta(hours=7))
@@ -107,6 +120,7 @@ def _vong_lap_mo_khoa_tu_dong():
 @app.on_event("startup")
 def on_startup():
     init_db_schema()
+    _dong_bo_email_truong_khi_khoi_dong()
     _dong_bo_ipv4_cong_cong_khi_khoi_dong()
     threading.Thread(target=_vong_lap_mo_khoa_tu_dong, daemon=True, name="tu-dong-mo-khoa").start()
 
@@ -197,19 +211,26 @@ def _mo_ta_can_bo(thong_tin: Optional[dict]) -> str:
     return f"{vt} {ho_ten or ma_cb}".strip()
 
 
+class AdminPinActionRequest(BaseModel):
+    ma_pin: Optional[str] = None
+
+
 class UnlockAccountRequest(BaseModel):
     cap_lai_mat_khau_tam: bool = False
+    ma_pin: Optional[str] = None
 
 
 class TempLockAccountRequest(BaseModel):
     so_phut: int = 15
     ly_do: Optional[str] = None
+    ma_pin: Optional[str] = None
 
 
 class IpBlockRequest(BaseModel):
     dia_chi_ip: str
     danh_sach_ip: Optional[list[str]] = None
     ly_do: Optional[str] = None
+    ma_pin: Optional[str] = None
 
 
 # =============================================================================
@@ -454,6 +475,52 @@ def _dong_bo_ipv4_cong_cong_khi_khoi_dong() -> None:
         pass
 
 
+def _dong_bo_email_truong_khi_khoi_dong():
+    """
+    Chuẩn hóa toàn bộ hộp thư cán bộ/giáo viên trong bảng TaiKhoan sang định dạng mới:
+    <têngiáoviên>.thpthoangvanthu@gmail.com (ví dụ: nguyenvanminh.thpthoangvanthu@gmail.com)
+    và thiết lập lại ràng buộc CHECK chk_taikhoan_email_domain trên PostgreSQL.
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE TaiKhoan DROP CONSTRAINT IF EXISTS chk_taikhoan_email_domain;")
+            cur.execute(
+                """
+                SELECT ma_tai_khoan::text AS ma_tai_khoan, ho_ten, email
+                FROM TaiKhoan
+                ORDER BY thoi_diem_tao ASC, ma_can_bo ASC;
+                """
+            )
+            ds_tk = cur.fetchall()
+            da_dung = {
+                (r["email"] or "").strip().lower()
+                for r in ds_tk
+                if kiem_tra_email_truong_hop_le(r["email"] or "")
+            }
+            for r in ds_tk:
+                email_cu = (r["email"] or "").strip().lower()
+                if kiem_tra_email_truong_hop_le(email_cu):
+                    continue
+                stt = 1
+                email_moi = tao_email_tu_ho_ten(r["ho_ten"] or "", stt)
+                while email_moi in da_dung:
+                    stt += 1
+                    email_moi = tao_email_tu_ho_ten(r["ho_ten"] or "", stt)
+                da_dung.add(email_moi)
+                cur.execute(
+                    "UPDATE TaiKhoan SET email = %s WHERE ma_tai_khoan = %s;",
+                    (email_moi, r["ma_tai_khoan"]),
+                )
+            cur.execute(
+                """
+                ALTER TABLE TaiKhoan
+                ADD CONSTRAINT chk_taikhoan_email_domain
+                CHECK (email ~* '^[a-z0-9]+(\\.[a-z0-9]+)*\\.(thpthoangvanthu|thtphoangvanthu)@gmail\\.com$');
+                """
+            )
+        conn.commit()
+
+
 def lay_ip_client(request: Request):
     """
     Lấy IP máy trạm nội bộ (ip_thiet_bi) và địa chỉ IPv4 đường truyền mạng thực tế (ipv4) từ Request:
@@ -482,6 +549,11 @@ def lay_ip_client(request: Request):
     if not ipv4:
         ipv4 = _lay_ipv4_cong_cong_thuc_te(ip_lan_may_chu)
 
+    # Khi chạy phía sau Reverse Proxy đám mây (Render / Cloud), request.client.host là IP nội bộ
+    # của Load Balancer nên ưu tiên ghi nhận IP thực của máy khách từ X-Forwarded-For.
+    if forwarded and _la_ipv4_ngoai_lan(ipv4) and not _la_ipv4_ngoai_lan(client_host):
+        ip_thiet_bi = ipv4
+
     thiet_bi = phan_tich_thiet_bi(request.headers.get("User-Agent", ""), request.headers)
     return ip_thiet_bi, ipv4, thiet_bi
 
@@ -505,7 +577,11 @@ def _kiem_tra_ip_bi_chan(cur, ip_may: Optional[str], ipv4: Optional[str]):
     return cur.fetchone()
 
 
-def kiem_tra_phien_hien_tai(request: Request, yeu_cau_otp_hoan_tat: bool = True):
+def kiem_tra_phien_hien_tai(
+    request: Request,
+    yeu_cau_otp_hoan_tat: bool = True,
+    yeu_cau_da_co_pin: bool = True,
+):
     """
     Truy vấn trực tiếp bảng PhienDangNhap và TaiKhoan trong PostgreSQL:
     1. Lấy chuỗi Session Token từ Cookie -> băm SHA-256 -> so khớp với cột ma_phien_bam
@@ -531,6 +607,7 @@ def kiem_tra_phien_hien_tai(request: Request, yeu_cau_otp_hoan_tat: bool = True)
                     host(p.ipv4) AS phien_ipv4,
                     p.thong_tin_thiet_bi, p.da_xac_thuc_otp, p.da_thu_hoi,
                     p.thoi_diem_het_han, p.thoi_diem_tao,
+                    COALESCE(p.thoi_diem_hoat_dong_cuoi, p.thoi_diem_tao) AS thoi_diem_hoat_dong_cuoi,
                     t.ma_can_bo, t.ten_dang_nhap, t.mat_khau, t.ho_ten, t.email, t.vai_tro,
                     t.ma_pin, t.ma_xac_nhan_pin, t.han_xac_nhan_pin,
                     t.bi_mat_otp_ma_hoa, t.da_kich_hoat_otp, t.bi_khoa,
@@ -595,6 +672,27 @@ def kiem_tra_phien_hien_tai(request: Request, yeu_cau_otp_hoan_tat: bool = True)
                 conn.commit()
                 raise HTTPException(status_code=401, detail={"code": "EXPIRED_SESSION", "message": "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại."})
 
+            last_active_dt = phien.get("thoi_diem_hoat_dong_cuoi") or phien["thoi_diem_tao"]
+            if (now_utc - last_active_dt) > timedelta(minutes=IDLE_TIMEOUT_MINUTES):
+                cur.execute("UPDATE PhienDangNhap SET da_thu_hoi = TRUE WHERE ma_phien = %s;", (phien["ma_phien"],))
+                conn.commit()
+                ghi_nhat_ky(
+                    ma_tai_khoan=phien["ma_tai_khoan"],
+                    hanh_dong="Đăng xuất",
+                    ip_thiet_bi=ip_may,
+                    ipv4=current_ipv4,
+                    ket_qua="Thành công",
+                    chi_tiet=f"{_mo_ta_can_bo(phien)} tự động đăng xuất và thu hồi phiên làm việc do không thao tác trên màn hình quá {IDLE_TIMEOUT_MINUTES} phút.",
+                    thong_tin_thiet_bi=thiet_bi,
+                )
+                raise HTTPException(
+                    status_code=401,
+                    detail={
+                        "code": "IDLE_SESSION_EXPIRED",
+                        "message": f"Phiên làm việc đã tự động đăng xuất do màn hình không có thao tác trong {IDLE_TIMEOUT_MINUTES} phút. Vui lòng đăng nhập lại.",
+                    },
+                )
+
             if current_ipv4 != phien["phien_ipv4"]:
                 cur.execute(
                     "UPDATE PhienDangNhap SET da_thu_hoi = TRUE, da_xac_thuc_otp = FALSE WHERE ma_phien = %s;",
@@ -628,6 +726,22 @@ def kiem_tra_phien_hien_tai(request: Request, yeu_cau_otp_hoan_tat: bool = True)
                     },
                 )
 
+            if yeu_cau_otp_hoan_tat and yeu_cau_da_co_pin and not phien.get("ma_pin"):
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "code": "PIN_SETUP_REQUIRED",
+                        "message": "Bắt buộc thiết lập mã PIN bảo mật 6 chữ số ở bước xác thực bên ngoài trước khi truy cập vào hệ thống.",
+                    },
+                )
+
+            if request.headers.get("X-Background-Poll") != "1":
+                cur.execute(
+                    "UPDATE PhienDangNhap SET thoi_diem_hoat_dong_cuoi = CURRENT_TIMESTAMP WHERE ma_phien = %s;",
+                    (phien["ma_phien"],),
+                )
+                conn.commit()
+
             return phien
 
 
@@ -653,7 +767,7 @@ def api_login(req: LoginRequest, request: Request, response: Response):
                 """
                 SELECT
                     ma_tai_khoan, ma_can_bo, ten_dang_nhap, mat_khau, ho_ten,
-                    email, vai_tro, bi_mat_otp_ma_hoa, da_kich_hoat_otp,
+                    email, vai_tro, bi_mat_otp_ma_hoa, da_kich_hoat_otp, ma_pin,
                     bi_khoa, COALESCE(so_lan_dang_nhap_sai, 0) AS so_lan_dang_nhap_sai,
                     COALESCE(so_lan_sai_otp, 0) AS so_lan_sai_otp,
                     host(ip_thiet_bi_gan_nhat) AS ip_gan_nhat,
@@ -894,16 +1008,23 @@ def api_login(req: LoginRequest, request: Request, response: Response):
                     chi_tiet="Đăng nhập thành công từ mạng nội bộ trường (IP tin cậy), cấp phiên làm việc",
                     thong_tin_thiet_bi=thiet_bi,
                 )
+                da_co_ma_pin = bool(acc.get("ma_pin"))
                 return {
                     "status": "OK",
-                    "next_step": "DASHBOARD",
-                    "message": "Đăng nhập thành công!",
+                    "next_step": "DASHBOARD" if da_co_ma_pin else "SETUP_PIN",
+                    "da_co_ma_pin": da_co_ma_pin,
+                    "message": (
+                        "Đăng nhập thành công!"
+                        if da_co_ma_pin
+                        else "Đăng nhập thành công! Vui lòng thiết lập mã PIN bảo mật 6 chữ số trước khi truy cập vào hệ thống."
+                    ),
                     "user": {
                         "ma_can_bo": acc["ma_can_bo"],
                         "ho_ten": acc["ho_ten"],
                         "ten_dang_nhap": acc["ten_dang_nhap"],
                         "email": acc["email"],
                         "vai_tro": acc["vai_tro"],
+                        "da_co_ma_pin": da_co_ma_pin,
                     },
                 }
 
@@ -1487,6 +1608,8 @@ def api_activate_first_time(req: ActivateFirstTimeRequest, request: Request, res
 
     return {
         "status": "OK",
+        "next_step": "DASHBOARD",
+        "da_co_ma_pin": True,
         "message": "Đăng nhập thành công!",
     }
 
@@ -1540,9 +1663,16 @@ def api_verify_otp(req: VerifyOtpRequest, request: Request, response: Response):
         thong_tin_thiet_bi=thiet_bi,
     )
 
+    da_co_ma_pin = bool(phien.get("ma_pin"))
     return {
         "status": "OK",
-        "message": "Đăng nhập thành công!",
+        "next_step": "DASHBOARD" if da_co_ma_pin else "SETUP_PIN",
+        "da_co_ma_pin": da_co_ma_pin,
+        "message": (
+            "Đăng nhập thành công!"
+            if da_co_ma_pin
+            else "Xác thực OTP thành công! Vui lòng thiết lập mã PIN bảo mật 6 chữ số trước khi truy cập vào hệ thống."
+        ),
     }
 
 
@@ -1610,8 +1740,8 @@ def _bat_buoc_xac_minh_ma_pin(
 
 @app.post("/api/auth/pin/setup")
 def api_setup_initial_pin(req: PinSetupRequest, request: Request):
-    """Thiết lập mã PIN 6 số lần đầu cho các tài khoản đã kích hoạt 2FA từ trước khi bổ sung cột ma_pin."""
-    phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
+    """Thiết lập mã PIN 6 số lần đầu ở bước xác thực bên ngoài hệ thống cho tài khoản đã kích hoạt 2FA."""
+    phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True, yeu_cau_da_co_pin=False)
     ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
 
     if phien.get("ma_pin"):
@@ -1659,133 +1789,33 @@ def api_verify_pin(req: PinVerifyRequest, request: Request):
 
 @app.post("/api/auth/pin/forgot")
 def api_forgot_pin(request: Request):
-    """
-    Cơ chế quên mã PIN (6 số):
-    Sinh mã xác nhận 6 chữ số hiệu lực 10 phút, lưu mã băm SHA-256 vào CSDL và gửi về email nội bộ của cán bộ.
-    """
-    phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
-    ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
-
-    ma_xac_nhan = f"{secrets.randbelow(900000) + 100000:06d}"
-    ma_bam_xn = hashlib.sha256(ma_xac_nhan.encode("utf-8")).hexdigest()
-
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                UPDATE TaiKhoan
-                SET ma_xac_nhan_pin = %s,
-                    han_xac_nhan_pin = NOW() + INTERVAL '10 minutes'
-                WHERE ma_tai_khoan = %s;
-                """,
-                (ma_bam_xn, phien["ma_tai_khoan"]),
-            )
-        conn.commit()
-
-    da_gui_email, thong_tin_email = gui_ma_xac_nhan_quen_pin(
-        phien["email"], phien["ho_ten"], phien["ten_dang_nhap"], ma_xac_nhan
+    """Đã tắt chức năng người dùng tự đặt lại mã PIN qua email; bắt buộc liên hệ Quản trị viên."""
+    kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
+    raise HTTPException(
+        status_code=403,
+        detail="Vui lòng liên hệ Quản trị viên hệ thống để được đổi hoặc đặt lại mã PIN bảo mật.",
     )
-    ghi_nhat_ky(
-        ma_tai_khoan=phien["ma_tai_khoan"],
-        hanh_dong="Quên mã PIN",
-        ip_thiet_bi=ip_may,
-        ipv4=dia_chi_ipv4,
-        ket_qua="Thành công",
-        chi_tiet=(
-            f"{_mo_ta_can_bo(phien)} yêu cầu cấp mã xác nhận đặt lại mã PIN 6 số tới hộp thư {phien['email']} "
-            f"({'đã gửi qua email' if da_gui_email else 'hiển thị mã xác nhận trực tiếp'})."
-        ),
-        thong_tin_thiet_bi=thiet_bi,
-    )
-
-    if da_gui_email:
-        return {
-            "status": "OK",
-            "email_sent": True,
-            "email": phien["email"],
-            "message": f"Hệ thống đã gửi mã xác nhận 6 chữ số về email {phien['email']}. Mã có hiệu lực trong 10 phút.",
-        }
-    return {
-        "status": "OK",
-        "email_sent": False,
-        "email": phien["email"],
-        "message": (
-            f"Đã tạo mã xác nhận đổi PIN cho {phien['email']}, tuy nhiên máy chủ chưa gửi được email "
-            f"({thong_tin_email}) Vui lòng dùng mã xác nhận hiển thị bên dưới để đặt lại mã PIN."
-        ),
-        "ma_xac_nhan_ban_giao": ma_xac_nhan,
-    }
 
 
 @app.post("/api/auth/pin/reset")
 def api_reset_pin(req: PinResetRequest, request: Request):
-    """Xác minh mã xác nhận từ email và cập nhật mã PIN 6 số mới."""
-    phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
-    ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
-
-    ma_xn = (req.ma_xac_nhan or "").strip()
-    if not re.fullmatch(r"\d{6}", ma_xn):
-        raise HTTPException(status_code=400, detail="Mã xác nhận email phải gồm đúng 6 chữ số.")
-
-    ma_bam_luu = phien.get("ma_xac_nhan_pin")
-    han_xn = phien.get("han_xac_nhan_pin")
-    now_utc = datetime.now(timezone.utc)
-    if not ma_bam_luu or not han_xn or now_utc > han_xn:
-        raise HTTPException(
-            status_code=400,
-            detail="Mã xác nhận đã hết hạn hoặc chưa được yêu cầu. Vui lòng bấm Gửi mã xác nhận về email lại.",
-        )
-
-    ma_bam_nhap = hashlib.sha256(ma_xn.encode("utf-8")).hexdigest()
-    if not secrets.compare_digest(ma_bam_nhap, str(ma_bam_luu)):
-        ghi_nhat_ky(
-            ma_tai_khoan=phien["ma_tai_khoan"],
-            hanh_dong="Đổi mã PIN",
-            ip_thiet_bi=ip_may,
-            ipv4=dia_chi_ipv4,
-            ket_qua="Cảnh báo",
-            chi_tiet=f"{_mo_ta_can_bo(phien)} nhập sai mã xác nhận email khi yêu cầu đặt lại mã PIN.",
-            thong_tin_thiet_bi=thiet_bi,
-        )
-        raise HTTPException(status_code=400, detail="Mã xác nhận email không chính xác. Vui lòng kiểm tra lại.")
-
-    pin_moi = (req.ma_pin_moi or "").strip()
-    pin_xn = (req.xac_nhan_ma_pin_moi or "").strip()
-    hop_le, thong_bao = kiem_tra_dinh_dang_ma_pin(pin_moi)
-    if not hop_le:
-        raise HTTPException(status_code=400, detail=thong_bao)
-    if pin_moi != pin_xn:
-        raise HTTPException(status_code=400, detail="Mã PIN xác nhận nhập lại không khớp với mã PIN mới.")
-
-    pin_bam = bam_ma_pin(pin_moi)
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                UPDATE TaiKhoan
-                SET ma_pin = %s,
-                    ma_xac_nhan_pin = NULL,
-                    han_xac_nhan_pin = NULL
-                WHERE ma_tai_khoan = %s;
-                """,
-                (pin_bam, phien["ma_tai_khoan"]),
-            )
-        conn.commit()
-
-    ghi_nhat_ky(
-        ma_tai_khoan=phien["ma_tai_khoan"],
-        hanh_dong="Đổi mã PIN",
-        ip_thiet_bi=ip_may,
-        ipv4=dia_chi_ipv4,
-        ket_qua="Thành công",
-        chi_tiet=f"{_mo_ta_can_bo(phien)} đã xác nhận qua email và đổi mã PIN bảo mật 6 số thành công.",
-        thong_tin_thiet_bi=thiet_bi,
+    """Đã tắt chức năng người dùng tự đặt lại mã PIN qua email; bắt buộc liên hệ Quản trị viên."""
+    kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
+    raise HTTPException(
+        status_code=403,
+        detail="Vui lòng liên hệ Quản trị viên hệ thống để được đổi hoặc đặt lại mã PIN bảo mật.",
     )
-    return {"status": "OK", "message": "Đổi mã PIN bảo mật 6 số thành công!"}
+
+
+@app.post("/api/auth/heartbeat")
+def api_session_heartbeat(request: Request):
+    """Cập nhật thời điểm thao tác màn hình thực tế của người dùng cho bộ đếm tự động đăng xuất 5 phút."""
+    kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=False, yeu_cau_da_co_pin=False)
+    return {"status": "OK", "idle_timeout_minutes": IDLE_TIMEOUT_MINUTES}
 
 
 @app.post("/api/auth/logout")
-def api_logout(request: Request, response: Response):
+def api_logout(request: Request, response: Response, reason: Optional[str] = None):
     """Đánh dấu PhienDangNhap.da_thu_hoi = TRUE và tự động ghi nhật ký khi đăng xuất."""
     raw_token = request.cookies.get(COOKIE_NAME)
     if raw_token:
@@ -1811,13 +1841,20 @@ def api_logout(request: Request, response: Response):
                 )
             conn.commit()
         if phien_row and not phien_row["da_thu_hoi"]:
+            if (reason or "").strip().lower() == "idle":
+                chi_tiet_log = (
+                    f"{_mo_ta_can_bo(phien_row)} đã tự động đăng xuất và kết thúc phiên làm việc "
+                    f"do màn hình không có thao tác trong {IDLE_TIMEOUT_MINUTES} phút."
+                )
+            else:
+                chi_tiet_log = f"{_mo_ta_can_bo(phien_row)} đã đăng xuất và kết thúc phiên làm việc."
             ghi_nhat_ky(
                 ma_tai_khoan=phien_row["ma_tai_khoan"],
                 hanh_dong="Đăng xuất",
                 ip_thiet_bi=ip_may,
                 ipv4=dia_chi_ipv4,
                 ket_qua="Thành công",
-                chi_tiet=f"{_mo_ta_can_bo(phien_row)} đã đăng xuất và kết thúc phiên làm việc.",
+                chi_tiet=chi_tiet_log,
                 thong_tin_thiet_bi=thiet_bi,
             )
     response.delete_cookie(COOKIE_NAME)
@@ -1844,7 +1881,7 @@ def api_preview_formula(request: Request, ho_ten: str = "", vai_tro: str = "GIAO
     Gợi ý dữ liệu cấp tài khoản mới:
     - Mã cán bộ: Tiền tố vai trò (GV/AD/HT) + 7 chữ số ngẫu nhiên, bảo đảm KHÔNG trùng trong CSDL.
     - Tên đăng nhập: 'Tên_vai_trò.tên' (viết thường, không dấu); nếu trùng tự thêm số thứ tự (gv.minh2).
-    - Email nội bộ: <tên đăng nhập>@thpthoangvanthu.edu.vn
+    - Email giáo viên/cán bộ: <têngiáoviên>.thpthoangvanthu@gmail.com (ví dụ: nguyenvanminh.thpthoangvanthu@gmail.com).
     - Mật khẩu khởi tạo: sinh ngẫu nhiên >= 10 ký tự (hoa, thường, số, ký tự đặc biệt).
     """
     phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
@@ -1862,16 +1899,20 @@ def api_preview_formula(request: Request, ho_ten: str = "", vai_tro: str = "GIAO
                 ma_can_bo = sinh_ma_can_bo_ngau_nhien(ma_vai_tro)
 
             ten_dang_nhap = ""
+            email = ""
             if ho_ten_chuan:
                 goc = tao_ten_dang_nhap_tu_ho_ten(ho_ten_chuan, ma_vai_tro)
                 ten_dang_nhap, stt = goc, 1
-                while _da_ton_tai(cur, "ten_dang_nhap", ten_dang_nhap) or _da_ton_tai(
-                    cur, "email", f"{ten_dang_nhap}@thpthoangvanthu.edu.vn"
-                ):
+                while _da_ton_tai(cur, "ten_dang_nhap", ten_dang_nhap):
                     stt += 1
                     ten_dang_nhap = f"{goc}{stt}"
 
-    email = f"{ten_dang_nhap}@thpthoangvanthu.edu.vn" if ten_dang_nhap else ""
+                stt_email = 1
+                email = tao_email_tu_ho_ten(ho_ten_chuan, stt_email)
+                while _da_ton_tai(cur, "email", email):
+                    stt_email += 1
+                    email = tao_email_tu_ho_ten(ho_ten_chuan, stt_email)
+
     return {
         "ma_can_bo": ma_can_bo,
         "ho_ten": ho_ten_chuan,
@@ -1976,6 +2017,7 @@ def api_list_accounts(request: Request):
                     email,
                     vai_tro,
                     da_kich_hoat_otp,
+                    (ma_pin IS NOT NULL) AS da_co_ma_pin,
                     bi_khoa,
                     COALESCE(so_lan_dang_nhap_sai, 0) AS so_lan_dang_nhap_sai,
                     COALESCE(so_lan_sai_otp, 0) AS so_lan_sai_otp,
@@ -2121,11 +2163,11 @@ def api_create_account(req: CreateAccountRequest, request: Request):
             f"{_mo_ta_can_bo(phien)} tạo tài khoản thất bại do tên đăng nhập \"{ten_dang_nhap}\" không đúng định dạng.",
         )
 
-    if not re.fullmatch(r"[a-z0-9._%+-]+@thpthoangvanthu\.edu\.vn", email):
+    if not kiem_tra_email_truong_hop_le(email):
         that_bai(
             400,
-            "Lỗi: Email phải có đuôi @thpthoangvanthu.edu.vn. Vui lòng kiểm tra lại!",
-            f"{_mo_ta_can_bo(phien)} tạo tài khoản thất bại do hộp thư \"{email}\" không thuộc tên miền @thpthoangvanthu.edu.vn.",
+            "Lỗi: Email phải theo định dạng <têngiáoviên>.thpthoangvanthu@gmail.com (ví dụ: nguyenvanminh.thpthoangvanthu@gmail.com). Vui lòng kiểm tra lại!",
+            f"{_mo_ta_can_bo(phien)} tạo tài khoản thất bại do hộp thư \"{email}\" không đúng định dạng đuôi .thpthoangvanthu@gmail.com.",
         )
 
     hop_le, thong_bao = kiem_tra_mat_khau_khoi_tao(mat_khau_khoi_tao)
@@ -2409,15 +2451,12 @@ def api_update_account_permissions(ma_tai_khoan: str, req: UpdateAccountPermissi
 
 
 @app.post("/api/accounts/{ma_tai_khoan}/reset-2fa")
-def api_reset_2fa(ma_tai_khoan: str, request: Request):
-    """Đặt lại xác thực 2 lớp (2FA) cho tài khoản và thu hồi các phiên làm việc cũ."""
+def api_reset_2fa(ma_tai_khoan: str, request: Request, req: Optional[AdminPinActionRequest] = None):
+    """Đặt lại xác thực 2 lớp (2FA), cấp mật khẩu khởi tạo mới cho tài khoản và thu hồi các phiên làm việc cũ."""
     phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
     ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
     if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
         raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền đặt lại 2FA.")
-
-    new_secret = sinh_khoa_bi_mat_totp(16)
-    encrypted_secret = ma_hoa_bi_mat_otp(new_secret)
 
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -2428,31 +2467,68 @@ def api_reset_2fa(ma_tai_khoan: str, request: Request):
             target = cur.fetchone()
             if not target:
                 raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản trong CSDL.")
-            if not target["dang_hoat_dong"]:
-                ghi_nhat_ky(
-                    ma_tai_khoan=phien["ma_tai_khoan"],
-                    hanh_dong="Đặt lại 2FA",
-                    ip_thiet_bi=ip_may,
-                    ipv4=dia_chi_ipv4,
-                    ket_qua="Thất bại",
-                    chi_tiet=f"{_mo_ta_can_bo(phien)} đặt lại 2FA thất bại do tài khoản {target['ho_ten']} ({target['ma_can_bo']}) đang ngừng hoạt động.",
-                    thong_tin_thiet_bi=thiet_bi,
-                )
-                raise HTTPException(status_code=400, detail="Tài khoản đang ở trạng thái ngừng hoạt động, không thể đặt lại 2FA.")
 
-            cur.execute(
-                """
-                UPDATE TaiKhoan
-                SET bi_mat_otp_ma_hoa = %s,
-                    da_kich_hoat_otp = FALSE,
-                    so_lan_sai_otp = 0,
-                    bi_khoa = FALSE,
-                    khoa_den_thoi_diem = NULL
-                WHERE ma_tai_khoan = %s
-                RETURNING ma_can_bo, ho_ten, ten_dang_nhap, email;
-                """,
-                (psycopg2.Binary(encrypted_secret), ma_tai_khoan),
-            )
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin if req else None,
+        f"Đặt lại 2FA và cấp mật khẩu mới ({target['ten_dang_nhap']})",
+    )
+
+    if not target["dang_hoat_dong"]:
+        ghi_nhat_ky(
+            ma_tai_khoan=phien["ma_tai_khoan"],
+            hanh_dong="Đặt lại 2FA",
+            ip_thiet_bi=ip_may,
+            ipv4=dia_chi_ipv4,
+            ket_qua="Thất bại",
+            chi_tiet=f"{_mo_ta_can_bo(phien)} đặt lại 2FA thất bại do tài khoản {target['ho_ten']} ({target['ma_can_bo']}) đang ngừng hoạt động.",
+            thong_tin_thiet_bi=thiet_bi,
+        )
+        raise HTTPException(status_code=400, detail="Tài khoản đang ở trạng thái ngừng hoạt động, không thể đặt lại 2FA.")
+
+    new_secret = sinh_khoa_bi_mat_totp(16)
+    encrypted_secret = ma_hoa_bi_mat_otp(new_secret)
+    mat_khau_moi = sinh_mat_khau_tam(12)
+    mat_khau_bam = bam_mat_khau(mat_khau_moi)
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            if str(phien["ma_tai_khoan"]) == ma_tai_khoan:
+                cur.execute(
+                    """
+                    UPDATE TaiKhoan
+                    SET bi_mat_otp_ma_hoa = %s,
+                        mat_khau = %s,
+                        da_kich_hoat_otp = FALSE,
+                        so_lan_dang_nhap_sai = 0,
+                        so_lan_sai_otp = 0,
+                        bi_khoa = FALSE,
+                        khoa_den_thoi_diem = NULL
+                    WHERE ma_tai_khoan = %s
+                    RETURNING ma_can_bo, ho_ten, ten_dang_nhap, email;
+                    """,
+                    (psycopg2.Binary(encrypted_secret), mat_khau_bam, ma_tai_khoan),
+                )
+            else:
+                cur.execute(
+                    """
+                    UPDATE TaiKhoan
+                    SET bi_mat_otp_ma_hoa = %s,
+                        mat_khau = %s,
+                        da_kich_hoat_otp = FALSE,
+                        so_lan_dang_nhap_sai = 0,
+                        so_lan_sai_otp = 0,
+                        bi_khoa = FALSE,
+                        khoa_den_thoi_diem = NULL,
+                        ma_pin = NULL,
+                        ma_xac_nhan_pin = NULL,
+                        han_xac_nhan_pin = NULL
+                    WHERE ma_tai_khoan = %s
+                    RETURNING ma_can_bo, ho_ten, ten_dang_nhap, email;
+                    """,
+                    (psycopg2.Binary(encrypted_secret), mat_khau_bam, ma_tai_khoan),
+                )
             updated = cur.fetchone()
 
             if str(phien["ma_tai_khoan"]) == ma_tai_khoan:
@@ -2467,6 +2543,10 @@ def api_reset_2fa(ma_tai_khoan: str, request: Request):
                 )
         conn.commit()
 
+    da_gui_email, thong_tin_email = gui_thong_bao_dat_lai_2fa(
+        updated["email"], updated["ho_ten"], updated["ten_dang_nhap"], mat_khau_moi
+    )
+
     ghi_nhat_ky(
         ma_tai_khoan=phien["ma_tai_khoan"],
         hanh_dong="Đặt lại 2FA",
@@ -2474,28 +2554,44 @@ def api_reset_2fa(ma_tai_khoan: str, request: Request):
         ipv4=dia_chi_ipv4,
         ket_qua="Thành công",
         chi_tiet=(
-            f"{_mo_ta_can_bo(phien)} đã đặt lại xác thực 2 lớp (2FA) cho tài khoản "
+            f"{_mo_ta_can_bo(phien)} đã đặt lại xác thực 2 lớp (2FA), cấp mật khẩu khởi tạo mới cho tài khoản "
             f"{updated['ho_ten']} ({updated['ma_can_bo']}) và thu hồi các phiên làm việc cũ."
         ),
         thong_tin_thiet_bi=thiet_bi,
     )
 
+    ghi_chu_email = (
+        f" Hệ thống đã gửi mật khẩu khởi tạo mới tới Gmail {updated['email']}."
+        if da_gui_email
+        else f" Lưu ý chưa gửi được Gmail ({thong_tin_email}), vui lòng bàn giao mật khẩu bên dưới."
+    )
     return {
         "status": "OK",
+        "email_sent": da_gui_email,
+        "email_detail": thong_tin_email,
+        "mat_khau_khoi_tao": mat_khau_moi,
         "message": (
-            "Đặt lại xác thực 2 bước (2FA) thành công! Khóa bảo mật cũ đã bị hủy và toàn bộ các phiên làm việc "
-            "đã được thu hồi. Cán bộ sẽ được yêu cầu quét mã QR mới ở lần đăng nhập tiếp theo."
+            f"Đã đặt lại xác thực 2 bước (2FA) và cấp mật khẩu khởi tạo mới cho tài khoản {updated['ho_ten']} ({updated['ma_can_bo']})! "
+            "Khóa bảo mật cũ đã bị hủy, các phiên làm việc đã thu hồi và cán bộ sẽ thiết lập lại mã QR, mật khẩu mới và mã PIN ở lần đăng nhập tiếp theo."
+            + ghi_chu_email
         ),
     }
 
 
 @app.post("/api/accounts/{ma_tai_khoan}/deactivate")
-def api_deactivate_account(ma_tai_khoan: str, request: Request):
+def api_deactivate_account(ma_tai_khoan: str, request: Request, req: Optional[AdminPinActionRequest] = None):
     """Tạm ngưng hoạt động tài khoản và thu hồi toàn bộ phiên đăng nhập."""
     phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
     ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
     if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
         raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền ngừng hoạt động tài khoản.")
+
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin if req else None,
+        "Tạm ngưng hoạt động tài khoản",
+    )
 
     if str(phien["ma_tai_khoan"]) == ma_tai_khoan:
         ghi_nhat_ky(
@@ -2552,12 +2648,19 @@ def api_deactivate_account(ma_tai_khoan: str, request: Request):
 
 
 @app.post("/api/accounts/{ma_tai_khoan}/activate")
-def api_activate_account(ma_tai_khoan: str, request: Request):
+def api_activate_account(ma_tai_khoan: str, request: Request, req: Optional[AdminPinActionRequest] = None):
     """Kích hoạt lại tài khoản đã bị vô hiệu hóa."""
     phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
     ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
     if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
         raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền kích hoạt tài khoản.")
+
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin if req else None,
+        "Kích hoạt lại tài khoản",
+    )
 
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -2598,6 +2701,13 @@ def api_unlock_account(ma_tai_khoan: str, req: UnlockAccountRequest, request: Re
     ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
     if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
         raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền mở khóa hoặc cấp lại mật khẩu.")
+
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin,
+        "Cấp lại mật khẩu tạm thời" if req.cap_lai_mat_khau_tam else "Mở khóa an ninh tài khoản",
+    )
 
     mat_khau_moi = sinh_mat_khau_tam(12) if req.cap_lai_mat_khau_tam else None
 
@@ -2679,16 +2789,22 @@ def api_unlock_account(ma_tai_khoan: str, req: UnlockAccountRequest, request: Re
             ),
             thong_tin_thiet_bi=thiet_bi,
         )
-        da_gui_email, _ = gui_mat_khau_khoi_tao(
+        da_gui_email, thong_tin_email = gui_mat_khau_cap_lai(
             updated["email"], updated["ho_ten"], updated["ten_dang_nhap"], mat_khau_moi
         )
-        thong_bao = (
-            "Cấp lại mật khẩu tạm thời thành công! Mật khẩu khởi tạo ngẫu nhiên mới "
-            "đã được gửi đến email nội bộ của cán bộ."
-        )
+        if da_gui_email:
+            thong_bao = (
+                f"Cấp lại mật khẩu tạm thời thành công! Mật khẩu khởi tạo mới đã được gửi tới Gmail {updated['email']}."
+            )
+        else:
+            thong_bao = (
+                f"Cấp lại mật khẩu tạm thời thành công! Tuy nhiên chưa gửi được Gmail ({thong_tin_email}), "
+                "vui lòng sao chép mật khẩu tạm bên dưới để bàn giao trực tiếp."
+            )
         return {
             "status": "OK",
             "email_sent": da_gui_email,
+            "email_detail": thong_tin_email,
             "message": thong_bao,
             "mat_khau_khoi_tao": mat_khau_moi,
         }
@@ -2712,6 +2828,13 @@ def api_temp_lock_account(ma_tai_khoan: str, req: TempLockAccountRequest, reques
     phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
     if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
         raise HTTPException(status_code=403, detail="Bạn không có quyền thực hiện thao tác quản trị này.")
+
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin,
+        "Khóa an ninh tài khoản",
+    )
 
     ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
     if str(phien["ma_tai_khoan"]) == ma_tai_khoan:
@@ -2780,11 +2903,18 @@ def api_temp_lock_account(ma_tai_khoan: str, req: TempLockAccountRequest, reques
 
 
 @app.post("/api/accounts/{ma_tai_khoan}/clear-trusted-ip")
-def api_clear_trusted_ip(ma_tai_khoan: str, request: Request):
+def api_clear_trusted_ip(ma_tai_khoan: str, request: Request, req: Optional[AdminPinActionRequest] = None):
     """Xóa thiết bị và địa chỉ IP tin cậy gần nhất của tài khoản và ghi nhận nhật ký."""
     phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
     if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
         raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền thực hiện thao tác này.")
+
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin if req else None,
+        "Xóa thiết bị và địa chỉ IP tin cậy",
+    )
 
     ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
     with get_conn() as conn:
@@ -2820,6 +2950,140 @@ def api_clear_trusted_ip(ma_tai_khoan: str, request: Request):
         "message": (
             f"Đã xóa thiết bị tin cậy của tài khoản {updated['ho_ten']} ({updated['ma_can_bo']}). "
             "Lần đăng nhập tiếp theo sẽ bắt buộc xác thực mã OTP 6 số."
+        ),
+    }
+
+
+class AdminSetPinRequest(BaseModel):
+    ma_pin_moi: str
+    xac_nhan_ma_pin_moi: str
+    ma_pin: Optional[str] = None
+
+
+@app.post("/api/accounts/{ma_tai_khoan}/admin-set-pin")
+def api_admin_set_teacher_pin(ma_tai_khoan: str, req: AdminSetPinRequest, request: Request):
+    """Quản trị viên trực tiếp đổi / đặt mới mã PIN bảo mật 6 số cho giáo viên (hoặc tài khoản cán bộ)."""
+    phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
+    ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
+    if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
+        raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền quản lý mã PIN của giáo viên.")
+
+    pin_moi = (req.ma_pin_moi or "").strip()
+    pin_xn = (req.xac_nhan_ma_pin_moi or "").strip()
+    hop_le, thong_bao = kiem_tra_dinh_dang_ma_pin(pin_moi)
+    if not hop_le:
+        raise HTTPException(status_code=400, detail=thong_bao)
+    if pin_moi != pin_xn:
+        raise HTTPException(status_code=400, detail="Mã PIN mới nhập lại không khớp.")
+
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin,
+        "Đổi / Cấp mã PIN bảo mật 6 số",
+    )
+
+    pin_bam = bam_ma_pin(pin_moi)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE TaiKhoan
+                SET ma_pin = %s,
+                    ma_xac_nhan_pin = NULL,
+                    han_xac_nhan_pin = NULL
+                WHERE ma_tai_khoan = %s
+                RETURNING ma_can_bo, ho_ten, ten_dang_nhap, vai_tro;
+                """,
+                (pin_bam, ma_tai_khoan),
+            )
+            updated = cur.fetchone()
+            if not updated:
+                raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản cần cập nhật mã PIN.")
+        conn.commit()
+
+    ghi_nhat_ky(
+        ma_tai_khoan=phien["ma_tai_khoan"],
+        hanh_dong="Quản lý mã PIN",
+        ip_thiet_bi=ip_may,
+        ipv4=dia_chi_ipv4,
+        ket_qua="Thành công",
+        chi_tiet=f"{_mo_ta_can_bo(phien)} đã cập nhật mã PIN bảo mật 6 số mới cho tài khoản {updated['ho_ten']} ({updated['ma_can_bo']}).",
+        thong_tin_thiet_bi=thiet_bi,
+    )
+
+    return {
+        "status": "OK",
+        "da_co_ma_pin": True,
+        "message": f"Đã cập nhật mã PIN bảo mật 6 chữ số mới cho {updated['ho_ten']} ({updated['ma_can_bo']}) thành công!",
+    }
+
+
+@app.post("/api/accounts/{ma_tai_khoan}/admin-reset-pin")
+def api_admin_reset_teacher_pin(ma_tai_khoan: str, request: Request, req: Optional[AdminPinActionRequest] = None):
+    """
+    Quản trị viên xóa mã PIN cũ của giáo viên và thu hồi phiên hiện hành để giáo viên
+    tự thiết lập lại mã PIN 6 số mới tại cổng xác thực ngoài hệ thống ở lần đăng nhập kế tiếp.
+    """
+    phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
+    ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
+    if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
+        raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền đặt lại mã PIN của giáo viên.")
+
+    if str(phien["ma_tai_khoan"]) == str(ma_tai_khoan):
+        raise HTTPException(
+            status_code=400,
+            detail="Không thể xóa trống mã PIN của chính tài khoản Quản trị viên đang đăng nhập. Vui lòng dùng nút 'Đổi / Cấp mã PIN' để đổi trực tiếp sang mã PIN mới.",
+        )
+
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin if req else None,
+        "Mở đặt lại mã PIN cho giáo viên",
+    )
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE TaiKhoan
+                SET ma_pin = NULL,
+                    ma_xac_nhan_pin = NULL,
+                    han_xac_nhan_pin = NULL
+                WHERE ma_tai_khoan = %s
+                RETURNING ma_can_bo, ho_ten, ten_dang_nhap;
+                """,
+                (ma_tai_khoan,),
+            )
+            updated = cur.fetchone()
+            if not updated:
+                raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản giáo viên.")
+            cur.execute(
+                "UPDATE PhienDangNhap SET da_thu_hoi = TRUE WHERE ma_tai_khoan = %s;",
+                (ma_tai_khoan,),
+            )
+        conn.commit()
+
+    ghi_nhat_ky(
+        ma_tai_khoan=phien["ma_tai_khoan"],
+        hanh_dong="Quản lý mã PIN",
+        ip_thiet_bi=ip_may,
+        ipv4=dia_chi_ipv4,
+        ket_qua="Thành công",
+        chi_tiet=(
+            f"{_mo_ta_can_bo(phien)} đã xóa mã PIN cũ và mở quyền thiết lập lại mã PIN ngoài hệ thống "
+            f"cho giáo viên {updated['ho_ten']} ({updated['ma_can_bo']}), đồng thời thu hồi các phiên làm việc đang mở."
+        ),
+        thong_tin_thiet_bi=thiet_bi,
+    )
+
+    return {
+        "status": "OK",
+        "da_co_ma_pin": False,
+        "message": (
+            f"Đã xóa mã PIN cũ của {updated['ho_ten']} ({updated['ma_can_bo']}) và thu hồi phiên đang mở. "
+            "Khi đăng nhập lại, giáo viên sẽ được chuyển tới màn hình đặt mã PIN 6 số mới bên ngoài hệ thống."
         ),
     }
 
@@ -3054,6 +3318,13 @@ def api_block_ip(req: IpBlockRequest, request: Request):
     except ValueError:
         raise HTTPException(status_code=400, detail="Địa chỉ IP không hợp lệ.")
 
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin,
+        f"Chặn địa chỉ IP ({ip_hop_le})",
+    )
+
     ly_do = (req.ly_do or "").strip() or "Chặn truy cập an ninh từ Nhật ký hoạt động"
     ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
 
@@ -3117,6 +3388,13 @@ def api_unblock_ip(req: IpBlockRequest, request: Request):
     except ValueError:
         raise HTTPException(status_code=400, detail="Địa chỉ IP không hợp lệ.")
 
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin,
+        f"Gỡ chặn địa chỉ IP ({ip_hop_le})",
+    )
+
     ds_ip_go_chan = {ip_hop_le}
     for extra_ip in (req.danh_sach_ip or []):
         s_ip = str(extra_ip or "").strip()
@@ -3155,6 +3433,141 @@ def api_unblock_ip(req: IpBlockRequest, request: Request):
         "dia_chi_ip": ip_hop_le,
         "ip_dang_bi_chan": False,
         "message": f"Đã gỡ chặn địa chỉ IP {ip_hop_le} thành công.",
+    }
+
+
+class GmailTestRequest(BaseModel):
+    email_nhan: Optional[str] = None
+    ma_pin: Optional[str] = None
+
+
+class GmailConfigUpdateRequest(BaseModel):
+    gmail_user: str
+    gmail_app_password: str
+    ma_pin: Optional[str] = None
+
+
+@app.post("/api/admin/gmail-config")
+def api_admin_gmail_update_config(req: GmailConfigUpdateRequest, request: Request):
+    """Cập nhật GMAIL_USER và GMAIL_APP_PASSWORD vào tệp .env và kiểm tra kết nối ngay (bắt buộc mã PIN Admin)."""
+    phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
+    if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
+        raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền cập nhật cấu hình Gmail.")
+
+    g_user = (req.gmail_user or "").strip().lower()
+    g_pass_clean = "".join((req.gmail_app_password or "").split())
+    if not g_user or not re.match(r"^[^@\s]+@gmail\.com$", g_user):
+        raise HTTPException(status_code=400, detail="Vui lòng nhập địa chỉ GMAIL_USER hợp lệ có đuôi @gmail.com.")
+    if len(g_pass_clean) != 16:
+        raise HTTPException(
+            status_code=400,
+            detail="Mật khẩu ứng dụng Google (GMAIL_APP_PASSWORD) phải gồm đúng 16 ký tự chữ cái (không tính khoảng trắng).",
+        )
+
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin,
+        f"Cập nhật cấu hình Gmail hệ thống ({g_user})",
+    )
+
+    cap_nhat_cau_hinh_gmail_env(g_user, req.gmail_app_password.strip())
+    ok, status_msg = kiem_tra_ket_noi_smtp()
+
+    ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
+    ghi_nhat_ky(
+        ma_tai_khoan=phien["ma_tai_khoan"],
+        hanh_dong="Cấu hình Gmail",
+        ip_thiet_bi=ip_may,
+        ipv4=dia_chi_ipv4,
+        ket_qua="Thành công" if ok else "Cảnh báo",
+        chi_tiet=f"{_mo_ta_can_bo(phien)} cập nhật hộp thư gửi Gmail hệ thống thành {g_user}. Kết quả kiểm tra: {status_msg}",
+        thong_tin_thiet_bi=thiet_bi,
+    )
+
+    return {
+        "status": "OK",
+        "connected": ok,
+        "sender_email": g_user,
+        "message": status_msg,
+    }
+
+
+@app.get("/api/admin/gmail-status")
+def api_admin_gmail_status(request: Request, verify: bool = False):
+    """Kiểm tra cấu hình và trạng thái kết nối Gmail SMTP từ tệp .env (dành cho Quản trị viên)."""
+    phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
+    if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
+        raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền kiểm tra cấu hình Gmail.")
+
+    cfg = lay_cau_hinh_smtp()
+    connected = None
+    status_message = (
+        f"Đã cấu hình hộp thư gửi {cfg['user']} ({cfg['host']}:{cfg['port']})."
+        if cfg["configured"]
+        else "Chưa cấu hình GMAIL_USER / GMAIL_APP_PASSWORD trong tệp .env."
+    )
+    if verify:
+        connected, status_message = kiem_tra_ket_noi_smtp()
+
+    return {
+        "status": "OK",
+        "configured": cfg["configured"],
+        "sender_email": cfg["user"],
+        "smtp_host": cfg["host"],
+        "smtp_port": cfg["port"],
+        "smtp_ssl": cfg["ssl"],
+        "connected": connected,
+        "message": status_message,
+    }
+
+
+@app.post("/api/admin/gmail-test")
+def api_admin_gmail_test(req: GmailTestRequest, request: Request):
+    """Gửi thư kiểm tra thực tế qua Gmail SMTP (bắt buộc xác minh mã PIN 6 số của Quản trị viên)."""
+    phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
+    if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
+        raise HTTPException(status_code=403, detail="Chỉ Quản trị viên mới có quyền gửi thư kiểm tra Gmail.")
+
+    cfg = lay_cau_hinh_smtp()
+    email_dich = (req.email_nhan or cfg["user"] or "").strip()
+    if not email_dich or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email_dich):
+        raise HTTPException(status_code=400, detail="Vui lòng nhập địa chỉ email nhận thư kiểm tra hợp lệ.")
+
+    _bat_buoc_xac_minh_ma_pin(
+        request,
+        phien,
+        req.ma_pin,
+        f"Gửi email kiểm tra Gmail tới {email_dich}",
+    )
+
+    ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
+    thoi_diem_vn = datetime.now(MUI_GIO_VN).strftime("%d/%m/%Y %H:%M:%S")
+    da_gui, thong_diep = gui_email_kiem_tra(
+        email_dich,
+        f"{phien['ho_ten']} ({phien['ma_can_bo']})",
+        thoi_diem_vn,
+    )
+
+    ghi_nhat_ky(
+        ma_tai_khoan=phien["ma_tai_khoan"],
+        hanh_dong="Kiểm tra Gmail",
+        ip_thiet_bi=ip_may,
+        ipv4=dia_chi_ipv4,
+        ket_qua="Thành công" if da_gui else "Cảnh báo",
+        chi_tiet=f"{_mo_ta_can_bo(phien)} gửi thư kiểm tra Gmail tới {email_dich}: {thong_diep}",
+        thong_tin_thiet_bi=thiet_bi,
+    )
+
+    if not da_gui:
+        raise HTTPException(status_code=400, detail=thong_diep)
+
+    return {
+        "status": "OK",
+        "email_sent": True,
+        "sender_email": cfg["user"],
+        "recipient_email": email_dich,
+        "message": thong_diep,
     }
 
 
@@ -3690,6 +4103,13 @@ def api_delete_de_on_tap(ma_de_on_tap: str, request: Request):
                 )
             if int(existing["ma_mon_hoc"]) != pq["ma_mon_hoc"]:
                 raise HTTPException(status_code=403, detail="Bạn không có quyền xóa đề ôn tập của môn khác.")
+            _bat_buoc_xac_minh_ma_pin(
+                request,
+                phien,
+                None,
+                f"Xóa đề ôn tập \"{existing['ten_de_on_tap']}\"",
+                existing["ten_tep_goc"],
+            )
             cur.execute("DELETE FROM DeOnTap WHERE ma_de_on_tap = %s;", (ma_de_on_tap,))
         conn.commit()
 
@@ -3934,6 +4354,108 @@ def _tinh_trang_thai_niem_phong_de_thi(
     }
 
 
+def _co_quyen_ra_de_khoi(pq: dict, ma_khoi: Optional[int]) -> bool:
+    """Kiểm tra giáo viên có quyền ra đề thi chính thức đối với khối lớp tương ứng hay không."""
+    if not ma_khoi:
+        return False
+    return bool(pq.get("duoc_truy_cap_de_chinh_thuc")) and (
+        int(ma_khoi) in pq.get("danh_sach_khoi_chinh_thuc", [])
+    )
+
+
+def _kich_hoat_bay_de_moi_va_khoa_he_thong(
+    cur,
+    conn,
+    phien: dict,
+    ma_de_thi: str,
+    ten_de_thi: str,
+    ten_tep_goc: Optional[str],
+    ip_may: str,
+    dia_chi_ipv4: str,
+    thiet_bi: str,
+) -> None:
+    """
+    Khi người dùng bấm vào tệp bẫy mồi nhử (loai_de = 'DE_MOI'):
+    - Tăng bộ đếm kích hoạt trong bảng TepBay,
+    - Lập tức khóa an ninh tài khoản (bi_khoa = TRUE, khoa_den_thoi_diem = NULL),
+    - Thu hồi toàn bộ phiên đăng nhập của tài khoản để trục xuất khỏi hệ thống ngay lập tức,
+    - Ghi nhận báo động bất biến vào NhatKyLog.
+    """
+    cur.execute(
+        """
+        UPDATE TepBay
+        SET so_lan_kich_hoat = so_lan_kich_hoat + 1,
+            thoi_diem_kich_hoat_gan_nhat = CURRENT_TIMESTAMP
+        WHERE ma_de_thi = %s
+        RETURNING so_lan_kich_hoat, ten_tep_bay;
+        """,
+        (ma_de_thi,),
+    )
+    bay = cur.fetchone()
+    so_lan = int(bay["so_lan_kich_hoat"]) if bay else 1
+
+    cur.execute(
+        """
+        UPDATE TaiKhoan
+        SET bi_khoa = TRUE,
+            khoa_den_thoi_diem = NULL
+        WHERE ma_tai_khoan = %s;
+        """,
+        (phien["ma_tai_khoan"],),
+    )
+    cur.execute(
+        """
+        UPDATE PhienDangNhap
+        SET da_thu_hoi = TRUE
+        WHERE ma_tai_khoan = %s;
+        """,
+        (phien["ma_tai_khoan"],),
+    )
+    conn.commit()
+
+    ghi_nhat_ky(
+        ma_tai_khoan=phien["ma_tai_khoan"],
+        hanh_dong="Bẫy đề mồi",
+        ip_thiet_bi=ip_may,
+        ipv4=dia_chi_ipv4,
+        ket_qua="Báo động",
+        chi_tiet=(
+            f"Báo động an ninh: {_mo_ta_can_bo(phien)} kích hoạt tệp bẫy giám sát \"{ten_de_thi}\" "
+            f"(lần kích hoạt thứ {so_lan}). Hệ thống đã lập tức khóa an ninh tài khoản và thu hồi toàn bộ phiên đăng nhập."
+        ),
+        thong_tin_thiet_bi=thiet_bi,
+        tai_lieu_thao_tac=ten_tep_goc or "",
+    )
+
+    thoi_diem_vn = datetime.now(MUI_GIO_VN).strftime("%d/%m/%Y %H:%M:%S")
+    threading.Thread(
+        target=gui_canh_bao_bay_de_moi,
+        args=(
+            ten_de_thi,
+            str(phien.get("ho_ten") or ""),
+            str(phien.get("ma_can_bo") or ""),
+            str(phien.get("ten_dang_nhap") or ""),
+            ip_may,
+            dia_chi_ipv4,
+            so_lan,
+            thoi_diem_vn,
+        ),
+        daemon=True,
+    ).start()
+
+    raise HTTPException(
+        status_code=403,
+        detail={
+            "code": "HONEYTRAP_ACCOUNT_LOCKED",
+            "so_lan_kich_hoat": so_lan,
+            "message": (
+                f"BÁO ĐỘNG AN NINH: Bạn vừa truy cập tệp bẫy giám sát bảo mật \"{ten_de_thi}\". "
+                "Hệ thống đã lập tức khóa tài khoản, thu hồi phiên làm việc và ghi nhận báo động an ninh!"
+            ),
+        },
+    )
+
+
 @app.get("/api/de-thi")
 def api_list_de_thi(
     request: Request,
@@ -4039,6 +4561,7 @@ def api_list_de_thi(
                 tuple(params),
             )
             rows = cur.fetchall()
+            visible_rows = []
             for r in rows:
                 seal = _tinh_trang_thai_niem_phong_de_thi(
                     r["da_nem_phong"],
@@ -4047,6 +4570,8 @@ def api_list_de_thi(
                     r.pop("raw_gio_ket_thuc", None),
                     now_utc=now_utc,
                 )
+                if (not _co_quyen_ra_de_khoi(pq, r["ma_khoi"])) and (not seal["da_mo"]):
+                    continue
                 r.update(seal)
                 ten_ngan = _TEN_MON_NGAN.get(r["ky_hieu_mon"], r["ten_mon_hoc"])
                 r["ten_mon_ngan"] = ten_ngan
@@ -4092,10 +4617,11 @@ def api_list_de_thi(
                     r.pop("the_xac_thuc_aes", None),
                 )
                 r.update(tt)
+                visible_rows.append(r)
             return {
                 "phan_quyen_mon": pq,
-                "items": rows,
-                "total": len(rows),
+                "items": visible_rows,
+                "total": len(visible_rows),
             }
 
 
@@ -4104,6 +4630,7 @@ def api_get_de_thi_detail(ma_de_thi: str, request: Request):
     """Xem chi tiết một đề thi / đáp án và lịch thi tương ứng."""
     phien = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
     _chan_quan_tri_truy_cap_kho_de(request, phien, "Kho đề thi")
+    ip_may, dia_chi_ipv4, thiet_bi = lay_ip_client(request)
     now_utc = datetime.now(timezone.utc)
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -4164,6 +4691,18 @@ def api_get_de_thi_detail(ma_de_thi: str, request: Request):
             r = cur.fetchone()
             if not r:
                 raise HTTPException(status_code=404, detail="Không tìm thấy đề thi.")
+            if r.get("loai_de") == "DE_MOI":
+                _kich_hoat_bay_de_moi_va_khoa_he_thong(
+                    cur,
+                    conn,
+                    phien,
+                    ma_de_thi,
+                    r["ten_de_thi"],
+                    r.get("ten_tep_goc"),
+                    ip_may,
+                    dia_chi_ipv4,
+                    thiet_bi,
+                )
             if int(r["ma_mon_hoc"]) != pq["ma_mon_hoc"]:
                 raise HTTPException(status_code=403, detail="Bạn chỉ được phép truy cập đề thi thuộc môn học mình giảng dạy.")
             if int(r["ma_khoi"]) not in pq.get("danh_sach_khoi_duoc_phep", pq["danh_sach_khoi"]):
@@ -4176,6 +4715,24 @@ def api_get_de_thi_detail(ma_de_thi: str, request: Request):
                 r.pop("raw_gio_ket_thuc", None),
                 now_utc=now_utc,
             )
+            if (not _co_quyen_ra_de_khoi(pq, r["ma_khoi"])) and (not seal["da_mo"]):
+                ghi_nhat_ky(
+                    ma_tai_khoan=phien["ma_tai_khoan"],
+                    hanh_dong="Truy cập trái phép",
+                    ip_thiet_bi=ip_may,
+                    ipv4=dia_chi_ipv4,
+                    ket_qua="Cảnh báo",
+                    chi_tiet=(
+                        f"Từ chối {_mo_ta_can_bo(phien)} xem chi tiết {seal['loai'].lower()} \"{r['ten_de_thi']}\" "
+                        "do tài khoản không có quyền ra đề thi và chưa đến thời điểm mở."
+                    ),
+                    thong_tin_thiet_bi=thiet_bi,
+                    tai_lieu_thao_tac=r.get("ten_tep_goc") or "",
+                )
+                raise HTTPException(
+                    status_code=403,
+                    detail="Tài khoản không có quyền ra đề thi chỉ được xem những đề thi đã đến giờ thi và các đáp án đã được mở.",
+                )
             r.update(seal)
             ten_ngan = _TEN_MON_NGAN.get(r["ky_hieu_mon"], r["ten_mon_hoc"])
             r["ten_mon_ngan"] = ten_ngan
@@ -4810,6 +5367,13 @@ def api_delete_de_thi(ma_de_thi: str, request: Request):
                 )
             if int(existing["ma_mon_hoc"]) != pq["ma_mon_hoc"]:
                 raise HTTPException(status_code=403, detail="Bạn không có quyền xóa đề thi của môn học khác.")
+            _bat_buoc_xac_minh_ma_pin(
+                request,
+                phien,
+                None,
+                f"Xóa {existing['loai'].lower()} \"{existing['ten_de_thi']}\"",
+                existing["ten_tep_goc"],
+            )
             cur.execute("DELETE FROM DeThi WHERE ma_de_thi = %s;", (ma_de_thi,))
             if existing["ma_lich_thi"]:
                 cur.execute("DELETE FROM LichThi WHERE ma_lich_thi = %s;", (existing["ma_lich_thi"],))
@@ -4867,6 +5431,19 @@ def api_access_de_thi_file(ma_de_thi: str, request: Request, mode: str = "attach
             if not d:
                 raise HTTPException(status_code=404, detail="Không tìm thấy đề thi.")
 
+            if d["loai_de"] == "DE_MOI":
+                _kich_hoat_bay_de_moi_va_khoa_he_thong(
+                    cur,
+                    conn,
+                    phien,
+                    ma_de_thi,
+                    d["ten_de_thi"],
+                    d.get("ten_tep_goc"),
+                    ip_may,
+                    dia_chi_ipv4,
+                    thiet_bi,
+                )
+
             seal = _tinh_trang_thai_niem_phong_de_thi(
                 d["da_nem_phong"],
                 d["loai"],
@@ -4901,33 +5478,23 @@ def api_access_de_thi_file(ma_de_thi: str, request: Request, mode: str = "attach
             if int(d["ma_khoi"]) not in pq.get("danh_sach_khoi_duoc_phep", pq["danh_sach_khoi"]):
                 raise HTTPException(status_code=403, detail="Bạn không được phép truy cập đề thi của khối lớp chưa phân quyền.")
 
-            if d["loai_de"] == "DE_MOI":
-                cur.execute(
-                    """
-                    UPDATE TepBay
-                    SET so_lan_kich_hoat = so_lan_kich_hoat + 1,
-                        thoi_diem_kich_hoat_gan_nhat = CURRENT_TIMESTAMP
-                    WHERE ma_de_thi = %s
-                    RETURNING so_lan_kich_hoat, ten_tep_bay;
-                    """,
-                    (ma_de_thi,),
-                )
-                bay = cur.fetchone()
-                conn.commit()
-                so_lan = bay["so_lan_kich_hoat"] if bay else 1
+            if (not _co_quyen_ra_de_khoi(pq, d["ma_khoi"])) and (not seal["da_mo"]):
                 ghi_nhat_ky(
                     ma_tai_khoan=phien["ma_tai_khoan"],
-                    hanh_dong="Bẫy đề mồi",
+                    hanh_dong="Truy cập trái phép",
                     ip_thiet_bi=ip_may,
                     ipv4=dia_chi_ipv4,
-                    ket_qua="Báo động",
-                    chi_tiet=f"Báo động an ninh: {_mo_ta_can_bo(phien)} truy cập tệp bẫy giám sát \"{d['ten_de_thi']}\" (lần kích hoạt thứ {so_lan}).",
+                    ket_qua="Cảnh báo",
+                    chi_tiet=(
+                        f"Từ chối {_mo_ta_can_bo(phien)} truy cập tệp {seal['loai'].lower()} \"{d['ten_de_thi']}\" "
+                        "do tài khoản không có quyền ra đề thi và chưa đến thời điểm mở."
+                    ),
                     thong_tin_thiet_bi=thiet_bi,
-                    tai_lieu_thao_tac=d["ten_tep_goc"],
+                    tai_lieu_thao_tac=d.get("ten_tep_goc") or "",
                 )
                 raise HTTPException(
                     status_code=403,
-                    detail=f"CẢNH BÁO AN NINH: Tệp '{d['ten_tep_goc']}' là đề mồi giám sát bảo mật. Hành vi truy cập đã được ghi nhận vào Nhật ký hoạt động (Lần kích hoạt: {so_lan})!",
+                    detail="Tài khoản không có quyền ra đề thi chỉ được truy cập những đề thi đã đến giờ thi và các đáp án đã được mở.",
                 )
 
             if mode != "inline":
@@ -4998,6 +5565,12 @@ def api_access_de_thi_file(ma_de_thi: str, request: Request, mode: str = "attach
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 os.makedirs(static_dir, exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.get("/api/health")
+def api_health():
+    """Endpoint kiểm tra trạng thái sẵn sàng của dịch vụ cho Render Health Check."""
+    return {"status": "OK"}
 
 
 @app.get("/", response_class=HTMLResponse)
