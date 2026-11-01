@@ -411,69 +411,275 @@ def _phat_hien_brave_local(chromium_major: str) -> Optional[str]:
     return None
 
 
-def phan_tich_thiet_bi(user_agent: str, headers: Optional[Mapping[str, str]] = None) -> str:
+def _lam_sach_chuoi_header(val: Optional[str], max_len: int = 96) -> str:
+    """Làm sạch giá trị header gửi từ trình duyệt, loại bỏ ký tự điều khiển và giới hạn độ dài."""
+    if not val:
+        return ""
+    cleaned = re.sub(r"[\r\n\t\x00-\x1f\x7f]+", " ", str(val)).strip().strip('"').strip()
+    return cleaned[:max_len]
+
+
+def _trich_xuat_phien_ban_brand(sec_ch_src: str, brand_names: tuple[str, ...]) -> str:
+    """Trích xuất số phiên bản trình duyệt từ header Client Hints."""
+    if not sec_ch_src:
+        return ""
+    for brand in brand_names:
+        pattern = rf'"{re.escape(brand)}"\s*;\s*v="([\d.]+)"'
+        m = re.search(pattern, sec_ch_src, flags=re.IGNORECASE)
+        if m:
+            return m.group(1)
+    return ""
+
+
+def _chon_phien_ban_chi_tiet(sec_ch_full: str, sec_ch_short: str, ua_ver: str, brand_names: tuple[str, ...]) -> str:
+    """Ưu tiên phiên bản đầy đủ từ Sec-CH-UA-Full-Version-List, tiếp đến phiên bản đầy đủ trong User-Agent, cuối cùng là Sec-CH-UA."""
+    full_ch = _trich_xuat_phien_ban_brand(sec_ch_full, brand_names)
+    if full_ch and "." in full_ch:
+        return full_ch
+    if ua_ver and "." in ua_ver:
+        return ua_ver
+    short_ch = _trich_xuat_phien_ban_brand(sec_ch_short, brand_names)
+    return full_ch or ua_ver or short_ch
+
+
+def phan_tich_thiet_bi(
+    user_agent: str,
+    headers: Optional[Mapping[str, str]] = None,
+    allow_local_host_probe: bool = False,
+) -> str:
     """
-    Lấy thông tin Hệ điều hành và Trình duyệt thực tế từ máy chủ & HTTP Client Hints:
-    - Hệ điều hành thật của máy (Windows 11 26H2 Build 26300 [Hostname] hoặc HĐH thiết bị di động).
-    - Trình duyệt thật (Brave, Edge, Cốc Cốc, Chrome, Firefox, Safari) kèm phiên bản thực tế.
+    Xác định chính xác Hệ điều hành và Trình duyệt thực tế của máy khách (Client):
+    - Ưu tiên thông tin Client Hints độ chính xác cao từ trình duyệt (X-Client-OS, Sec-CH-UA-Platform-Version)
+      để phân biệt chính xác Windows 11 (platformVersion >= 13) và Windows 10 (< 13), macOS, Android, iOS, Linux.
+    - Tuyệt đối không lấy hệ điều hành của container máy chủ đám mây (Render/Linux AWS) gán cho người truy cập từ xa.
     """
     ua = str(user_agent or "")
     hdrs = {k.lower(): v for k, v in (headers or {}).items()}
     sec_ch_ua = hdrs.get("sec-ch-ua", "")
-    real_browser_hdr = hdrs.get("x-real-browser", "").strip()
+    sec_ch_full = hdrs.get("sec-ch-ua-full-version-list", "")
+    platform_hint = _lam_sach_chuoi_header(hdrs.get("sec-ch-ua-platform", ""), 40)
+    platform_ver_hint = _lam_sach_chuoi_header(hdrs.get("sec-ch-ua-platform-version", ""), 32)
+    bitness_hint = _lam_sach_chuoi_header(hdrs.get("sec-ch-ua-bitness", ""), 16)
+    arch_hint = _lam_sach_chuoi_header(hdrs.get("sec-ch-ua-arch", ""), 24)
+    model_hint = _lam_sach_chuoi_header(hdrs.get("sec-ch-ua-model", ""), 48)
+    client_os_hdr = _lam_sach_chuoi_header(hdrs.get("x-client-os", ""), 80)
+    real_browser_hdr = _lam_sach_chuoi_header(hdrs.get("x-real-browser", ""), 80)
 
-    # 1. Xác định Hệ điều hành thực tế
-    if "Android" in ua:
-        m_and = re.search(r"Android\s+([\d.]+)", ua)
-        os_name = f"Android {m_and.group(1)}" if m_and else "Android"
-    elif "iPhone" in ua or "iPad" in ua:
-        os_name = "iOS (iPhone/iPad)"
-    elif "Mac OS X" in ua and "Windows" not in ua:
-        os_name = "macOS"
-    elif "Linux" in ua and "Android" not in ua and "Windows" not in ua:
-        os_name = "Linux"
+    if arch_hint.lower() == "arm" and bitness_hint == "64":
+        win_arch_suffix = " (ARM64)"
+    elif bitness_hint == "64" or any(tok in ua for tok in ("Win64", "x64", "WOW64", "amd64")):
+        win_arch_suffix = " (64-bit)"
+    elif bitness_hint == "32":
+        win_arch_suffix = " (32-bit)"
     else:
-        os_name = _lay_os_that_tren_may_chu()
+        win_arch_suffix = ""
 
-    # 2. Xác định Trình duyệt thực tế
+    # 1. Xác định Hệ điều hành thực tế của thiết bị truy cập
+    os_name = ""
+    if client_os_hdr and "-aws" not in client_os_hdr.lower() and "[srv-" not in client_os_hdr.lower():
+        os_name = client_os_hdr
+
+    if not os_name and platform_hint:
+        plat_low = platform_hint.lower()
+        if plat_low == "windows":
+            major_ver = -1
+            if platform_ver_hint:
+                first_part = platform_ver_hint.split(".")[0].strip()
+                if first_part.isdigit():
+                    major_ver = int(first_part)
+            if major_ver >= 13:
+                os_name = f"Windows 11{win_arch_suffix}"
+            elif 1 <= major_ver < 13:
+                os_name = f"Windows 10{win_arch_suffix}"
+            elif allow_local_host_probe and sys.platform == "win32":
+                os_name = _lay_os_that_tren_may_chu()
+            else:
+                os_name = f"Windows 10/11{win_arch_suffix}"
+        elif plat_low in ("macos", "mac os x", "mac"):
+            if platform_ver_hint and platform_ver_hint != "0.0.0":
+                os_name = f"macOS {platform_ver_hint}"
+            else:
+                os_name = "macOS"
+        elif plat_low == "android":
+            ver = platform_ver_hint if (platform_ver_hint and platform_ver_hint != "0.0.0") else ""
+            if not ver:
+                m_and = re.search(r"Android\s+([\d.]+)", ua)
+                ver = m_and.group(1) if m_and else ""
+            os_name = f"Android {ver}".strip() if ver else "Android"
+            if model_hint:
+                os_name = f"{os_name} ({model_hint})"
+        elif plat_low in ("ios", "ipados"):
+            ver = platform_ver_hint if (platform_ver_hint and platform_ver_hint != "0.0.0") else ""
+            os_name = f"iOS {ver}".strip() if ver else "iOS (iPhone/iPad)"
+        elif plat_low in ("chrome os", "chromium os"):
+            os_name = "ChromeOS"
+        elif plat_low == "linux" and "Android" not in ua and "Windows" not in ua:
+            os_name = "Linux"
+
+    if not os_name:
+        if "Android" in ua:
+            m_and = re.search(r"Android\s+([\d.]+)", ua)
+            os_name = f"Android {m_and.group(1)}" if m_and else "Android"
+            m_mod = re.search(r"Android\s+[\d.]+;\s*([^;)]+?)\s+Build/", ua)
+            if m_mod:
+                mod = _lam_sach_chuoi_header(m_mod.group(1), 36)
+                if mod and mod.upper() != "K":
+                    os_name = f"{os_name} ({mod})"
+        elif "iPhone" in ua or "iPad" in ua:
+            dev_lbl = "iPad" if "iPad" in ua else "iPhone"
+            m_ios = re.search(r"OS\s+(\d+[_\d]*)", ua)
+            if m_ios:
+                ios_ver = m_ios.group(1).replace("_", ".")
+                os_name = f"iOS {ios_ver} ({dev_lbl})"
+            else:
+                os_name = f"iOS ({dev_lbl})"
+        elif "Windows NT 10.0" in ua:
+            if allow_local_host_probe and sys.platform == "win32":
+                os_name = _lay_os_that_tren_may_chu()
+            else:
+                os_name = f"Windows 10/11{win_arch_suffix}"
+        elif "Windows NT 6.3" in ua:
+            os_name = f"Windows 8.1{win_arch_suffix}"
+        elif "Windows NT 6.2" in ua:
+            os_name = f"Windows 8{win_arch_suffix}"
+        elif "Windows NT 6.1" in ua:
+            os_name = f"Windows 7{win_arch_suffix}"
+        elif "Windows" in ua:
+            os_name = f"Windows{win_arch_suffix}"
+        elif ("Mac OS X" in ua or "Macintosh" in ua) and "Windows" not in ua:
+            m_mac = re.search(r"Mac OS X\s+(\d+[_\d.]*)", ua)
+            if m_mac:
+                mac_ver = m_mac.group(1).replace("_", ".")
+                os_name = "macOS" if mac_ver.startswith("10.15") else f"macOS {mac_ver}"
+            else:
+                os_name = "macOS"
+        elif "CrOS" in ua:
+            os_name = "ChromeOS"
+        elif ("Linux" in ua or "X11" in ua) and "Android" not in ua and "Windows" not in ua:
+            os_name = "Linux"
+        elif allow_local_host_probe:
+            os_name = _lay_os_that_tren_may_chu()
+        else:
+            os_name = "Thiết bị Web"
+
+    # 2. Xác định Trình duyệt thực tế của máy khách
     if real_browser_hdr:
         browser = real_browser_hdr
-        if "Brave" in browser:
+        if allow_local_host_probe and "Brave" in browser:
             m_chr = re.search(r"Chrome/(\d+)", ua)
             brave_detail = _phat_hien_brave_local(m_chr.group(1) if m_chr else "")
             if brave_detail:
                 browser = brave_detail
-    elif "Brave" in sec_ch_ua or "Brave" in ua:
-        m_chr = re.search(r"Chrome/(\d+)", ua)
-        browser = _phat_hien_brave_local(m_chr.group(1) if m_chr else "") or "Brave Browser"
-    elif "CocCoc" in sec_ch_ua or "coc_coc_browser" in ua:
+    elif "Brave" in sec_ch_full or "Brave" in sec_ch_ua or "Brave" in ua:
+        m_chr = re.search(r"Chrome/([\d.]+)", ua)
+        ch_ver = _chon_phien_ban_chi_tiet(sec_ch_full, sec_ch_ua, "", ("Brave",))
+        if allow_local_host_probe:
+            brave_local = _phat_hien_brave_local(m_chr.group(1).split(".")[0] if m_chr else "")
+        else:
+            brave_local = None
+        if brave_local:
+            browser = brave_local
+        elif ch_ver and "." in ch_ver:
+            browser = f"Brave Browser {ch_ver}"
+        elif m_chr:
+            browser = f"Brave Browser (Chromium {m_chr.group(1)})"
+        else:
+            browser = "Brave Browser"
+    elif "CocCoc" in sec_ch_full or "CocCoc" in sec_ch_ua or "coc_coc_browser" in ua:
         m = re.search(r"coc_coc_browser/([\d.]+)", ua)
-        browser = f"Cốc Cốc {m.group(1)}" if m else "Cốc Cốc"
-    elif "Edg/" in ua or "Microsoft Edge" in sec_ch_ua:
-        m = re.search(r"Edg/([\d.]+)", ua)
-        browser = f"Microsoft Edge {m.group(1)}" if m else "Microsoft Edge"
-    elif "OPR/" in ua or "Opera" in sec_ch_ua:
+        ver = _chon_phien_ban_chi_tiet(sec_ch_full, sec_ch_ua, m.group(1) if m else "", ("CocCoc", "Coc Coc"))
+        browser = f"Cốc Cốc {ver}".strip() if ver else "Cốc Cốc"
+    elif any(tok in ua for tok in ("Edg/", "EdgA/", "EdgiOS/")) or "Microsoft Edge" in sec_ch_ua or "Microsoft Edge" in sec_ch_full:
+        m = re.search(r"(?:Edg|EdgA|EdgiOS)/([\d.]+)", ua)
+        ver = _chon_phien_ban_chi_tiet(sec_ch_full, sec_ch_ua, m.group(1) if m else "", ("Microsoft Edge",))
+        browser = f"Microsoft Edge {ver}".strip() if ver else "Microsoft Edge"
+    elif "OPR/" in ua or "Opera" in sec_ch_ua or "Opera" in sec_ch_full:
         m = re.search(r"OPR/([\d.]+)", ua)
-        browser = f"Opera {m.group(1)}" if m else "Opera"
-    elif "Firefox/" in ua:
-        m = re.search(r"Firefox/([\d.]+)", ua)
+        ver = _chon_phien_ban_chi_tiet(sec_ch_full, sec_ch_ua, m.group(1) if m else "", ("Opera",))
+        browser = f"Opera {ver}".strip() if ver else "Opera"
+    elif "SamsungBrowser/" in ua:
+        m = re.search(r"SamsungBrowser/([\d.]+)", ua)
+        browser = f"Samsung Internet {m.group(1)}" if m else "Samsung Internet"
+    elif "Firefox/" in ua or "FxiOS/" in ua:
+        m = re.search(r"(?:Firefox|FxiOS)/([\d.]+)", ua)
         browser = f"Mozilla Firefox {m.group(1)}" if m else "Mozilla Firefox"
-    elif "Chrome/" in ua:
-        m = re.search(r"Chrome/([\d.]+)", ua)
-        full_ver = m.group(1) if m else ""
+    elif "Chrome/" in ua or "CriOS/" in ua:
+        m = re.search(r"(?:Chrome|CriOS)/([\d.]+)", ua)
+        full_ver = _chon_phien_ban_chi_tiet(sec_ch_full, sec_ch_ua, m.group(1) if m else "", ("Google Chrome", "Chromium"))
         major_ver = full_ver.split(".")[0] if full_ver else ""
-        # Nếu Brave trên máy đang chạy và giả lập User-Agent Chrome/<major>.0.0.0
-        brave_local = _phat_hien_brave_local(major_ver)
+        brave_local = _phat_hien_brave_local(major_ver) if allow_local_host_probe else None
         if brave_local and "Google Chrome" not in sec_ch_ua:
             browser = brave_local
         else:
             browser = f"Google Chrome {full_ver}".strip()
     elif "Safari/" in ua:
-        browser = "Apple Safari"
+        m_ver = re.search(r"Version/([\d.]+)", ua)
+        browser = f"Apple Safari {m_ver.group(1)}" if m_ver else "Apple Safari"
     else:
-        browser = ua[:80] if ua else "Trình duyệt Web"
+        browser = _lam_sach_chuoi_header(ua, 60) or "Trình duyệt Web"
 
     return f"{os_name} - {browser}"
+
+
+def _phan_loai_nhom_thiet_bi(thong_tin_thiet_bi: str) -> tuple[str, str]:
+    """Trích xuất (nhóm_hệ_điều_hành, nhóm_trình_duyệt) phục vụ đối chiếu tính liên tục của phiên làm việc."""
+    s = (thong_tin_thiet_bi or "").strip().lower()
+    if not s:
+        return ("unknown", "unknown")
+
+    la_chuoi_container_cu = ("-aws" in s) or ("[srv-" in s)
+    if la_chuoi_container_cu:
+        os_fam = "legacy_cloud"
+    elif "windows" in s:
+        os_fam = "windows"
+    elif "android" in s:
+        os_fam = "android"
+    elif "ios" in s or "iphone" in s or "ipad" in s:
+        os_fam = "ios"
+    elif "macos" in s or "mac os" in s:
+        os_fam = "macos"
+    elif "chromeos" in s:
+        os_fam = "chromeos"
+    elif "linux" in s:
+        os_fam = "linux"
+    else:
+        os_fam = "unknown"
+
+    if "brave" in s:
+        br_fam = "brave"
+    elif "cốc cốc" in s or "coccoc" in s:
+        br_fam = "coccoc"
+    elif "edge" in s:
+        br_fam = "edge"
+    elif "opera" in s:
+        br_fam = "opera"
+    elif "samsung" in s:
+        br_fam = "samsung"
+    elif "firefox" in s:
+        br_fam = "firefox"
+    elif "chrome" in s:
+        br_fam = "chrome"
+    elif "safari" in s:
+        br_fam = "safari"
+    else:
+        br_fam = "unknown"
+
+    return (os_fam, br_fam)
+
+
+def cung_nhom_thiet_bi_phien(thiet_bi_cu: str, thiet_bi_moi: str) -> bool:
+    """
+    Kiểm tra hai chuỗi thông tin thiết bị có thuộc cùng một trình duyệt và hệ điều hành máy khách hay không
+    (hỗ trợ trường hợp mạng Dual-WAN / CGNAT / chuyển vùng IPv4-IPv6 trên cùng trình duyệt đang đăng nhập,
+    hoặc nâng cấp chuỗi Client Hints từ Windows 10/11 lên Windows 11).
+    """
+    os_cu, br_cu = _phan_loai_nhom_thiet_bi(thiet_bi_cu)
+    os_moi, br_moi = _phan_loai_nhom_thiet_bi(thiet_bi_moi)
+    if br_cu == "unknown" or br_moi == "unknown" or br_cu != br_moi:
+        return False
+    if os_cu == "legacy_cloud":
+        return os_moi != "unknown"
+    return os_cu != "unknown" and os_cu == os_moi
 
 
 # =============================================================================

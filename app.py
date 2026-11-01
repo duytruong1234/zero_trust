@@ -52,6 +52,7 @@ from security import (
     kiem_tra_email_truong_hop_le,
     lay_tien_to_vai_tro,
     phan_tich_thiet_bi,
+    cung_nhom_thiet_bi_phien,
     chuan_hoa_vai_tro,
     chuan_hoa_ho_ten,
     sinh_mat_khau_tam,
@@ -76,6 +77,19 @@ app = FastAPI(
     title="THPT Hoàng Văn Thụ - Hệ thống Quản lý và Phân phối Đề thi",
     description="Chức năng Đăng nhập và Bảo mật (CSDL PostgreSQL)",
 )
+
+_ACCEPT_CLIENT_HINTS = (
+    "Sec-CH-UA, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Platform, "
+    "Sec-CH-UA-Platform-Version, Sec-CH-UA-Arch, Sec-CH-UA-Bitness, "
+    "Sec-CH-UA-Model, Sec-CH-UA-Mobile"
+)
+
+
+@app.middleware("http")
+async def attach_client_hints_header(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("Accept-CH", _ACCEPT_CLIENT_HINTS)
+    return response
 
 
 def dinh_dang_gio_vn(dt: Optional[datetime]) -> str:
@@ -256,20 +270,58 @@ _PUBLIC_IPV4_CACHE = {
 }
 
 
-def _phan_tich_ipv4(ip_str: Optional[str]) -> Optional[ipaddress.IPv4Address]:
-    """Chuẩn hóa và trả về đối tượng IPv4Address nếu hợp lệ (bao gồm dạng IPv4-mapped IPv6), ngược lại trả về None."""
+def _phan_tich_ip_hop_le(ip_str: Optional[str]):
+    """Chuẩn hóa chuỗi IPv4 hoặc IPv6 hợp lệ (gỡ ngoặc vuông, zone-id, IPv4-mapped IPv6), ngược lại trả về None."""
     raw = (ip_str or "").strip()
     if not raw:
         return None
+    if "%" in raw:
+        raw = raw.split("%", 1)[0].strip()
+    if raw.startswith("[") and "]" in raw:
+        raw = raw[1:raw.index("]")].strip()
+    elif raw.count(":") == 1 and "." in raw:
+        host_part, port_part = raw.rsplit(":", 1)
+        if port_part.isdigit():
+            raw = host_part.strip()
     try:
         addr = ipaddress.ip_address(raw)
         if isinstance(addr, ipaddress.IPv6Address) and addr.ipv4_mapped:
-            return addr.ipv4_mapped
-        if isinstance(addr, ipaddress.IPv4Address):
-            return addr
+            addr = addr.ipv4_mapped
+        if addr.is_unspecified or addr.is_multicast:
+            return None
+        return addr
     except ValueError:
         return None
+
+
+def _phan_tich_ipv4(ip_str: Optional[str]) -> Optional[ipaddress.IPv4Address]:
+    """Chuẩn hóa và trả về đối tượng IPv4Address nếu hợp lệ (bao gồm dạng IPv4-mapped IPv6), ngược lại trả về None."""
+    addr = _phan_tich_ip_hop_le(ip_str)
+    if isinstance(addr, ipaddress.IPv4Address):
+        return addr
     return None
+
+
+def _la_ipv4_lan_rieng(ip_str: Optional[str]) -> bool:
+    """Kiểm tra chuỗi có phải địa chỉ IPv4 mạng LAN riêng tư (10.x, 172.16-31.x, 192.168.x) hay không."""
+    ipv4_obj = _phan_tich_ipv4(ip_str)
+    if not ipv4_obj or ipv4_obj.is_loopback or ipv4_obj.is_link_local:
+        return False
+    return any(ipv4_obj in net for net in _DAI_IPV4_NOI_BO[:3])
+
+
+def _la_ip_cong_cong(addr) -> bool:
+    """Kiểm tra đối tượng IPv4Address/IPv6Address có phải IP công cộng định tuyến Internet hay không."""
+    if addr is None:
+        return False
+    return bool(
+        addr.is_global
+        and not addr.is_loopback
+        and not addr.is_private
+        and not addr.is_link_local
+        and not addr.is_multicast
+        and not addr.is_unspecified
+    )
 
 
 def _la_ipv4_ngoai_lan(ip_str: Optional[str]) -> bool:
@@ -350,129 +402,17 @@ def _lay_ipv4_cong_cong_thuc_te(ip_lan_du_phong: Optional[str] = None) -> str:
 
 def _dong_bo_ipv4_cong_cong_khi_khoi_dong() -> None:
     """
-    Làm nóng bộ nhớ đệm Public IPv4 khi khởi động và đồng bộ một lần các bản ghi nội bộ cũ
-    (PhienDangNhap, TaiKhoan, NhatKyLog) từng lưu IP LAN riêng tư ở cột ipv4 sang Public IPv4 thực tế,
-    đồng thời niêm phong lại chuỗi băm SHA-256 và khôi phục ngay Trigger chống chỉnh sửa NhatKyLog.
+    Chỉ áp dụng cho môi trường máy chủ nội bộ (Local LAN): làm nóng bộ nhớ đệm Public IPv4 khi khởi động.
+    Tuyệt đối bỏ qua khi chạy trên đám mây (Render) để không ghi đè IP máy khách bằng IP máy chủ AWS,
+    và không bao giờ can thiệp vào bảng bất biến NhatKyLog.
     """
+    if os.getenv("RENDER") or os.getenv("RENDER_EXTERNAL_URL") or os.getenv("RENDER_SERVICE_ID"):
+        return
     ip_lan = _lay_ip_lan_thuc_te()
     ip_cong_cong = _lay_ipv4_cong_cong_thuc_te(ip_lan)
     ipv4_obj = _phan_tich_ipv4(ip_cong_cong)
     if not ipv4_obj or not ipv4_obj.is_global or ip_cong_cong == ip_lan:
         return
-    try:
-        with get_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE PhienDangNhap
-                    SET ipv4 = %s::inet
-                    WHERE ipv4 <<= '192.168.0.0/16'::inet
-                       OR ipv4 <<= '10.0.0.0/8'::inet
-                       OR ipv4 <<= '172.16.0.0/12'::inet
-                       OR ipv4 <<= '127.0.0.0/8'::inet;
-                    """,
-                    (ip_cong_cong,),
-                )
-                cur.execute(
-                    """
-                    UPDATE TaiKhoan
-                    SET ipv4_gan_nhat = %s::inet
-                    WHERE ipv4_gan_nhat IS NOT NULL
-                      AND (
-                           ipv4_gan_nhat <<= '192.168.0.0/16'::inet
-                        OR ipv4_gan_nhat <<= '10.0.0.0/8'::inet
-                        OR ipv4_gan_nhat <<= '172.16.0.0/12'::inet
-                        OR ipv4_gan_nhat <<= '127.0.0.0/8'::inet
-                      );
-                    """,
-                    (ip_cong_cong,),
-                )
-                cur.execute(
-                    """
-                    SELECT EXISTS (
-                        SELECT 1
-                        FROM NhatKyLog
-                        WHERE COALESCE(bi_can_thiep, FALSE) = FALSE
-                          AND (
-                               ipv4 <<= '192.168.0.0/16'::inet
-                            OR ipv4 <<= '10.0.0.0/8'::inet
-                            OR ipv4 <<= '172.16.0.0/12'::inet
-                            OR ipv4 <<= '127.0.0.0/8'::inet
-                          )
-                    ) AS can_dong_bo;
-                    """
-                )
-                check_row = cur.fetchone()
-                if check_row and check_row.get("can_dong_bo"):
-                    cur.execute("SELECT pg_advisory_xact_lock(20261023);")
-                    cur.execute("DROP TRIGGER IF EXISTS trg_nhat_ky_log_chan_chinh_sua ON NhatKyLog;")
-                    cur.execute(
-                        """
-                        UPDATE NhatKyLog
-                        SET ipv4 = %s::inet
-                        WHERE COALESCE(bi_can_thiep, FALSE) = FALSE
-                          AND (
-                               ipv4 <<= '192.168.0.0/16'::inet
-                            OR ipv4 <<= '10.0.0.0/8'::inet
-                            OR ipv4 <<= '172.16.0.0/12'::inet
-                            OR ipv4 <<= '127.0.0.0/8'::inet
-                          );
-                        """,
-                        (ip_cong_cong,),
-                    )
-                    cur.execute(
-                        """
-                        DO $$
-                        DECLARE
-                            rec RECORD;
-                            v_prev CHAR(64) := repeat('0', 64);
-                            v_hash CHAR(64);
-                        BEGIN
-                            FOR rec IN
-                                SELECT
-                                    ma_nhat_ky,
-                                    ma_tai_khoan,
-                                    hanh_dong,
-                                    ip_thiet_bi,
-                                    ipv4,
-                                    COALESCE(ket_qua_goc, ket_qua) AS kq_goc,
-                                    chi_tiet,
-                                    thoi_diem
-                                FROM NhatKyLog
-                                ORDER BY ma_nhat_ky ASC
-                            LOOP
-                                v_hash := fn_tinh_bam_nhat_ky_log(
-                                    rec.ma_nhat_ky,
-                                    v_prev,
-                                    rec.ma_tai_khoan,
-                                    rec.hanh_dong,
-                                    rec.ip_thiet_bi,
-                                    rec.ipv4,
-                                    rec.kq_goc,
-                                    rec.chi_tiet,
-                                    rec.thoi_diem
-                                );
-                                UPDATE NhatKyLog
-                                SET ma_bam_truoc = v_prev,
-                                    ma_bam_nhat_ky = v_hash
-                                WHERE ma_nhat_ky = rec.ma_nhat_ky;
-                                v_prev := v_hash;
-                            END LOOP;
-                        END;
-                        $$;
-                        """
-                    )
-                    cur.execute(
-                        """
-                        CREATE TRIGGER trg_nhat_ky_log_chan_chinh_sua
-                        BEFORE UPDATE ON NhatKyLog
-                        FOR EACH ROW
-                        EXECUTE FUNCTION fn_chan_chinh_sua_nhat_ky_log();
-                        """
-                    )
-            conn.commit()
-    except Exception:
-        pass
 
 
 def _dong_bo_email_truong_khi_khoi_dong():
@@ -521,46 +461,151 @@ def _dong_bo_email_truong_khi_khoi_dong():
         conn.commit()
 
 
+def _trich_xuat_ip_tu_proxy_headers(request: Request):
+    """
+    Trích xuất địa chỉ IP thực (IPv4 hoặc IPv6) của máy khách đứng trước Reverse Proxy / Cloudflare / Render.
+    Ưu tiên: CF-Connecting-IP -> True-Client-IP -> hop công cộng đầu tiên trong X-Forwarded-For -> X-Real-IP.
+    """
+    for hdr_name in ("CF-Connecting-IP", "True-Client-IP"):
+        val = (request.headers.get(hdr_name) or "").strip()
+        if val:
+            addr = _phan_tich_ip_hop_le(val.split(",")[0].strip())
+            if addr and not addr.is_loopback:
+                return addr
+
+    forwarded = (request.headers.get("X-Forwarded-For") or "").strip()
+    if forwarded:
+        hops = [_phan_tich_ip_hop_le(h.strip()) for h in forwarded.split(",")]
+        valid_hops = [h for h in hops if h is not None and not h.is_loopback]
+        for h in valid_hops:
+            if _la_ip_cong_cong(h):
+                return h
+        if valid_hops:
+            return valid_hops[0]
+
+    real_ip = (request.headers.get("X-Real-IP") or "").strip()
+    if real_ip:
+        addr = _phan_tich_ip_hop_le(real_ip.split(",")[0].strip())
+        if addr and not addr.is_loopback:
+            return addr
+
+    return None
+
+
+def _dang_chay_sau_cloud_proxy(request: Request) -> bool:
+    """Kiểm tra ứng dụng có đang chạy trên đám mây (Render) hoặc sau Reverse Proxy công cộng hay không."""
+    if os.getenv("RENDER") or os.getenv("RENDER_EXTERNAL_URL") or os.getenv("RENDER_SERVICE_ID"):
+        return True
+    for hdr_name in ("CF-Connecting-IP", "True-Client-IP", "X-Forwarded-For", "X-Real-IP"):
+        if (request.headers.get(hdr_name) or "").strip():
+            return True
+    return False
+
+
 def lay_ip_client(request: Request):
     """
-    Lấy IP máy trạm nội bộ (ip_thiet_bi) và địa chỉ IPv4 đường truyền mạng thực tế (ipv4) từ Request:
-    - ip_thiet_bi: IP LAN thực tế của máy trạm kết nối (ví dụ: 192.168.1.4).
-    - ipv4: IPv4 công cộng (Public WAN IPv4) của đường truyền mạng đang sử dụng.
+    Lấy địa chỉ IP thiết bị máy khách (ip_thiet_bi), địa chỉ IPv4 công cộng (ipv4) và thông tin thiết bị (thiet_bi):
+    - Khi triển khai công khai trên đám mây (Render / Cloudflare):
+      + Không bao giờ lấy IP nội bộ hay IP AWS của máy chủ Render gán cho người truy cập.
+      + Hỗ trợ đầy đủ cả người dùng mạng IPv4, Dual-Stack IPv6 (2402:800:...) và CGNAT/Dual-WAN.
+      + ip_thiet_bi ghi nhận IP LAN máy khách (nếu trình duyệt cung cấp qua X-Client-LAN-IP) hoặc IPv6/IP máy khách thực tế.
+      + ipv4 ghi nhận Public WAN IPv4 thực tế của đường truyền người dùng.
+    - Khi chạy trực tiếp trong mạng LAN nội bộ (Localhost / LAN nhà trường):
+      + ip_thiet_bi ghi nhận IP LAN máy trạm, ipv4 ghi nhận Public WAN IPv4 của mạng trường.
     """
-    ip_lan_may_chu = _lay_ip_lan_thuc_te()
+    co_qua_proxy = _dang_chay_sau_cloud_proxy(request)
+    proxy_ip_obj = _trich_xuat_ip_tu_proxy_headers(request)
     client_host = (request.client.host if (request.client and request.client.host) else "").strip()
-    client_ipv4_obj = _phan_tich_ipv4(client_host)
+    client_host_obj = _phan_tich_ip_hop_le(client_host)
+    peer_ip_obj = proxy_ip_obj or client_host_obj
 
-    if client_ipv4_obj and not client_ipv4_obj.is_loopback and not client_ipv4_obj.is_unspecified:
-        ip_thiet_bi = str(client_ipv4_obj)
+    hdr_lan_raw = (request.headers.get("X-Client-LAN-IP") or "").strip()
+    client_lan_ipv4 = str(_phan_tich_ipv4(hdr_lan_raw)) if _la_ipv4_lan_rieng(hdr_lan_raw) else ""
+
+    hdr_pub4_raw = (request.headers.get("X-Client-Public-IPv4") or "").strip()
+    client_pub_ipv4 = str(_phan_tich_ipv4(hdr_pub4_raw)) if _la_ipv4_ngoai_lan(hdr_pub4_raw) else ""
+
+    hdr_ipv6_raw = (request.headers.get("X-Client-IPv6") or "").strip()
+    hdr_ipv6_obj = _phan_tich_ip_hop_le(hdr_ipv6_raw)
+    client_pub_ipv6 = (
+        str(hdr_ipv6_obj)
+        if (isinstance(hdr_ipv6_obj, ipaddress.IPv6Address) and _la_ip_cong_cong(hdr_ipv6_obj))
+        else ""
+    )
+
+    if co_qua_proxy:
+        if isinstance(peer_ip_obj, ipaddress.IPv4Address) and _la_ip_cong_cong(peer_ip_obj):
+            ipv4 = str(peer_ip_obj)
+        elif client_pub_ipv4:
+            ipv4 = client_pub_ipv4
+        elif peer_ip_obj is not None:
+            ipv4 = str(peer_ip_obj)
+        else:
+            ipv4 = "0.0.0.0"
+
+        if client_lan_ipv4:
+            ip_thiet_bi = client_lan_ipv4
+        elif isinstance(peer_ip_obj, ipaddress.IPv6Address) and _la_ip_cong_cong(peer_ip_obj):
+            ip_thiet_bi = str(peer_ip_obj)
+        elif client_pub_ipv6:
+            ip_thiet_bi = client_pub_ipv6
+        elif peer_ip_obj is not None and not peer_ip_obj.is_loopback:
+            ip_thiet_bi = str(peer_ip_obj)
+        else:
+            ip_thiet_bi = ipv4
+
+        allow_local_probe = False
     else:
-        ip_thiet_bi = ip_lan_may_chu
+        is_loopback_peer = (peer_ip_obj is None) or peer_ip_obj.is_loopback
+        ip_lan_may_chu = _lay_ip_lan_thuc_te()
 
-    ipv4 = ""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        first_hop = forwarded.split(",")[0].strip()
-        if _la_ipv4_ngoai_lan(first_hop):
-            ipv4 = str(_phan_tich_ipv4(first_hop))
+        if client_lan_ipv4 and not is_loopback_peer:
+            ip_thiet_bi = client_lan_ipv4
+        elif peer_ip_obj is not None and not peer_ip_obj.is_loopback:
+            ip_thiet_bi = str(peer_ip_obj)
+        elif client_lan_ipv4:
+            ip_thiet_bi = client_lan_ipv4
+        else:
+            ip_thiet_bi = ip_lan_may_chu
 
-    if not ipv4 and _la_ipv4_ngoai_lan(client_host):
-        ipv4 = str(client_ipv4_obj)
+        if isinstance(peer_ip_obj, ipaddress.IPv4Address) and _la_ip_cong_cong(peer_ip_obj):
+            ipv4 = str(peer_ip_obj)
+        elif client_pub_ipv4:
+            ipv4 = client_pub_ipv4
+        else:
+            ipv4 = _lay_ipv4_cong_cong_thuc_te(ip_lan_may_chu)
 
-    if not ipv4:
-        ipv4 = _lay_ipv4_cong_cong_thuc_te(ip_lan_may_chu)
+        allow_local_probe = is_loopback_peer
 
-    # Khi chạy phía sau Reverse Proxy đám mây (Render / Cloud), request.client.host là IP nội bộ
-    # của Load Balancer nên ưu tiên ghi nhận IP thực của máy khách từ X-Forwarded-For.
-    if forwarded and _la_ipv4_ngoai_lan(ipv4) and not _la_ipv4_ngoai_lan(client_host):
-        ip_thiet_bi = ipv4
+    try:
+        request.state.raw_peer_ip = str(peer_ip_obj) if peer_ip_obj is not None else ""
+    except Exception:
+        pass
 
-    thiet_bi = phan_tich_thiet_bi(request.headers.get("User-Agent", ""), request.headers)
+    thiet_bi = phan_tich_thiet_bi(
+        request.headers.get("User-Agent", ""),
+        request.headers,
+        allow_local_host_probe=allow_local_probe,
+    )
     return ip_thiet_bi, ipv4, thiet_bi
 
 
-def _kiem_tra_ip_bi_chan(cur, ip_may: Optional[str], ipv4: Optional[str]):
-    """Kiểm tra xem địa chỉ IP máy trạm hoặc IPv4 kết nối có đang nằm trong danh sách chặn ChanDiaChiIP không."""
-    ips = [ip for ip in {str(ip_may or "").strip(), str(ipv4 or "").strip()} if ip]
+def _kiem_tra_ip_bi_chan(
+    cur,
+    ip_may: Optional[str],
+    ipv4: Optional[str],
+    extra_ip: Optional[str] = None,
+):
+    """Kiểm tra xem địa chỉ IP máy trạm, IPv4 hoặc IP kết nối trực tiếp có đang bị chặn trong ChanDiaChiIP không."""
+    ips = [
+        ip
+        for ip in {
+            str(ip_may or "").strip(),
+            str(ipv4 or "").strip(),
+            str(extra_ip or "").strip(),
+        }
+        if ip
+    ]
     if not ips:
         return None
     cur.execute(
@@ -648,8 +693,9 @@ def kiem_tra_phien_hien_tai(
                         detail={"code": "ACCOUNT_LOCKED", "message": "Tài khoản đang bị tạm khóa an ninh. Phiên làm việc đã bị thu hồi."},
                     )
 
+            raw_peer_ip = getattr(request.state, "raw_peer_ip", "")
             if chuan_hoa_vai_tro(phien["vai_tro"]) != "QUAN_TRI":
-                chan_ip = _kiem_tra_ip_bi_chan(cur, ip_may, current_ipv4)
+                chan_ip = _kiem_tra_ip_bi_chan(cur, ip_may, current_ipv4, raw_peer_ip)
                 if chan_ip:
                     cur.execute("UPDATE PhienDangNhap SET da_thu_hoi = TRUE WHERE ma_phien = %s;", (phien["ma_phien"],))
                     conn.commit()
@@ -693,28 +739,66 @@ def kiem_tra_phien_hien_tai(
                     },
                 )
 
+            thiet_bi_cu = (phien.get("thong_tin_thiet_bi") or "").strip()
+            cung_thiet_bi = cung_nhom_thiet_bi_phien(thiet_bi_cu, thiet_bi)
+
             if current_ipv4 != phien["phien_ipv4"]:
+                if cung_thiet_bi:
+                    # Cùng trình duyệt và cùng hệ điều hành máy khách (mạng Dual-WAN / CGNAT / Dual-Stack đổi IP động):
+                    # cập nhật lại IP hiện hành của phiên để duy trì phiên làm việc liền mạch.
+                    cur.execute(
+                        """
+                        UPDATE PhienDangNhap
+                        SET ip_thiet_bi = %s,
+                            ipv4 = %s,
+                            thong_tin_thiet_bi = %s
+                        WHERE ma_phien = %s;
+                        """,
+                        (ip_may, current_ipv4, thiet_bi, phien["ma_phien"]),
+                    )
+                    conn.commit()
+                    phien["phien_ip_thiet_bi"] = ip_may
+                    phien["phien_ipv4"] = current_ipv4
+                    phien["thong_tin_thiet_bi"] = thiet_bi
+                else:
+                    cur.execute(
+                        "UPDATE PhienDangNhap SET da_thu_hoi = TRUE, da_xac_thuc_otp = FALSE WHERE ma_phien = %s;",
+                        (phien["ma_phien"],),
+                    )
+                    conn.commit()
+                    ghi_nhat_ky(
+                        ma_tai_khoan=phien["ma_tai_khoan"],
+                        hanh_dong="Đăng nhập",
+                        ip_thiet_bi=ip_may,
+                        ipv4=current_ipv4,
+                        ket_qua="Cảnh báo",
+                        chi_tiet=f"Phát hiện đổi địa chỉ IPv4 từ {phien['phien_ipv4']} sang {current_ipv4} kèm sai khác thiết bị truy cập. Phiên bị chặn ngay lập tức, yêu cầu xác thực lại thiết bị chính chủ.",
+                        thong_tin_thiet_bi=thiet_bi,
+                    )
+                    raise HTTPException(
+                        status_code=401,
+                        detail={
+                            "code": "IPV4_MISMATCH_HIJACK",
+                            "message": "Phát hiện địa chỉ mạng và thiết bị thay đổi bất thường. Phiên làm việc đã bị khóa, vui lòng xác thực lại!",
+                        },
+                    )
+            elif cung_thiet_bi and (
+                (thiet_bi and thiet_bi != thiet_bi_cu and ("Windows 10/11" in thiet_bi_cu or "-aws" in thiet_bi_cu.lower() or "[srv-" in thiet_bi_cu.lower()))
+                or (ip_may and ip_may != phien["phien_ip_thiet_bi"] and ip_may != current_ipv4)
+            ):
+                thiet_bi_cap_nhat = thiet_bi if ("Windows 10/11" not in thiet_bi) else (thiet_bi_cu or thiet_bi)
                 cur.execute(
-                    "UPDATE PhienDangNhap SET da_thu_hoi = TRUE, da_xac_thuc_otp = FALSE WHERE ma_phien = %s;",
-                    (phien["ma_phien"],),
+                    """
+                    UPDATE PhienDangNhap
+                    SET ip_thiet_bi = %s,
+                        thong_tin_thiet_bi = %s
+                    WHERE ma_phien = %s;
+                    """,
+                    (ip_may, thiet_bi_cap_nhat, phien["ma_phien"]),
                 )
                 conn.commit()
-                ghi_nhat_ky(
-                    ma_tai_khoan=phien["ma_tai_khoan"],
-                    hanh_dong="Đăng nhập",
-                    ip_thiet_bi=ip_may,
-                    ipv4=current_ipv4,
-                    ket_qua="Cảnh báo",
-                    chi_tiet=f"Phát hiện đổi địa chỉ IPv4 từ {phien['phien_ipv4']} sang {current_ipv4}. Phiên bị chặn ngay lập tức, yêu cầu xác thực lại thiết bị chính chủ.",
-                    thong_tin_thiet_bi=thiet_bi,
-                )
-                raise HTTPException(
-                    status_code=401,
-                    detail={
-                        "code": "IPV4_MISMATCH_HIJACK",
-                        "message": "Phát hiện địa chỉ IPv4 thay đổi bất thường. Phiên làm việc đã bị khóa, vui lòng xác thực lại!",
-                    },
-                )
+                phien["phien_ip_thiet_bi"] = ip_may
+                phien["thong_tin_thiet_bi"] = thiet_bi_cap_nhat
 
             if yeu_cau_otp_hoan_tat and (not phien["da_xac_thuc_otp"] or not phien["da_kich_hoat_otp"]):
                 raise HTTPException(
@@ -782,7 +866,7 @@ def api_login(req: LoginRequest, request: Request, response: Response):
             acc = cur.fetchone()
 
             if (not acc) or (chuan_hoa_vai_tro(acc["vai_tro"]) != "QUAN_TRI"):
-                chan_ip = _kiem_tra_ip_bi_chan(cur, ip_may, dia_chi_ipv4)
+                chan_ip = _kiem_tra_ip_bi_chan(cur, ip_may, dia_chi_ipv4, getattr(request.state, "raw_peer_ip", ""))
                 if chan_ip:
                     ghi_nhat_ky(
                         ma_tai_khoan=acc["ma_tai_khoan"] if acc else None,
@@ -946,12 +1030,28 @@ def api_login(req: LoginRequest, request: Request, response: Response):
             # MẬT KHẨU ĐÚNG -> Phân nhánh Kịch bản 5 (TH1), Kịch bản 6 (TH2), Kịch bản 7 (TH3)
             da_kich_hoat = bool(acc["da_kich_hoat_otp"])
             ip_khop = (acc["ip_gan_nhat"] == ip_may) and (acc["ipv4_gan_nhat"] == dia_chi_ipv4)
-            ip_wan_may_chu = _lay_ipv4_cong_cong_thuc_te(_lay_ip_lan_thuc_te())
-            thuoc_mang_truong = la_mang_noi_bo_truong(dia_chi_ipv4) or (
-                la_mang_noi_bo_truong(ip_may) and dia_chi_ipv4 == ip_wan_may_chu
-            )
+            if _dang_chay_sau_cloud_proxy(request):
+                thuoc_mang_truong = _la_ipv4_ngoai_lan(dia_chi_ipv4) and la_mang_noi_bo_truong(dia_chi_ipv4)
+            else:
+                ip_wan_may_chu = _lay_ipv4_cong_cong_thuc_te(_lay_ip_lan_thuc_te())
+                thuoc_mang_truong = la_mang_noi_bo_truong(dia_chi_ipv4) or (
+                    la_mang_noi_bo_truong(ip_may) and dia_chi_ipv4 == ip_wan_may_chu
+                )
 
             dang_nhap_noi_bo_an_toan = da_kich_hoat and ip_khop and thuoc_mang_truong
+
+            # Thu hồi toàn bộ các phiên "Chờ nhập OTP" (chưa xác thực 2 lớp) còn treo trước đó của tài khoản này
+            # để tránh sinh nhiều phiên chờ trùng lặp khi bấm đăng nhập nhiều lần hoặc tải lại trang.
+            cur.execute(
+                """
+                UPDATE PhienDangNhap
+                SET da_thu_hoi = TRUE
+                WHERE ma_tai_khoan = %s
+                  AND da_xac_thuc_otp = FALSE
+                  AND da_thu_hoi = FALSE;
+                """,
+                (acc["ma_tai_khoan"],),
+            )
 
             raw_token, token_hash = sinh_session_token()
 
@@ -1279,7 +1379,7 @@ def api_ip_access_status(request: Request):
 
     with get_conn() as conn:
         with conn.cursor() as cur:
-            chan_ip = _kiem_tra_ip_bi_chan(cur, ip_may, current_ipv4)
+            chan_ip = _kiem_tra_ip_bi_chan(cur, ip_may, current_ipv4, getattr(request.state, "raw_peer_ip", ""))
             if raw_token:
                 token_hash = bam_session_token(raw_token)
                 cur.execute(
@@ -1608,10 +1708,24 @@ def api_activate_first_time(req: ActivateFirstTimeRequest, request: Request, res
                 """
                 UPDATE PhienDangNhap
                 SET da_xac_thuc_otp = TRUE,
+                    ip_thiet_bi = %s,
+                    ipv4 = %s,
+                    thong_tin_thiet_bi = %s,
                     thoi_diem_het_han = thoi_diem_tao + INTERVAL '8 hours'
                 WHERE ma_phien = %s;
                 """,
-                (phien["ma_phien"],),
+                (ip_may, dia_chi_ipv4, thiet_bi, phien["ma_phien"]),
+            )
+            cur.execute(
+                """
+                UPDATE PhienDangNhap
+                SET da_thu_hoi = TRUE
+                WHERE ma_tai_khoan = %s
+                  AND ma_phien <> %s
+                  AND da_xac_thuc_otp = FALSE
+                  AND da_thu_hoi = FALSE;
+                """,
+                (phien["ma_tai_khoan"], phien["ma_phien"]),
             )
         conn.commit()
 
@@ -1665,10 +1779,24 @@ def api_verify_otp(req: VerifyOtpRequest, request: Request, response: Response):
                 """
                 UPDATE PhienDangNhap
                 SET da_xac_thuc_otp = TRUE,
+                    ip_thiet_bi = %s,
+                    ipv4 = %s,
+                    thong_tin_thiet_bi = %s,
                     thoi_diem_het_han = thoi_diem_tao + INTERVAL '8 hours'
                 WHERE ma_phien = %s;
                 """,
-                (phien["ma_phien"],),
+                (ip_may, dia_chi_ipv4, thiet_bi, phien["ma_phien"]),
+            )
+            cur.execute(
+                """
+                UPDATE PhienDangNhap
+                SET da_thu_hoi = TRUE
+                WHERE ma_tai_khoan = %s
+                  AND ma_phien <> %s
+                  AND da_xac_thuc_otp = FALSE
+                  AND da_thu_hoi = FALSE;
+                """,
+                (phien["ma_tai_khoan"], phien["ma_phien"]),
             )
         conn.commit()
 
@@ -3592,12 +3720,37 @@ def api_admin_gmail_test(req: GmailTestRequest, request: Request):
 
 @app.get("/api/sessions")
 def api_list_sessions(request: Request):
-    """Truy vấn trực tiếp bảng PhienDangNhap trong PostgreSQL."""
+    """Truy vấn trực tiếp bảng PhienDangNhap trong PostgreSQL và tự động thu hồi các phiên hết hạn / phiên chờ OTP bị bỏ dở."""
     phien_hien_tai = kiem_tra_phien_hien_tai(request, yeu_cau_otp_hoan_tat=True)
     if chuan_hoa_vai_tro(phien_hien_tai["vai_tro"]) == "GIAO_VIEN":
         raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập danh sách phiên đăng nhập hệ thống.")
     with get_conn() as conn:
         with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE PhienDangNhap p
+                SET da_thu_hoi = TRUE
+                WHERE p.da_thu_hoi = FALSE
+                  AND (
+                        p.thoi_diem_het_han <= NOW()
+                     OR NOW() - COALESCE(p.thoi_diem_hoat_dong_cuoi, p.thoi_diem_tao) > make_interval(mins => %s)
+                     OR (
+                          p.da_xac_thuc_otp = FALSE
+                          AND EXISTS (
+                              SELECT 1
+                              FROM PhienDangNhap p2
+                              WHERE p2.ma_tai_khoan = p.ma_tai_khoan
+                                AND p2.ma_phien <> p.ma_phien
+                                AND p2.thoi_diem_tao >= p.thoi_diem_tao
+                          )
+                        )
+                  );
+                """,
+                (IDLE_TIMEOUT_MINUTES,),
+            )
+            if cur.rowcount > 0:
+                conn.commit()
+
             cur.execute(
                 """
                 SELECT
@@ -3614,11 +3767,15 @@ def api_list_sessions(request: Request):
                     p.da_thu_hoi,
                     to_char(p.thoi_diem_tao AT TIME ZONE 'Asia/Ho_Chi_Minh', 'DD/MM/YYYY HH24:MI:SS') AS thoi_diem_tao,
                     to_char(p.thoi_diem_het_han AT TIME ZONE 'Asia/Ho_Chi_Minh', 'DD/MM/YYYY HH24:MI:SS') AS thoi_diem_het_han,
-                    (p.thoi_diem_het_han > NOW()) AS con_han
+                    (
+                        p.thoi_diem_het_han > NOW()
+                        AND NOW() - COALESCE(p.thoi_diem_hoat_dong_cuoi, p.thoi_diem_tao) <= make_interval(mins => %s)
+                    ) AS con_han
                 FROM PhienDangNhap p
                 JOIN TaiKhoan t ON t.ma_tai_khoan = p.ma_tai_khoan
                 ORDER BY p.thoi_diem_tao DESC;
-                """
+                """,
+                (IDLE_TIMEOUT_MINUTES,),
             )
             rows = cur.fetchall()
             for r in rows:

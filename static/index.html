@@ -3604,6 +3604,308 @@
   <!-- JAVASCRIPT ĐIỀU KHIỂN LOGIC GIAO DIỆN & KẾT NỐI API CSDL              -->
   <!-- ===================================================================== -->
   <script>
+    (function initClientTelemetryAndApiHeaders() {
+      const _rawFetch = window.fetch.bind(window);
+      const _telemetry = {
+        clientOs: "",
+        realBrowser: "",
+        lanIp: "",
+        publicIpv4: "",
+        publicIpv6: "",
+      };
+
+      try {
+        _telemetry.publicIpv4 = sessionStorage.getItem("hvt_client_pub_ipv4") || "";
+        _telemetry.publicIpv6 = sessionStorage.getItem("hvt_client_pub_ipv6") || "";
+        _telemetry.lanIp = sessionStorage.getItem("hvt_client_lan_ip") || "";
+      } catch (_) {}
+
+      function _sleepMs(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      function _isPrivateLanIpv4(ip) {
+        if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return false;
+        const p = ip.split(".").map(Number);
+        if (p.some((n) => n < 0 || n > 255)) return false;
+        if (p[0] === 10) return true;
+        if (p[0] === 192 && p[1] === 168) return true;
+        if (p[0] === 172 && p[1] >= 16 && p[1] <= 31) return true;
+        return false;
+      }
+
+      async function _detectDeviceAndBrowser() {
+        const ua = navigator.userAgent || "";
+        let osLabel = "";
+        let browserLabel = "";
+        let high = null;
+
+        if (navigator.userAgentData && typeof navigator.userAgentData.getHighEntropyValues === "function") {
+          try {
+            high = await Promise.race([
+              navigator.userAgentData.getHighEntropyValues([
+                "platform",
+                "platformVersion",
+                "architecture",
+                "bitness",
+                "model",
+                "fullVersionList",
+              ]),
+              _sleepMs(350),
+            ]);
+          } catch (_) {
+            high = null;
+          }
+        }
+
+        const plat = (high && high.platform) || (navigator.userAgentData && navigator.userAgentData.platform) || "";
+        const platVer = (high && high.platformVersion) || "";
+        const bitness = (high && high.bitness) || "";
+        const arch = (high && high.architecture) || "";
+        const model = (high && high.model) || "";
+        const winArch =
+          arch.toLowerCase() === "arm" && bitness === "64"
+            ? " (ARM64)"
+            : bitness === "64" || /Win64|x64|WOW64/i.test(ua)
+              ? " (64-bit)"
+              : bitness === "32"
+                ? " (32-bit)"
+                : "";
+
+        if (plat.toLowerCase() === "windows") {
+          const major = parseInt(String(platVer).split(".")[0], 10);
+          if (!Number.isNaN(major) && major >= 13) {
+            osLabel = "Windows 11" + winArch;
+          } else if (!Number.isNaN(major) && major >= 1) {
+            osLabel = "Windows 10" + winArch;
+          } else {
+            osLabel = "Windows 10/11" + winArch;
+          }
+        } else if (plat.toLowerCase() === "macos") {
+          osLabel = platVer && platVer !== "0.0.0" ? "macOS " + platVer : "macOS";
+        } else if (plat.toLowerCase() === "android") {
+          const mAnd = ua.match(/Android\s+([\d.]+)/i);
+          const v = (platVer && platVer !== "0.0.0" ? platVer : (mAnd ? mAnd[1] : "")).trim();
+          osLabel = (v ? "Android " + v : "Android") + (model ? " (" + model + ")" : "");
+        } else if (plat.toLowerCase() === "ios") {
+          osLabel = platVer && platVer !== "0.0.0" ? "iOS " + platVer : "iOS (iPhone/iPad)";
+        } else if (plat.toLowerCase() === "chrome os" || plat.toLowerCase() === "chromium os") {
+          osLabel = "ChromeOS";
+        } else if (plat.toLowerCase() === "linux" && !/Android|Windows/i.test(ua)) {
+          osLabel = "Linux";
+        }
+
+        if (!osLabel) {
+          if (/Android/i.test(ua)) {
+            const m = ua.match(/Android\s+([\d.]+)/i);
+            osLabel = m ? "Android " + m[1] : "Android";
+          } else if (/iPad/i.test(ua)) {
+            const m = ua.match(/OS\s+(\d+[_\d]*)/i);
+            osLabel = m ? "iOS " + m[1].replace(/_/g, ".") + " (iPad)" : "iOS (iPad)";
+          } else if (/iPhone/i.test(ua)) {
+            const m = ua.match(/OS\s+(\d+[_\d]*)/i);
+            osLabel = m ? "iOS " + m[1].replace(/_/g, ".") + " (iPhone)" : "iOS (iPhone)";
+          } else if (/Windows NT 10\.0/i.test(ua)) {
+            osLabel = "Windows 10/11" + winArch;
+          } else if (/Windows NT 6\.3/i.test(ua)) {
+            osLabel = "Windows 8.1" + winArch;
+          } else if (/Windows NT 6\.1/i.test(ua)) {
+            osLabel = "Windows 7" + winArch;
+          } else if (/Windows/i.test(ua)) {
+            osLabel = "Windows" + winArch;
+          } else if (/Mac OS X|Macintosh/i.test(ua)) {
+            osLabel = "macOS";
+          } else if (/CrOS/i.test(ua)) {
+            osLabel = "ChromeOS";
+          } else if (/Linux|X11/i.test(ua)) {
+            osLabel = "Linux";
+          }
+        }
+
+        let isBrave = false;
+        try {
+          if (navigator.brave && typeof navigator.brave.isBrave === "function") {
+            isBrave = Boolean(await Promise.race([navigator.brave.isBrave(), _sleepMs(200)]));
+          }
+        } catch (_) {}
+
+        const brands = (high && Array.isArray(high.fullVersionList) && high.fullVersionList) ||
+          (navigator.userAgentData && Array.isArray(navigator.userAgentData.brands) && navigator.userAgentData.brands) ||
+          [];
+        const findBrandVer = (kw) => {
+          const hit = brands.find((b) => String(b.brand || "").toLowerCase().includes(kw.toLowerCase()));
+          return hit ? String(hit.version || "").trim() : "";
+        };
+
+        if (isBrave || findBrandVer("brave")) {
+          const bv = findBrandVer("brave");
+          const cv = findBrandVer("chromium") || ((ua.match(/Chrome\/([\d.]+)/) || [])[1] || "");
+          browserLabel = bv ? "Brave Browser " + bv : (cv ? "Brave Browser (Chromium " + cv + ")" : "Brave Browser");
+        } else if (/coc_coc_browser/i.test(ua) || findBrandVer("coccoc")) {
+          const v = ((ua.match(/coc_coc_browser\/([\d.]+)/i) || [])[1]) || findBrandVer("coccoc");
+          browserLabel = v ? "Cốc Cốc " + v : "Cốc Cốc";
+        } else if (/(?:Edg|EdgA|EdgiOS)\//i.test(ua) || findBrandVer("microsoft edge")) {
+          const v = findBrandVer("microsoft edge") || ((ua.match(/(?:Edg|EdgA|EdgiOS)\/([\d.]+)/i) || [])[1] || "");
+          browserLabel = v ? "Microsoft Edge " + v : "Microsoft Edge";
+        } else if (/OPR\//i.test(ua) || findBrandVer("opera")) {
+          const v = findBrandVer("opera") || ((ua.match(/OPR\/([\d.]+)/i) || [])[1] || "");
+          browserLabel = v ? "Opera " + v : "Opera";
+        } else if (/SamsungBrowser\//i.test(ua)) {
+          const v = (ua.match(/SamsungBrowser\/([\d.]+)/i) || [])[1] || "";
+          browserLabel = v ? "Samsung Internet " + v : "Samsung Internet";
+        } else if (/(?:Firefox|FxiOS)\//i.test(ua)) {
+          const v = (ua.match(/(?:Firefox|FxiOS)\/([\d.]+)/i) || [])[1] || "";
+          browserLabel = v ? "Mozilla Firefox " + v : "Mozilla Firefox";
+        } else if (/(?:Chrome|CriOS)\//i.test(ua) || findBrandVer("google chrome")) {
+          const v = findBrandVer("google chrome") || ((ua.match(/(?:Chrome|CriOS)\/([\d.]+)/i) || [])[1] || "");
+          browserLabel = v ? "Google Chrome " + v : "Google Chrome";
+        } else if (/Safari\//i.test(ua)) {
+          const v = (ua.match(/Version\/([\d.]+)/i) || [])[1] || "";
+          browserLabel = v ? "Apple Safari " + v : "Apple Safari";
+        }
+
+        _telemetry.clientOs = osLabel;
+        _telemetry.realBrowser = browserLabel;
+      }
+
+      async function _probeLanIpViaWebRtc() {
+        if (_telemetry.lanIp) return;
+        const RTCPeer = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+        if (!RTCPeer) return;
+        await new Promise((resolve) => {
+          let settled = false;
+          let pc = null;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            try { if (pc) pc.close(); } catch (_) {}
+            resolve();
+          };
+          setTimeout(finish, 450);
+          try {
+            pc = new RTCPeer({ iceServers: [] });
+            pc.createDataChannel("lan");
+            pc.onicecandidate = (evt) => {
+              if (!evt || !evt.candidate || !evt.candidate.candidate) {
+                finish();
+                return;
+              }
+              const cand = evt.candidate.candidate;
+              const matches = cand.match(/\b(\d{1,3}(?:\.\d{1,3}){3})\b/g) || [];
+              for (const ip of matches) {
+                if (_isPrivateLanIpv4(ip)) {
+                  _telemetry.lanIp = ip;
+                  try { sessionStorage.setItem("hvt_client_lan_ip", ip); } catch (_) {}
+                  finish();
+                  return;
+                }
+              }
+            };
+            pc.createOffer()
+              .then((offer) => pc.setLocalDescription(offer))
+              .catch(finish);
+          } catch (_) {
+            finish();
+          }
+        });
+      }
+
+      async function _fetchTextWithTimeout(url, timeoutMs) {
+        const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : null;
+        try {
+          const res = await _rawFetch(url, {
+            method: "GET",
+            cache: "no-store",
+            credentials: "omit",
+            signal: ctrl ? ctrl.signal : undefined,
+          });
+          if (!res.ok) return "";
+          return (await res.text()).trim();
+        } catch (_) {
+          return "";
+        } finally {
+          if (timer) clearTimeout(timer);
+        }
+      }
+
+      async function _probePublicIps() {
+        const tasks = [];
+        if (!_telemetry.publicIpv4) {
+          tasks.push((async () => {
+            for (const url of ["https://api4.ipify.org", "https://ipv4.icanhazip.com"]) {
+              const txt = await _fetchTextWithTimeout(url, 1400);
+              if (/^\d{1,3}(\.\d{1,3}){3}$/.test(txt)) {
+                _telemetry.publicIpv4 = txt;
+                try { sessionStorage.setItem("hvt_client_pub_ipv4", txt); } catch (_) {}
+                break;
+              }
+            }
+          })());
+        }
+        if (!_telemetry.publicIpv6) {
+          tasks.push((async () => {
+            const txt = await _fetchTextWithTimeout("https://api6.ipify.org", 1400);
+            if (txt && txt.includes(":") && txt.length <= 45) {
+              _telemetry.publicIpv6 = txt;
+              try { sessionStorage.setItem("hvt_client_pub_ipv6", txt); } catch (_) {}
+            }
+          })());
+        }
+        await Promise.all(tasks);
+      }
+
+      const _devicePromise = _detectDeviceAndBrowser();
+      const _networkPromise = Promise.all([_probeLanIpViaWebRtc(), _probePublicIps()]);
+
+      function _isSameOriginApiUrl(input) {
+        try {
+          const rawUrl = typeof input === "string" ? input : (input && input.url ? input.url : "");
+          if (!rawUrl) return false;
+          const u = new URL(rawUrl, window.location.origin);
+          return u.origin === window.location.origin && u.pathname.startsWith("/api/");
+        } catch (_) {
+          return false;
+        }
+      }
+
+      window.fetch = async function patchedApiFetch(input, init) {
+        if (!_isSameOriginApiUrl(input)) {
+          return _rawFetch(input, init);
+        }
+
+        const rawUrl = typeof input === "string" ? input : (input && input.url ? input.url : "");
+        const isAuthEntry = /\/api\/auth\/(login|verify-otp|verify-first-time-otp|activate-first-time)/.test(rawUrl);
+        if (isAuthEntry) {
+          await Promise.race([Promise.all([_devicePromise, _networkPromise]), _sleepMs(650)]);
+        } else {
+          await Promise.race([_devicePromise, _sleepMs(200)]);
+        }
+
+        const nextInit = Object.assign({}, init || {});
+        const hdrs = new Headers(
+          nextInit.headers || (typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined) || {}
+        );
+        if (_telemetry.clientOs && !hdrs.has("X-Client-OS")) {
+          hdrs.set("X-Client-OS", _telemetry.clientOs);
+        }
+        if (_telemetry.realBrowser && !hdrs.has("X-Real-Browser")) {
+          hdrs.set("X-Real-Browser", _telemetry.realBrowser);
+        }
+        if (_telemetry.lanIp && !hdrs.has("X-Client-LAN-IP")) {
+          hdrs.set("X-Client-LAN-IP", _telemetry.lanIp);
+        }
+        if (_telemetry.publicIpv4 && !hdrs.has("X-Client-Public-IPv4")) {
+          hdrs.set("X-Client-Public-IPv4", _telemetry.publicIpv4);
+        }
+        if (_telemetry.publicIpv6 && !hdrs.has("X-Client-IPv6")) {
+          hdrs.set("X-Client-IPv6", _telemetry.publicIpv6);
+        }
+        nextInit.headers = hdrs;
+        return _rawFetch(input, nextInit);
+      };
+    })();
+
     function setupOtpInputs(selector) {
       const inputs = Array.from(document.querySelectorAll(selector));
       inputs.forEach((input, idx) => {
@@ -4010,11 +4312,20 @@
       inp.type = inp.type === "password" ? "text" : "password";
     }
 
+    let _loginSubmitting = false;
     async function handleLoginSubmit(e) {
       e.preventDefault();
+      if (_loginSubmitting) return;
       hideAlert("loginAlert");
       const identifier = document.getElementById("loginIdentifier").value.trim();
       const mat_khau = document.getElementById("loginPassword").value;
+      const submitBtn = document.getElementById("loginSubmitBtn");
+
+      _loginSubmitting = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("opacity-75", "cursor-not-allowed");
+      }
 
       try {
         const res = await fetch("/api/auth/login", {
@@ -4046,14 +4357,16 @@
           await openExternalPinSetupScreen(data.user, data.message);
         } else {
           showAlert("loginAlert", data.message || "Đăng nhập thành công!", "success");
-          if (data.next_step === "SETUP_PIN") {
-        await openExternalPinSetupScreen(null, data.message);
-        return;
-      }
-      await loadDashboardScreen(data.message || "Đăng nhập thành công!");
+          await loadDashboardScreen(data.message || "Đăng nhập thành công!");
         }
       } catch (err) {
         showAlert("loginAlert", "Lỗi kết nối máy chủ: " + err.message);
+      } finally {
+        _loginSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-75", "cursor-not-allowed");
+        }
       }
     }
 
@@ -4399,8 +4712,10 @@
       }
     }
 
+    let _verifyOtpSubmitting = false;
     async function handleVerifyOtpSubmit(e) {
       e.preventDefault();
+      if (_verifyOtpSubmitting) return;
       hideAlert("verifyOtpAlert");
       const ma_otp = getOtpValue(".v-otp-input");
 
@@ -4409,33 +4724,50 @@
         return;
       }
 
-      const res = await fetch("/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ma_otp }),
-      });
-      const data = await res.json();
+      const submitBtn = e.target?.querySelector?.('button[type="submit"]');
+      _verifyOtpSubmitting = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("opacity-75", "cursor-not-allowed");
+      }
 
-      if (!res.ok) {
-        const detail = data.detail;
-        if (detail?.code === "OTP_BRUTE_FORCE_LOCKED") {
-          showScreen("LOGIN");
-          showAlert("loginAlert", detail.message, "warning");
+      try {
+        const res = await fetch("/api/auth/verify-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ma_otp }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          const detail = data.detail;
+          if (detail?.code === "OTP_BRUTE_FORCE_LOCKED") {
+            showScreen("LOGIN");
+            showAlert("loginAlert", detail.message, "warning");
+            return;
+          }
+          setOtpValue(".v-otp-input", "");
+          const firstOtp = document.querySelector(".v-otp-input");
+          if (firstOtp) firstOtp.focus();
+          const msg = typeof detail === "string" ? detail : (detail?.message || "Xác thực OTP thất bại");
+          showAlert("verifyOtpAlert", msg, "error");
           return;
         }
-        setOtpValue(".v-otp-input", "");
-        const firstOtp = document.querySelector(".v-otp-input");
-        if (firstOtp) firstOtp.focus();
-        const msg = typeof detail === "string" ? detail : (detail?.message || "Xác thực OTP thất bại");
-        showAlert("verifyOtpAlert", msg, "error");
-        return;
-      }
 
-      if (data.next_step === "SETUP_PIN") {
-        await openExternalPinSetupScreen(null, data.message);
-        return;
+        if (data.next_step === "SETUP_PIN") {
+          await openExternalPinSetupScreen(null, data.message);
+          return;
+        }
+        await loadDashboardScreen(data.message || "Đăng nhập thành công!");
+      } catch (err) {
+        showAlert("verifyOtpAlert", "Lỗi kết nối máy chủ: " + err.message, "error");
+      } finally {
+        _verifyOtpSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-75", "cursor-not-allowed");
+        }
       }
-      await loadDashboardScreen(data.message || "Đăng nhập thành công!");
     }
 
     // =====================================================================
@@ -6460,6 +6792,7 @@
     function trangThaiPhien(s) {
       if (s.da_thu_hoi) return { key: "revoked", html: `<span class="ad-pill muted">Đã kết thúc</span>` };
       if (!s.con_han) return { key: "expired", html: `<span class="ad-pill muted">Hết hạn</span>` };
+      if (!s.da_xac_thuc_otp) return { key: "pending", html: `<span class="ad-pill warn">Đang chờ OTP</span>` };
       return { key: "active", html: `<span class="ad-pill ok">Đang hoạt động</span>` };
     }
 
@@ -6483,14 +6816,14 @@
     function renderSessions() {
       const all = DASH.sessions.map(s => ({ s, st: trangThaiPhien(s) }));
       renderChips("sesChips", [
-        ["active", "Đang hoạt động", all.filter(x => x.st.key === "active").length],
-        ["ended", "Đã kết thúc", all.filter(x => x.st.key !== "active").length],
+        ["active", "Đang hoạt động", all.filter(x => x.st.key === "active" || x.st.key === "pending").length],
+        ["ended", "Đã kết thúc", all.filter(x => x.st.key !== "active" && x.st.key !== "pending").length],
         ["", "Tất cả", all.length],
       ], DASH.sesFilter, "pickSesFilter");
 
       const q = document.getElementById("sesSearch").value.trim().toLowerCase();
       const rows = all.filter(({ s, st }) =>
-        (!DASH.sesFilter || (DASH.sesFilter === "active" ? st.key === "active" : st.key !== "active")) &&
+        (!DASH.sesFilter || (DASH.sesFilter === "active" ? (st.key === "active" || st.key === "pending") : (st.key !== "active" && st.key !== "pending"))) &&
         (!q || [s.ho_ten, s.ten_dang_nhap, s.ma_can_bo, s.ip_thiet_bi, s.ipv4, s.thong_tin_thiet_bi].some(v => String(v || "").toLowerCase().includes(q)))
       );
 
@@ -6510,9 +6843,9 @@
               <div class="t-muted t-xs whitespace-nowrap" title="Mã phiên: ${escapeHtml(s.ma_phien)}&#10;Mã băm token: ${escapeHtml(s.ma_phien_bam)}">${escapeHtml(s.ten_dang_nhap)} · <span class="t-code">${escapeHtml(s.ma_can_bo)}</span></div>
             </td>
             <td class="t-sm" style="min-width: 11rem; max-width: 16rem">${chiaThietBi(s.thong_tin_thiet_bi)}</td>
-            <td class="whitespace-nowrap t-sm t-num">
+            <td class="whitespace-nowrap t-sm t-num" style="max-width: 15rem">
               <div>${escapeHtml(s.ipv4)}</div>
-              ${s.ip_thiet_bi !== s.ipv4 ? `<div class="t-muted t-xs">Máy trạm ${escapeHtml(s.ip_thiet_bi)}</div>` : ""}
+              ${s.ip_thiet_bi && s.ip_thiet_bi !== s.ipv4 ? `<div class="t-muted t-xs truncate" title="IP thiết bị: ${escapeHtml(s.ip_thiet_bi)}">Thiết bị: ${escapeHtml(s.ip_thiet_bi)}</div>` : ""}
             </td>
             <td class="whitespace-nowrap">${s.da_xac_thuc_otp ? '<span class="ad-pill ok">Đã xác thực</span>' : '<span class="ad-pill warn">Chờ nhập OTP</span>'}</td>
             <td class="whitespace-nowrap">${st.html}</td>
