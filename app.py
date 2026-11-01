@@ -83,12 +83,18 @@ _ACCEPT_CLIENT_HINTS = (
     "Sec-CH-UA-Platform-Version, Sec-CH-UA-Arch, Sec-CH-UA-Bitness, "
     "Sec-CH-UA-Model, Sec-CH-UA-Mobile"
 )
+_CRITICAL_CLIENT_HINTS = (
+    "Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version, "
+    "Sec-CH-UA-Bitness, Sec-CH-UA-Full-Version-List"
+)
 
 
 @app.middleware("http")
 async def attach_client_hints_header(request: Request, call_next):
     response = await call_next(request)
     response.headers.setdefault("Accept-CH", _ACCEPT_CLIENT_HINTS)
+    if request.url.path == "/":
+        response.headers.setdefault("Critical-CH", _CRITICAL_CLIENT_HINTS)
     return response
 
 
@@ -525,14 +531,6 @@ def lay_ip_client(request: Request):
     hdr_pub4_raw = (request.headers.get("X-Client-Public-IPv4") or "").strip()
     client_pub_ipv4 = str(_phan_tich_ipv4(hdr_pub4_raw)) if _la_ipv4_ngoai_lan(hdr_pub4_raw) else ""
 
-    hdr_ipv6_raw = (request.headers.get("X-Client-IPv6") or "").strip()
-    hdr_ipv6_obj = _phan_tich_ip_hop_le(hdr_ipv6_raw)
-    client_pub_ipv6 = (
-        str(hdr_ipv6_obj)
-        if (isinstance(hdr_ipv6_obj, ipaddress.IPv6Address) and _la_ip_cong_cong(hdr_ipv6_obj))
-        else ""
-    )
-
     if co_qua_proxy:
         if isinstance(peer_ip_obj, ipaddress.IPv4Address) and _la_ip_cong_cong(peer_ip_obj):
             ipv4 = str(peer_ip_obj)
@@ -543,12 +541,12 @@ def lay_ip_client(request: Request):
         else:
             ipv4 = "0.0.0.0"
 
+        # Luôn ưu tiên định dạng số IPv4 (IP LAN nếu trình duyệt cung cấp, ngược lại dùng IPv4 thực của máy khách)
+        # để không hiển thị chuỗi IPv6 dạng hex dài gây nhầm lẫn với dữ liệu mã hóa.
         if client_lan_ipv4:
             ip_thiet_bi = client_lan_ipv4
-        elif isinstance(peer_ip_obj, ipaddress.IPv6Address) and _la_ip_cong_cong(peer_ip_obj):
-            ip_thiet_bi = str(peer_ip_obj)
-        elif client_pub_ipv6:
-            ip_thiet_bi = client_pub_ipv6
+        elif _phan_tich_ipv4(ipv4) is not None:
+            ip_thiet_bi = ipv4
         elif peer_ip_obj is not None and not peer_ip_obj.is_loopback:
             ip_thiet_bi = str(peer_ip_obj)
         else:

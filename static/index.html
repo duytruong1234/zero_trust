@@ -3611,13 +3611,12 @@
         realBrowser: "",
         lanIp: "",
         publicIpv4: "",
-        publicIpv6: "",
       };
 
       try {
         _telemetry.publicIpv4 = sessionStorage.getItem("hvt_client_pub_ipv4") || "";
-        _telemetry.publicIpv6 = sessionStorage.getItem("hvt_client_pub_ipv6") || "";
         _telemetry.lanIp = sessionStorage.getItem("hvt_client_lan_ip") || "";
+        sessionStorage.removeItem("hvt_client_pub_ipv6");
       } catch (_) {}
 
       function _sleepMs(ms) {
@@ -3651,7 +3650,7 @@
                 "model",
                 "fullVersionList",
               ]),
-              _sleepMs(350),
+              _sleepMs(1200),
             ]);
           } catch (_) {
             high = null;
@@ -3830,29 +3829,16 @@
       }
 
       async function _probePublicIps() {
-        const tasks = [];
         if (!_telemetry.publicIpv4) {
-          tasks.push((async () => {
-            for (const url of ["https://api4.ipify.org", "https://ipv4.icanhazip.com"]) {
-              const txt = await _fetchTextWithTimeout(url, 1400);
-              if (/^\d{1,3}(\.\d{1,3}){3}$/.test(txt)) {
-                _telemetry.publicIpv4 = txt;
-                try { sessionStorage.setItem("hvt_client_pub_ipv4", txt); } catch (_) {}
-                break;
-              }
+          for (const url of ["https://api4.ipify.org", "https://ipv4.icanhazip.com"]) {
+            const txt = await _fetchTextWithTimeout(url, 1500);
+            if (/^\d{1,3}(\.\d{1,3}){3}$/.test(txt)) {
+              _telemetry.publicIpv4 = txt;
+              try { sessionStorage.setItem("hvt_client_pub_ipv4", txt); } catch (_) {}
+              break;
             }
-          })());
+          }
         }
-        if (!_telemetry.publicIpv6) {
-          tasks.push((async () => {
-            const txt = await _fetchTextWithTimeout("https://api6.ipify.org", 1400);
-            if (txt && txt.includes(":") && txt.length <= 45) {
-              _telemetry.publicIpv6 = txt;
-              try { sessionStorage.setItem("hvt_client_pub_ipv6", txt); } catch (_) {}
-            }
-          })());
-        }
-        await Promise.all(tasks);
       }
 
       const _devicePromise = _detectDeviceAndBrowser();
@@ -3877,9 +3863,9 @@
         const rawUrl = typeof input === "string" ? input : (input && input.url ? input.url : "");
         const isAuthEntry = /\/api\/auth\/(login|verify-otp|verify-first-time-otp|activate-first-time)/.test(rawUrl);
         if (isAuthEntry) {
-          await Promise.race([Promise.all([_devicePromise, _networkPromise]), _sleepMs(650)]);
+          await Promise.race([Promise.all([_devicePromise, _networkPromise]), _sleepMs(1200)]);
         } else {
-          await Promise.race([_devicePromise, _sleepMs(200)]);
+          await Promise.race([_devicePromise, _sleepMs(350)]);
         }
 
         const nextInit = Object.assign({}, init || {});
@@ -3898,13 +3884,17 @@
         if (_telemetry.publicIpv4 && !hdrs.has("X-Client-Public-IPv4")) {
           hdrs.set("X-Client-Public-IPv4", _telemetry.publicIpv4);
         }
-        if (_telemetry.publicIpv6 && !hdrs.has("X-Client-IPv6")) {
-          hdrs.set("X-Client-IPv6", _telemetry.publicIpv6);
-        }
         nextInit.headers = hdrs;
         return _rawFetch(input, nextInit);
       };
     })();
+
+    function hienThiIpChuanIpv4(ipMay, ipv4) {
+      const m = String(ipMay || "").trim();
+      const v4 = String(ipv4 || "").trim();
+      if (m.includes(":") && v4 && !v4.includes(":")) return v4;
+      return m || v4 || "—";
+    }
 
     function setupOtpInputs(selector) {
       const inputs = Array.from(document.querySelectorAll(selector));
@@ -5224,7 +5214,7 @@
                 ${lg.ip_dang_bi_chan ? '<span class="ad-pill bad">IP bị chặn</span>' : ""}
               </div>
               <div class="t-muted t-xs t-num mt-0.5 whitespace-nowrap">
-                IP: <span class="t-text font-medium">${escapeHtml(lg.ip_may || "—")}</span>
+                IP: <span class="t-text font-medium">${escapeHtml(hienThiIpChuanIpv4(lg.ip_may, lg.dia_chi_ipv4))}</span>
                 <span class="t-dim mx-1">·</span>
                 IPv4: <span class="t-text font-medium">${escapeHtml(lg.dia_chi_ipv4 || "—")}</span>
               </div>
@@ -5312,7 +5302,7 @@
       document.getElementById("ldMangThietBi").innerHTML = `
         <div>
           <div class="t-muted t-xs">Địa chỉ IP</div>
-          <div class="t-strong t-num mt-0.5">${escapeHtml(lg.ip_may || "—")}</div>
+          <div class="t-strong t-num mt-0.5">${escapeHtml(hienThiIpChuanIpv4(lg.ip_may, lg.dia_chi_ipv4))}</div>
         </div>
         <div>
           <div class="t-muted t-xs">Địa chỉ IPv4</div>
@@ -6165,8 +6155,8 @@
         const otp = a.da_kich_hoat_otp
           ? `<span class="ad-pill ok">Đã kích hoạt</span>`
           : `<span class="ad-pill muted" title="Lần đăng nhập đầu tiên sẽ được yêu cầu quét mã QR">Chưa kích hoạt</span>`;
-        const ipMay = a.ip_thiet_bi_gan_nhat || a.ipv4_gan_nhat;
         const ipv4 = a.ipv4_gan_nhat || a.ip_thiet_bi_gan_nhat;
+        const ipMay = hienThiIpChuanIpv4(a.ip_thiet_bi_gan_nhat, ipv4);
         const truyCapGanNhat = (ipMay || ipv4)
           ? `<div><span class="t-dim">IP:</span> ${escapeHtml(ipMay)}</div>
              <div class="t-muted t-xs flex items-center gap-1.5 flex-wrap"><span class="t-dim">IPv4:</span> <span>${escapeHtml(ipv4)}</span>${a.ip_dang_bi_chan ? '<span class="ad-pill bad">IP bị chặn</span>' : ""}</div>`
@@ -6845,7 +6835,7 @@
             <td class="t-sm" style="min-width: 11rem; max-width: 16rem">${chiaThietBi(s.thong_tin_thiet_bi)}</td>
             <td class="whitespace-nowrap t-sm t-num" style="max-width: 15rem">
               <div>${escapeHtml(s.ipv4)}</div>
-              ${s.ip_thiet_bi && s.ip_thiet_bi !== s.ipv4 ? `<div class="t-muted t-xs truncate" title="IP thiết bị: ${escapeHtml(s.ip_thiet_bi)}">Thiết bị: ${escapeHtml(s.ip_thiet_bi)}</div>` : ""}
+              ${(() => { const ipTb = hienThiIpChuanIpv4(s.ip_thiet_bi, s.ipv4); return ipTb && ipTb !== s.ipv4 && ipTb !== "—" ? `<div class="t-muted t-xs truncate" title="IP thiết bị: ${escapeHtml(ipTb)}">Thiết bị: ${escapeHtml(ipTb)}</div>` : ""; })()}
             </td>
             <td class="whitespace-nowrap">${s.da_xac_thuc_otp ? '<span class="ad-pill ok">Đã xác thực</span>' : '<span class="ad-pill warn">Chờ nhập OTP</span>'}</td>
             <td class="whitespace-nowrap">${st.html}</td>
