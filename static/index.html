@@ -184,7 +184,7 @@
        KHU VỰC QUẢN TRỊ (DASHBOARD) - HAI CHẾ ĐỘ SÁNG / TỐI
        Toàn bộ màu lấy từ biến; đổi chế độ bằng html[data-theme="light|dark"].
        ===================================================================== */
-    #viewDashboard, .ad-overlay, #createModal, #gmailModal, #permModal, #adminPinModal, #logDetailModal, #adDialog, #rowMenu, #adToasts {
+    #viewDashboard, .qt-overlay, #createModal, #gmailModal, #permModal, #adminPinModal, #logDetailModal, #qtDialog, #rowMenu, #qtToasts {
       --bg: #0b1220;
       --surface: #111a2c;
       --surface-2: #0e1626;
@@ -217,9 +217,9 @@
       --mute-fg: #97a3b8;  --mute-bg: rgba(138, 151, 173, .1);  --mute-bd: rgba(138, 151, 173, .22);
       color-scheme: dark;
     }
-    html[data-theme="light"] #viewDashboard, html[data-theme="light"] .ad-overlay, html[data-theme="light"] #createModal, html[data-theme="light"] #gmailModal,
+    html[data-theme="light"] #viewDashboard, html[data-theme="light"] .qt-overlay, html[data-theme="light"] #createModal, html[data-theme="light"] #gmailModal,
     html[data-theme="light"] #permModal, html[data-theme="light"] #adminPinModal, html[data-theme="light"] #logDetailModal,
-    html[data-theme="light"] #adDialog, html[data-theme="light"] #rowMenu, html[data-theme="light"] #adToasts {
+    html[data-theme="light"] #qtDialog, html[data-theme="light"] #rowMenu, html[data-theme="light"] #qtToasts {
       --bg: #f3f5f9;
       --surface: #ffffff;
       --surface-2: #f8fafc;
@@ -253,110 +253,110 @@
       color-scheme: light;
     }
     #viewDashboard { background: var(--bg); color: var(--text); }
-    #viewDashboard, #viewDashboard .ad-topbar, #viewDashboard .ad-card, #viewDashboard .ad-table thead th {
+    #viewDashboard, #viewDashboard .qt-topbar, #viewDashboard .qt-card, #viewDashboard .qt-table thead th {
       transition: background-color .2s ease, border-color .2s ease, color .2s ease;
     }
-    #viewDashboard .ad-wrap { max-width: 1480px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; }
-    #viewDashboard .ad-topbar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; }
-    #viewDashboard .ad-logo {
+    #viewDashboard .qt-wrap { max-width: 1480px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+    #viewDashboard .qt-topbar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; }
+    #viewDashboard .qt-logo {
       width: 2.25rem; height: 2.25rem; border-radius: 8px; display: grid; place-items: center;
       background: #17337a; color: #fff; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.04em;
     }
-    #viewDashboard .ad-brand { color: var(--strong); font-weight: 700; font-size: 1.05rem; line-height: 1.2; }
-    #viewDashboard .ad-sub { color: var(--muted); font-size: 0.82rem; }
-    #viewDashboard .ad-tabs { display: flex; gap: 0.25rem; margin-bottom: -1px; }
-    #viewDashboard .ad-tab {
+    #viewDashboard .qt-brand { color: var(--strong); font-weight: 700; font-size: 1.05rem; line-height: 1.2; }
+    #viewDashboard .qt-sub { color: var(--muted); font-size: 0.82rem; }
+    #viewDashboard .qt-tabs { display: flex; gap: 0.25rem; margin-bottom: -1px; }
+    #viewDashboard .qt-tab {
       padding: 0.7rem 0.95rem; color: var(--muted); font-size: 0.95rem; border-bottom: 2px solid transparent;
       transition: color .15s, border-color .15s; white-space: nowrap;
     }
-    #viewDashboard .ad-tab:hover { color: var(--text); }
-    #viewDashboard .ad-tab.is-active { color: var(--strong); border-bottom-color: var(--accent); font-weight: 700; }
-    #viewDashboard .ad-tab .ad-count { margin-left: 0.4rem; font-size: 0.75rem; color: var(--dim); font-variant-numeric: tabular-nums; }
+    #viewDashboard .qt-tab:hover { color: var(--text); }
+    #viewDashboard .qt-tab.is-active { color: var(--strong); border-bottom-color: var(--accent); font-weight: 700; }
+    #viewDashboard .qt-tab .qt-count { margin-left: 0.4rem; font-size: 0.75rem; color: var(--dim); font-variant-numeric: tabular-nums; }
 
-    #viewDashboard .ad-user {
+    #viewDashboard .qt-user {
       display: flex; align-items: center; gap: 0.6rem; padding: 0.3rem 0.5rem 0.3rem 0.3rem; border-radius: 8px;
       border: 1px solid transparent; transition: background .15s, border-color .15s;
     }
-    #viewDashboard .ad-user:hover { background: var(--surface-3); border-color: var(--line); }
-    #viewDashboard .ad-avatar {
+    #viewDashboard .qt-user:hover { background: var(--surface-3); border-color: var(--line); }
+    #viewDashboard .qt-avatar {
       width: 2rem; height: 2rem; border-radius: 999px; display: grid; place-items: center; font-weight: 700;
       background: var(--avatar-bg); color: var(--avatar-fg); font-size: 0.9rem; flex-shrink: 0;
     }
-    #viewDashboard .ad-pop {
+    #viewDashboard .qt-pop {
       position: absolute; right: 0; top: calc(100% + 6px); width: 18rem; background: var(--surface); border: 1px solid var(--line-2);
       border-radius: 10px; box-shadow: var(--shadow); padding: 0.4rem; z-index: 40;
     }
-    #viewDashboard .ad-pop .ad-pop-item { width: 100%; text-align: left; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 6px; }
-    #viewDashboard .ad-pop .ad-pop-item:hover { background: var(--surface-3); }
+    #viewDashboard .qt-pop .qt-pop-item { width: 100%; text-align: left; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 6px; }
+    #viewDashboard .qt-pop .qt-pop-item:hover { background: var(--surface-3); }
 
     /* Công tắc Sáng / Tối dạng Icon trên nền Sidebar xanh đậm */
-    #viewDashboard .ad-theme {
+    #viewDashboard .qt-theme {
       display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px;
       background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14); flex-shrink: 0;
     }
-    #viewDashboard .ad-theme button {
+    #viewDashboard .qt-theme button {
       width: 1.85rem; height: 1.85rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px;
       color: rgba(219, 234, 254, 0.72); transition: background .15s, color .15s, transform .15s;
     }
-    #viewDashboard .ad-theme button:hover { color: #ffffff; background: rgba(255, 255, 255, 0.08); }
-    #viewDashboard .ad-theme button.is-active { background: #2563eb; color: #ffffff; box-shadow: 0 2px 6px rgba(0, 0, 0, .28); }
+    #viewDashboard .qt-theme button:hover { color: #ffffff; background: rgba(255, 255, 255, 0.08); }
+    #viewDashboard .qt-theme button.is-active { background: #2563eb; color: #ffffff; box-shadow: 0 2px 6px rgba(0, 0, 0, .28); }
 
-    #viewDashboard .ad-pagehead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
-    #viewDashboard .ad-pagehead h1 { color: var(--strong); font-size: 1.65rem; font-weight: 800; line-height: 1.25; }
-    #viewDashboard .ad-pagehead p { color: var(--muted); font-size: 0.95rem; margin-top: 0.25rem; max-width: 48rem; }
+    #viewDashboard .qt-pagehead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+    #viewDashboard .qt-pagehead h1 { color: var(--strong); font-size: 1.65rem; font-weight: 800; line-height: 1.25; }
+    #viewDashboard .qt-pagehead p { color: var(--muted); font-size: 0.95rem; margin-top: 0.25rem; max-width: 48rem; }
 
-    #viewDashboard .ad-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.04); }
-    #viewDashboard .ad-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--line); }
+    #viewDashboard .qt-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.04); }
+    #viewDashboard .qt-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--line); }
 
-    .ad-btn {
+    .qt-btn {
       display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.9rem; border-radius: 7px; font-size: 0.92rem;
       font-weight: 700; background: var(--accent-2); color: #fff; border: 1px solid var(--accent-2); transition: background .15s;
       white-space: nowrap;
     }
-    .ad-btn:hover { background: var(--accent); border-color: var(--accent); }
-    .ad-btn:disabled { opacity: .45; cursor: not-allowed; }
-    .ad-btn-ghost {
+    .qt-btn:hover { background: var(--accent); border-color: var(--accent); }
+    .qt-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .qt-btn-ghost {
       display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.85rem; border-radius: 7px; font-size: 0.92rem;
       background: var(--surface); color: var(--text); border: 1px solid var(--line-2); transition: background .15s; white-space: nowrap;
     }
-    .ad-btn-ghost:hover { background: var(--surface-3); }
-    .ad-btn.ad-btn-danger { background: var(--danger); border-color: var(--danger); }
-    .ad-btn.ad-btn-danger:hover { filter: brightness(1.1); }
-    .ad-link { color: var(--accent); font-size: 0.85rem; }
-    .ad-link:hover { text-decoration: underline; }
+    .qt-btn-ghost:hover { background: var(--surface-3); }
+    .qt-btn.qt-btn-danger { background: var(--danger); border-color: var(--danger); }
+    .qt-btn.qt-btn-danger:hover { filter: brightness(1.1); }
+    .qt-link { color: var(--accent); font-size: 0.85rem; }
+    .qt-link:hover { text-decoration: underline; }
 
-    .ad-input {
+    .qt-input {
       width: 100%; background: var(--surface-2); border: 1px solid var(--line-2); color: var(--strong); border-radius: 7px;
       padding: 0.5rem 0.7rem; font-size: 0.95rem; transition: border-color .15s, box-shadow .15s;
     }
-    .ad-input::placeholder { color: var(--dim); }
-    .ad-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
-    .ad-input[readonly] { background: var(--surface-3); color: var(--text); }
-    select.ad-input option { background: var(--surface); color: var(--strong); }
-    #viewDashboard .ad-search { position: relative; flex: 1 1 18rem; max-width: 26rem; }
-    #viewDashboard .ad-search svg { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: var(--dim); }
-    #viewDashboard .ad-search .ad-input { padding-left: 2.1rem; }
+    .qt-input::placeholder { color: var(--dim); }
+    .qt-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+    .qt-input[readonly] { background: var(--surface-3); color: var(--text); }
+    select.qt-input option { background: var(--surface); color: var(--strong); }
+    #viewDashboard .qt-search { position: relative; flex: 1 1 18rem; max-width: 26rem; }
+    #viewDashboard .qt-search svg { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: var(--dim); }
+    #viewDashboard .qt-search .qt-input { padding-left: 2.1rem; }
 
-    #viewDashboard .ad-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-    #viewDashboard .ad-chip {
+    #viewDashboard .qt-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    #viewDashboard .qt-chip {
       padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.85rem; color: var(--muted); border: 1px solid var(--line-2);
       background: transparent; transition: all .15s; white-space: nowrap;
     }
-    #viewDashboard .ad-chip b { color: var(--text); font-weight: 700; margin-left: 0.3rem; font-variant-numeric: tabular-nums; }
-    #viewDashboard .ad-chip:hover { color: var(--text); border-color: var(--dim); }
-    #viewDashboard .ad-chip.is-active { background: var(--info-bg); border-color: var(--info-bd); color: var(--strong); }
+    #viewDashboard .qt-chip b { color: var(--text); font-weight: 700; margin-left: 0.3rem; font-variant-numeric: tabular-nums; }
+    #viewDashboard .qt-chip:hover { color: var(--text); border-color: var(--dim); }
+    #viewDashboard .qt-chip.is-active { background: var(--info-bg); border-color: var(--info-bd); color: var(--strong); }
 
-    #viewDashboard .ad-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
-    #viewDashboard .ad-table thead th {
+    #viewDashboard .qt-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    #viewDashboard .qt-table thead th {
       text-align: left; font-weight: 600; color: var(--muted); font-size: 0.82rem; padding: 0.6rem 0.9rem;
       border-bottom: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; position: sticky; top: 0; z-index: 1;
     }
-    #viewDashboard .ad-table tbody td { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
-    #viewDashboard .ad-table tbody tr:last-child td { border-bottom: 0; }
-    #viewDashboard .ad-table tbody tr:hover { background: var(--row-hover); }
-    #viewDashboard .ad-table tbody tr.is-current { background: var(--row-current); }
-    #viewDashboard .ad-empty { padding: 2.5rem 1rem; text-align: center; color: var(--muted); }
-    #viewDashboard .ad-scroll { overflow-x: auto; max-height: calc(100vh - 17rem); overflow-y: auto; border-radius: 0 0 10px 10px; }
+    #viewDashboard .qt-table tbody td { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    #viewDashboard .qt-table tbody tr:last-child td { border-bottom: 0; }
+    #viewDashboard .qt-table tbody tr:hover { background: var(--row-hover); }
+    #viewDashboard .qt-table tbody tr.is-current { background: var(--row-current); }
+    #viewDashboard .qt-empty { padding: 2.5rem 1rem; text-align: center; color: var(--muted); }
+    #viewDashboard .qt-scroll { overflow-x: auto; max-height: calc(100vh - 17rem); overflow-y: auto; border-radius: 0 0 10px 10px; }
 
     .t-strong { color: var(--strong); font-weight: 700; }
     .t-text { color: var(--text); }
@@ -373,62 +373,62 @@
     .t-alert { color: var(--alert-fg); }
     .t-ok { color: var(--ok-fg); }
 
-    .ad-pill {
+    .qt-pill {
       display: inline-flex; align-items: center; justify-content: center; padding: 0.16rem 0.62rem; border-radius: 999px; font-size: 0.8rem;
       font-weight: 600; white-space: nowrap; border: 1px solid transparent;
     }
-    .ad-pill.ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-bd); }
-    .ad-pill.bad { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-bd); }
-    .ad-pill.warn { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-bd); }
-    .ad-pill.alert { color: var(--alert-fg); background: var(--alert-bg); border-color: var(--alert-bd); font-weight: 700; }
-    .ad-pill.info { color: var(--info-fg); background: var(--info-bg); border-color: var(--info-bd); }
-    .ad-pill.muted { color: var(--mute-fg); background: var(--mute-bg); border-color: var(--mute-bd); }
+    .qt-pill.ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-bd); }
+    .qt-pill.bad { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-bd); }
+    .qt-pill.warn { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-bd); }
+    .qt-pill.alert { color: var(--alert-fg); background: var(--alert-bg); border-color: var(--alert-bd); font-weight: 700; }
+    .qt-pill.info { color: var(--info-fg); background: var(--info-bg); border-color: var(--info-bd); }
+    .qt-pill.muted { color: var(--mute-fg); background: var(--mute-bg); border-color: var(--mute-bd); }
 
     /* Khối thống kê chỉ số tổng quan Nhật ký hoạt động */
-    #viewDashboard .ad-kpi-grid {
+    #viewDashboard .qt-kpi-grid {
       display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.85rem; margin-bottom: 1.15rem;
     }
     @media (max-width: 1180px) {
-      #viewDashboard .ad-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      #viewDashboard .qt-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
     @media (max-width: 680px) {
-      #viewDashboard .ad-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #viewDashboard .qt-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-    #viewDashboard .ad-kpi-card {
+    #viewDashboard .qt-kpi-card {
       text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 13px;
       padding: 0.9rem 1.05rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
       transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
       box-shadow: 0 3px 14px rgba(15, 23, 42, 0.035); cursor: pointer;
     }
-    #viewDashboard .ad-kpi-card:hover { border-color: var(--line-2); transform: translateY(-1px); }
-    #viewDashboard .ad-kpi-card.is-active {
+    #viewDashboard .qt-kpi-card:hover { border-color: var(--line-2); transform: translateY(-1px); }
+    #viewDashboard .qt-kpi-card.is-active {
       border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
     }
-    #viewDashboard .ad-kpi-label { font-size: 0.82rem; font-weight: 600; color: var(--muted); }
-    #viewDashboard .ad-kpi-val {
+    #viewDashboard .qt-kpi-label { font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+    #viewDashboard .qt-kpi-val {
       font-size: 1.6rem; font-weight: 800; line-height: 1.2; margin-top: 0.2rem;
       font-variant-numeric: tabular-nums; color: var(--strong);
     }
-    #viewDashboard .ad-kpi-icon {
+    #viewDashboard .qt-kpi-icon {
       width: 2.5rem; height: 2.5rem; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0;
       border: 1px solid transparent;
     }
-    #viewDashboard .ad-kpi-icon.total { color: var(--info-fg); background: var(--info-bg); border-color: var(--info-bd); }
-    #viewDashboard .ad-kpi-icon.ok    { color: var(--ok-fg);   background: var(--ok-bg);   border-color: var(--ok-bd); }
-    #viewDashboard .ad-kpi-icon.bad   { color: var(--bad-fg);  background: var(--bad-bg);  border-color: var(--bad-bd); }
-    #viewDashboard .ad-kpi-icon.warn  { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-bd); }
-    #viewDashboard .ad-kpi-icon.alert { color: var(--alert-fg); background: var(--alert-bg); border-color: var(--alert-bd); }
+    #viewDashboard .qt-kpi-icon.total { color: var(--info-fg); background: var(--info-bg); border-color: var(--info-bd); }
+    #viewDashboard .qt-kpi-icon.ok    { color: var(--ok-fg);   background: var(--ok-bg);   border-color: var(--ok-bd); }
+    #viewDashboard .qt-kpi-icon.bad   { color: var(--bad-fg);  background: var(--bad-bg);  border-color: var(--bad-bd); }
+    #viewDashboard .qt-kpi-icon.warn  { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-bd); }
+    #viewDashboard .qt-kpi-icon.alert { color: var(--alert-fg); background: var(--alert-bg); border-color: var(--alert-bd); }
 
-    .ad-btn-sm {
+    .qt-btn-sm {
       display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.34rem 0.68rem; border-radius: 7px;
       font-size: 0.82rem; font-weight: 600; background: var(--surface-2); color: var(--strong);
       border: 1px solid var(--line-2); transition: all .15s; white-space: nowrap;
     }
-    .ad-btn-sm:hover { background: var(--surface-3); border-color: var(--accent); color: var(--accent); }
-    .ad-btn.ad-btn-warn { background: #b86e0b; border-color: #b86e0b; color: #fff; }
-    .ad-btn.ad-btn-warn:hover { filter: brightness(1.08); }
-    .ad-btn.ad-btn-ok { background: #15803d; border-color: #15803d; color: #fff; }
-    .ad-btn.ad-btn-ok:hover { filter: brightness(1.08); }
+    .qt-btn-sm:hover { background: var(--surface-3); border-color: var(--accent); color: var(--accent); }
+    .qt-btn.qt-btn-warn { background: #b86e0b; border-color: #b86e0b; color: #fff; }
+    .qt-btn.qt-btn-warn:hover { filter: brightness(1.08); }
+    .qt-btn.qt-btn-ok { background: #15803d; border-color: #15803d; color: #fff; }
+    .qt-btn.qt-btn-ok:hover { filter: brightness(1.08); }
 
     #logDetailModal .ld-section {
       background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 0.85rem 1rem;
@@ -480,83 +480,83 @@
     }
     .pq-check-label input[type="checkbox"]:disabled { cursor: not-allowed; }
 
-    #viewDashboard .ad-note { padding: 0.7rem 0.9rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid; margin-bottom: 1rem; display: flex; gap: 0.65rem; align-items: center; }
-    #viewDashboard .ad-note.hidden { display: none; }
-    #viewDashboard .ad-note.ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-bd); }
-    #viewDashboard .ad-note.bad { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-bd); }
-    #viewDashboard .ad-note-close {
+    #viewDashboard .qt-note { padding: 0.7rem 0.9rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid; margin-bottom: 1rem; display: flex; gap: 0.65rem; align-items: center; }
+    #viewDashboard .qt-note.hidden { display: none; }
+    #viewDashboard .qt-note.ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-bd); }
+    #viewDashboard .qt-note.bad { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-bd); }
+    #viewDashboard .qt-note-close {
       margin-left: auto; width: 1.75rem; height: 1.75rem; border-radius: 6px;
       display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
       color: currentColor; opacity: 0.7; transition: opacity .15s, background-color .15s; cursor: pointer;
     }
-    #viewDashboard .ad-note-close:hover { opacity: 1; background: rgba(255, 255, 255, 0.12); }
-    html[data-theme="light"] #viewDashboard .ad-note-close:hover { background: rgba(15, 23, 42, 0.08); }
+    #viewDashboard .qt-note-close:hover { opacity: 1; background: rgba(255, 255, 255, 0.12); }
+    html[data-theme="light"] #viewDashboard .qt-note-close:hover { background: rgba(15, 23, 42, 0.08); }
 
-    #viewDashboard .ad-iconbtn {
+    #viewDashboard .qt-iconbtn {
       width: 2rem; height: 2rem; display: inline-grid; place-items: center; border-radius: 7px; color: var(--muted);
       border: 1px solid transparent; transition: all .15s;
     }
-    #viewDashboard .ad-iconbtn:hover { background: var(--surface-3); color: var(--strong); border-color: var(--line-2); }
-    #viewDashboard .ad-hash { color: var(--muted); display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
-    #viewDashboard .ad-hash:hover { color: var(--text); }
+    #viewDashboard .qt-iconbtn:hover { background: var(--surface-3); color: var(--strong); border-color: var(--line-2); }
+    #viewDashboard .qt-hash { color: var(--muted); display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+    #viewDashboard .qt-hash:hover { color: var(--text); }
 
     /* Menu thao tác, hộp thoại, thông báo nổi */
-    .ad-menu {
+    .qt-menu {
       position: fixed; z-index: 60; min-width: 14.5rem; background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px;
       box-shadow: var(--shadow); padding: 0.35rem; color: var(--text);
     }
-    .ad-menu button { width: 100%; text-align: left; display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.65rem; border-radius: 6px; font-size: 0.92rem; }
-    .ad-menu button:hover:not(:disabled) { background: var(--surface-3); }
-    .ad-menu button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .ad-menu button.danger { color: var(--bad-fg); }
-    .ad-menu button.warn { color: var(--warn-fg); }
-    .ad-menu button.success { color: var(--ok-fg); }
-    .ad-menu hr { border: 0; border-top: 1px solid var(--line); margin: 0.3rem 0; }
-    .ad-menu .ad-menu-title { padding: 0.45rem 0.65rem 0.35rem; font-size: 0.78rem; color: var(--muted); }
+    .qt-menu button { width: 100%; text-align: left; display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.65rem; border-radius: 6px; font-size: 0.92rem; }
+    .qt-menu button:hover:not(:disabled) { background: var(--surface-3); }
+    .qt-menu button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .qt-menu button.danger { color: var(--bad-fg); }
+    .qt-menu button.warn { color: var(--warn-fg); }
+    .qt-menu button.success { color: var(--ok-fg); }
+    .qt-menu hr { border: 0; border-top: 1px solid var(--line); margin: 0.3rem 0; }
+    .qt-menu .qt-menu-title { padding: 0.45rem 0.65rem 0.35rem; font-size: 0.78rem; color: var(--muted); }
 
-    .ad-overlay { position: fixed; inset: 0; background: var(--overlay); backdrop-filter: blur(2px); z-index: 70; display: flex; align-items: flex-start; justify-content: center; padding: 6vh 1rem 1rem; overflow-y: auto; }
-    .ad-overlay.hidden { display: none !important; }
-    .ad-dialog { width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: var(--shadow); }
-    .ad-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
-    .ad-dialog-head h3 { color: var(--strong); font-weight: 700; font-size: 1.12rem; }
-    .ad-dialog-head .ad-close { color: var(--muted); }
-    .ad-dialog-head .ad-close:hover { color: var(--strong); }
-    .ad-dialog-body { padding: 1.15rem 1.25rem; }
-    .ad-dialog-foot { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.85rem 1.25rem; border-top: 1px solid var(--line); background: var(--surface-2); border-radius: 0 0 12px 12px; }
-    .ad-field label { display: block; font-size: 0.86rem; color: var(--label); margin-bottom: 0.3rem; font-weight: 600; }
-    .ad-field label.flex { display: flex; }
-    .ad-field .ad-hint { font-size: 0.78rem; color: var(--dim); margin-top: 0.3rem; }
-    .ad-field .ad-hint.is-error { color: var(--bad-fg); font-weight: 600; }
-    .ad-secret {
+    .qt-overlay { position: fixed; inset: 0; background: var(--overlay); backdrop-filter: blur(2px); z-index: 70; display: flex; align-items: flex-start; justify-content: center; padding: 6vh 1rem 1rem; overflow-y: auto; }
+    .qt-overlay.hidden { display: none !important; }
+    .qt-dialog { width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: var(--shadow); }
+    .qt-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
+    .qt-dialog-head h3 { color: var(--strong); font-weight: 700; font-size: 1.12rem; }
+    .qt-dialog-head .qt-close { color: var(--muted); }
+    .qt-dialog-head .qt-close:hover { color: var(--strong); }
+    .qt-dialog-body { padding: 1.15rem 1.25rem; }
+    .qt-dialog-foot { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.85rem 1.25rem; border-top: 1px solid var(--line); background: var(--surface-2); border-radius: 0 0 12px 12px; }
+    .qt-field label { display: block; font-size: 0.86rem; color: var(--label); margin-bottom: 0.3rem; font-weight: 600; }
+    .qt-field label.flex { display: flex; }
+    .qt-field .qt-hint { font-size: 0.78rem; color: var(--dim); margin-top: 0.3rem; }
+    .qt-field .qt-hint.is-error { color: var(--bad-fg); font-weight: 600; }
+    .qt-secret {
       display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.6rem 0.8rem; border-radius: 8px;
       background: var(--surface-2); border: 1px dashed var(--line-2); color: var(--strong); font-size: 1.05rem; letter-spacing: 0.06em;
     }
-    .ad-success-icon { background: var(--ok-bg); color: var(--ok-fg); }
-    .ad-msg { padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid; margin-bottom: 0.9rem; }
-    .ad-msg.bad { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-bd); }
-    .ad-msg.warn { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-bd); }
-    .ad-msg.ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-bd); }
+    .qt-success-icon { background: var(--ok-bg); color: var(--ok-fg); }
+    .qt-msg { padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid; margin-bottom: 0.9rem; }
+    .qt-msg.bad { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-bd); }
+    .qt-msg.warn { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-bd); }
+    .qt-msg.ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-bd); }
 
-    #adDialog { z-index: 80; }
-    #adToasts { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 110; display: flex; flex-direction: column; gap: 0.5rem; max-width: 26rem; }
-    .ad-table tbody tr.is-tampered-row td { background: rgba(239, 68, 68, 0.10); }
-    [data-theme="light"] .ad-table tbody tr.is-tampered-row td { background: #fef2f2; }
-    .ad-toast {
+    #qtDialog { z-index: 105; }
+    #qtToasts { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 130; display: flex; flex-direction: column; gap: 0.5rem; max-width: 26rem; }
+    .qt-table tbody tr.is-tampered-row td { background: rgba(239, 68, 68, 0.10); }
+    [data-theme="light"] .qt-table tbody tr.is-tampered-row td { background: #fef2f2; }
+    .qt-toast {
       display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.7rem 0.85rem; border-radius: 9px; font-size: 0.92rem;
       background: var(--surface); color: var(--strong); border: 1px solid var(--line-2); border-left-width: 3px; box-shadow: var(--shadow);
-      animation: adToastIn .18s ease-out;
+      animation: qtToastIn .18s ease-out;
     }
-    .ad-toast .ad-toast-icon { margin-top: 0.15rem; }
-    .ad-toast-close {
+    .qt-toast .qt-toast-icon { margin-top: 0.15rem; }
+    .qt-toast-close {
       margin-left: auto; width: 1.45rem; height: 1.45rem; border-radius: 5px;
       display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
       color: var(--muted); transition: color .15s, background-color .15s; cursor: pointer;
     }
-    .ad-toast-close:hover { color: var(--strong); background: var(--surface-3); }
-    .ad-toast.ok { border-left-color: var(--ok-fg); } .ad-toast.ok .ad-toast-icon { color: var(--ok-fg); }
-    .ad-toast.bad { border-left-color: var(--bad-fg); } .ad-toast.bad .ad-toast-icon { color: var(--bad-fg); }
-    .ad-toast.warn { border-left-color: var(--warn-fg); } .ad-toast.warn .ad-toast-icon { color: var(--warn-fg); }
-    @keyframes adToastIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .qt-toast-close:hover { color: var(--strong); background: var(--surface-3); }
+    .qt-toast.ok { border-left-color: var(--ok-fg); } .qt-toast.ok .qt-toast-icon { color: var(--ok-fg); }
+    .qt-toast.bad { border-left-color: var(--bad-fg); } .qt-toast.bad .qt-toast-icon { color: var(--bad-fg); }
+    .qt-toast.warn { border-left-color: var(--warn-fg); } .qt-toast.warn .qt-toast-icon { color: var(--warn-fg); }
+    @keyframes qtToastIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -1527,7 +1527,7 @@
             </div>
           </button>
 
-          <div class="ad-theme" role="group" aria-label="Chế độ hiển thị">
+          <div class="qt-theme" role="group" aria-label="Chế độ hiển thị">
             <button type="button" data-theme-btn="light" onclick="setTheme('light')" title="Chế độ Sáng" aria-label="Chế độ Sáng">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
             </button>
@@ -1537,7 +1537,7 @@
           </div>
         </div>
 
-        <div id="userMenu" class="ad-pop hidden" style="bottom: calc(100% + 8px); top: auto; left: 0.75rem; right: 0.75rem; width: auto;">
+        <div id="userMenu" class="qt-pop hidden" style="bottom: calc(100% + 8px); top: auto; left: 0.75rem; right: 0.75rem; width: auto;">
           <div class="px-3 py-2.5">
             <div class="t-strong" id="dashHoTen2"></div>
             <div class="t-muted t-sm" id="dashEmail"></div>
@@ -1552,23 +1552,23 @@
 
     <!-- Khu vực nội dung bên phải -->
     <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-      <main class="ad-wrap w-full py-6 flex-1">
+      <main class="qt-wrap w-full py-6 flex-1">
 
       <!-- ================================================================= -->
       <!-- TAB 1: NHẬT KÝ HOẠT ĐỘNG (MỤC 3 & MỤC 4)                          -->
       <!-- ================================================================= -->
       <section id="dashSectionLogs">
-        <div class="ad-pagehead">
+        <div class="qt-pagehead">
           <div>
             <h1>Nhật ký hoạt động</h1>
             <p>Mọi lần đăng nhập, xác thực và thao tác quản trị đều được ghi lại. Mỗi dòng được niêm phong nối tiếp dòng trước nên không thể sửa hay xóa lén.</p>
           </div>
           <div class="flex gap-2">
-            <button type="button" class="ad-btn-ghost" onclick="loadLogs()">
+            <button type="button" class="qt-btn-ghost" onclick="loadLogs()">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
               Làm mới
             </button>
-            <button type="button" class="ad-btn" onclick="verifyHashChain()">
+            <button type="button" class="qt-btn" onclick="verifyHashChain()">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
               Kiểm tra toàn vẹn
             </button>
@@ -1578,61 +1578,61 @@
         <div id="hashChainStatusBox" class="hidden"></div>
 
         <!-- 1. KHỐI THỐNG KÊ CHỈ SỐ TỔNG QUAN -->
-        <div id="logKpiGrid" class="ad-kpi-grid" aria-label="Thống kê chỉ số tổng quan nhật ký">
-          <button type="button" class="ad-kpi-card is-active" data-kpi-filter="" onclick="pickLogFilter('')">
+        <div id="logKpiGrid" class="qt-kpi-grid" aria-label="Thống kê chỉ số tổng quan nhật ký">
+          <button type="button" class="qt-kpi-card is-active" data-kpi-filter="" onclick="pickLogFilter('')">
             <div>
-              <div class="ad-kpi-label">Tổng số sự kiện</div>
-              <div id="kpiTongSuKien" class="ad-kpi-val">0</div>
+              <div class="qt-kpi-label">Tổng số sự kiện</div>
+              <div id="kpiTongSuKien" class="qt-kpi-val">0</div>
             </div>
-            <div class="ad-kpi-icon total">
+            <div class="qt-kpi-icon total">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
             </div>
           </button>
 
-          <button type="button" class="ad-kpi-card" data-kpi-filter="Thành công" onclick="pickLogFilter('Thành công')">
+          <button type="button" class="qt-kpi-card" data-kpi-filter="Thành công" onclick="pickLogFilter('Thành công')">
             <div>
-              <div class="ad-kpi-label">Thành công</div>
-              <div id="kpiThanhCong" class="ad-kpi-val t-ok">0</div>
+              <div class="qt-kpi-label">Thành công</div>
+              <div id="kpiThanhCong" class="qt-kpi-val t-ok">0</div>
             </div>
-            <div class="ad-kpi-icon ok">
+            <div class="qt-kpi-icon ok">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div>
           </button>
 
-          <button type="button" class="ad-kpi-card" data-kpi-filter="Thất bại" onclick="pickLogFilter('Thất bại')">
+          <button type="button" class="qt-kpi-card" data-kpi-filter="Thất bại" onclick="pickLogFilter('Thất bại')">
             <div>
-              <div class="ad-kpi-label">Thất bại</div>
-              <div id="kpiThatBai" class="ad-kpi-val t-bad">0</div>
+              <div class="qt-kpi-label">Thất bại</div>
+              <div id="kpiThatBai" class="qt-kpi-val t-bad">0</div>
             </div>
-            <div class="ad-kpi-icon bad">
+            <div class="qt-kpi-icon bad">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div>
           </button>
 
-          <button type="button" class="ad-kpi-card" data-kpi-filter="Cảnh báo" onclick="pickLogFilter('Cảnh báo')">
+          <button type="button" class="qt-kpi-card" data-kpi-filter="Cảnh báo" onclick="pickLogFilter('Cảnh báo')">
             <div>
-              <div class="ad-kpi-label">Cảnh báo</div>
-              <div id="kpiCanhBao" class="ad-kpi-val t-warn">0</div>
+              <div class="qt-kpi-label">Cảnh báo</div>
+              <div id="kpiCanhBao" class="qt-kpi-val t-warn">0</div>
             </div>
-            <div class="ad-kpi-icon warn">
+            <div class="qt-kpi-icon warn">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
               </svg>
             </div>
           </button>
 
-          <button type="button" class="ad-kpi-card" data-kpi-filter="Báo động" onclick="pickLogFilter('Báo động')">
+          <button type="button" class="qt-kpi-card" data-kpi-filter="Báo động" onclick="pickLogFilter('Báo động')">
             <div>
-              <div class="ad-kpi-label">Báo động</div>
-              <div id="kpiBaoDong" class="ad-kpi-val t-alert">0</div>
+              <div class="qt-kpi-label">Báo động</div>
+              <div id="kpiBaoDong" class="qt-kpi-val t-alert">0</div>
             </div>
-            <div class="ad-kpi-icon alert">
+            <div class="qt-kpi-icon alert">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
               </svg>
@@ -1641,16 +1641,16 @@
         </div>
 
         <!-- 2. BẢNG DANH MỤC NHẬT KÝ -->
-        <div class="ad-card">
-          <div class="ad-toolbar">
-            <div class="ad-search">
+        <div class="qt-card">
+          <div class="qt-toolbar">
+            <div class="qt-search">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
-              <input id="logSearch" type="search" class="ad-input" placeholder="Tìm theo mã log, tên giáo viên, IP, hành động, nội dung..." oninput="renderLogs()" />
+              <input id="logSearch" type="search" class="qt-input" placeholder="Tìm theo mã log, tên giáo viên, IP, hành động, nội dung..." oninput="renderLogs()" />
             </div>
-            <div id="logChips" class="ad-chips"></div>
+            <div id="logChips" class="qt-chips"></div>
           </div>
-          <div class="ad-scroll">
-            <table class="ad-table">
+          <div class="qt-scroll">
+            <table class="qt-table">
               <thead>
                 <tr>
                   <th>Mã log</th>
@@ -1672,42 +1672,42 @@
       <!-- TAB 2: TÀI KHOẢN (MỤC 2, 7, 8 & CN_CapTaiKhoanMoi)                -->
       <!-- ================================================================= -->
       <section id="dashSectionAccounts" class="hidden">
-        <div class="ad-pagehead">
+        <div class="qt-pagehead">
           <div>
             <h1>Tài khoản</h1>
             <p>Cấp tài khoản cho cán bộ, theo dõi tình trạng bảo mật và xử lý khi tài khoản bị khóa hoặc giáo viên đổi điện thoại.</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button type="button" class="ad-btn-ghost" onclick="openGmailStatusModal()">
+            <button type="button" class="qt-btn-ghost" onclick="openGmailStatusModal()">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               Kiểm tra Gmail
             </button>
-            <button type="button" class="ad-btn-ghost" onclick="loadAccounts()">
+            <button type="button" class="qt-btn-ghost" onclick="loadAccounts()">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
               Làm mới
             </button>
-            <button type="button" class="ad-btn" onclick="openCreateModal()">
+            <button type="button" class="qt-btn" onclick="openCreateModal()">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"/></svg>
               Cấp tài khoản
             </button>
           </div>
         </div>
 
-        <div class="ad-card">
-          <div class="ad-toolbar">
-            <div class="ad-search">
+        <div class="qt-card">
+          <div class="qt-toolbar">
+            <div class="qt-search">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
-              <input id="accSearch" type="search" class="ad-input" placeholder="Tìm theo họ tên, mã cán bộ, tên đăng nhập, email..." oninput="renderAccounts()" />
+              <input id="accSearch" type="search" class="qt-input" placeholder="Tìm theo họ tên, mã cán bộ, tên đăng nhập, email..." oninput="renderAccounts()" />
             </div>
-            <select id="accRoleFilter" class="ad-input" style="width: auto" onchange="renderAccounts()">
+            <select id="accRoleFilter" class="qt-input" style="width: auto" onchange="renderAccounts()">
               <option value="">Tất cả vai trò</option>
               <option value="GIAO_VIEN">Giáo viên</option>
               <option value="QUAN_TRI">Quản trị viên IT</option>
             </select>
-            <div id="accChips" class="ad-chips"></div>
+            <div id="accChips" class="qt-chips"></div>
           </div>
-          <div class="ad-scroll">
-            <table class="ad-table">
+          <div class="qt-scroll">
+            <table class="qt-table">
               <thead>
                 <tr>
                   <th>Cán bộ</th>
@@ -1731,27 +1731,27 @@
       <!-- TAB 3: PHIÊN ĐĂNG NHẬP (Bảng PhienDangNhap)                       -->
       <!-- ================================================================= -->
       <section id="dashSectionSessions" class="hidden">
-        <div class="ad-pagehead">
+        <div class="qt-pagehead">
           <div>
             <h1>Phiên đăng nhập</h1>
             <p>Các phiên làm việc đã cấp. Phiên bị thu hồi khi người dùng đăng xuất, đổi địa chỉ IP bất thường hoặc nhập sai mã OTP quá số lần cho phép.</p>
           </div>
-          <button type="button" class="ad-btn-ghost" onclick="loadSessions()">
+          <button type="button" class="qt-btn-ghost" onclick="loadSessions()">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             Làm mới
           </button>
         </div>
 
-        <div class="ad-card">
-          <div class="ad-toolbar">
-            <div class="ad-search">
+        <div class="qt-card">
+          <div class="qt-toolbar">
+            <div class="qt-search">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
-              <input id="sesSearch" type="search" class="ad-input" placeholder="Tìm theo người dùng, IP, thiết bị..." oninput="renderSessions()" />
+              <input id="sesSearch" type="search" class="qt-input" placeholder="Tìm theo người dùng, IP, thiết bị..." oninput="renderSessions()" />
             </div>
-            <div id="sesChips" class="ad-chips"></div>
+            <div id="sesChips" class="qt-chips"></div>
           </div>
-          <div class="ad-scroll">
-            <table class="ad-table">
+          <div class="qt-scroll">
+            <table class="qt-table">
               <thead>
                 <tr>
                   <th>Người dùng</th>
@@ -1773,31 +1773,31 @@
       <!-- TAB 4: QUẢN LÝ MÃ PIN GIÁO VIÊN (Bảng TaiKhoan.ma_pin)            -->
       <!-- ================================================================= -->
       <section id="dashSectionPins" class="hidden">
-        <div class="ad-pagehead">
+        <div class="qt-pagehead">
           <div>
             <h1>Quản lý mã PIN giáo viên</h1>
             <p>Giáo viên không tự thay đổi mã PIN qua Gmail. Khi giáo viên quên hoặc cần đổi mã PIN 6 chữ số, giáo viên liên hệ Quản trị viên để được đổi trực tiếp hoặc mở đặt lại mã PIN tại đây.</p>
           </div>
-          <button type="button" class="ad-btn-ghost" onclick="loadAccounts()">
+          <button type="button" class="qt-btn-ghost" onclick="loadAccounts()">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             Làm mới
           </button>
         </div>
 
-        <div class="ad-card">
-          <div class="ad-toolbar">
-            <div class="ad-search">
+        <div class="qt-card">
+          <div class="qt-toolbar">
+            <div class="qt-search">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
-              <input id="pinAccSearch" type="search" class="ad-input" placeholder="Tìm theo họ tên giáo viên, mã cán bộ, tên đăng nhập, email..." oninput="renderAdminPins()" />
+              <input id="pinAccSearch" type="search" class="qt-input" placeholder="Tìm theo họ tên giáo viên, mã cán bộ, tên đăng nhập, email..." oninput="renderAdminPins()" />
             </div>
-            <select id="pinRoleFilter" class="ad-input" style="width: auto" onchange="renderAdminPins()">
+            <select id="pinRoleFilter" class="qt-input" style="width: auto" onchange="renderAdminPins()">
               <option value="GIAO_VIEN">Giáo viên</option>
               <option value="">Tất cả vai trò (kể cả Quản trị viên)</option>
             </select>
-            <div id="pinChips" class="ad-chips"></div>
+            <div id="pinChips" class="qt-chips"></div>
           </div>
-          <div class="ad-scroll">
-            <table class="ad-table">
+          <div class="qt-scroll">
+            <table class="qt-table">
               <thead>
                 <tr>
                   <th>Giáo viên / Cán bộ</th>
@@ -1821,71 +1821,71 @@
   <!-- ===================================================================== -->
   <!-- HỘP THOẠI CẤP TÀI KHOẢN MỚI (CN_CapTaiKhoanMoi - Kịch bản 9 & 10)     -->
   <!-- ===================================================================== -->
-  <div id="createModal" class="ad-overlay hidden" onmousedown="if (event.target === this) closeCreateModal()">
-    <div class="ad-dialog" style="max-width: 49rem">
-      <div class="ad-dialog-head">
+  <div id="createModal" class="qt-overlay hidden" onmousedown="if (event.target === this) closeCreateModal()">
+    <div class="qt-dialog" style="max-width: 49rem">
+      <div class="qt-dialog-head">
         <h3 id="createModalTitle">Cấp tài khoản mới</h3>
-        <button type="button" onclick="closeCreateModal()" class="ad-close" aria-label="Đóng">
+        <button type="button" onclick="closeCreateModal()" class="qt-close" aria-label="Đóng">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
       <!-- Bước 1: Nhập thông tin -->
       <form id="createAccountForm" onsubmit="handleCreateAccount(event)" novalidate>
-        <div class="ad-dialog-body">
+        <div class="qt-dialog-body">
           <div id="createAccAlert" class="hidden"></div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
-            <div class="ad-field sm:col-span-2">
+            <div class="qt-field sm:col-span-2">
               <label for="caHoTen">Họ và tên <span class="t-bad">(*)</span></label>
-              <input id="caHoTen" type="text" class="ad-input" placeholder="Nhập họ tên giáo viên" oninput="handleHoTenInput()" onblur="normalizeHoTenInput()" autocomplete="off" />
+              <input id="caHoTen" type="text" class="qt-input" placeholder="Nhập họ tên giáo viên" oninput="handleHoTenInput()" onblur="normalizeHoTenInput()" autocomplete="off" />
             </div>
 
-            <div class="ad-field">
+            <div class="qt-field">
               <label for="caVaiTro">Vai trò <span class="t-bad">(*)</span></label>
-              <select id="caVaiTro" class="ad-input" onchange="handleVaiTroChange()">
+              <select id="caVaiTro" class="qt-input" onchange="handleVaiTroChange()">
                 <option value="GIAO_VIEN">Giáo viên</option>
                 <option value="QUAN_TRI">Quản trị viên IT</option>
               </select>
             </div>
 
-            <div class="ad-field">
+            <div class="qt-field">
               <label for="caMaCanBo" class="flex items-center justify-between">
                 <span>Mã cán bộ <span class="t-bad">(*)</span></span>
-                <button type="button" class="ad-link font-normal" onclick="regenerateMaCanBo()">Sinh mã khác</button>
+                <button type="button" class="qt-link font-normal" onclick="regenerateMaCanBo()">Sinh mã khác</button>
               </label>
-              <input id="caMaCanBo" type="text" class="ad-input" maxlength="9" autocomplete="off"
+              <input id="caMaCanBo" type="text" class="qt-input" maxlength="9" autocomplete="off"
                 oninput="this.value = this.value.toUpperCase().replace(/\s/g, '')"
                 onblur="checkUniqueField('ma_can_bo', 'caMaCanBo', 'caMaCanBoHint')" />
-              <div id="caMaCanBoHint" class="ad-hint hidden"></div>
+              <div id="caMaCanBoHint" class="qt-hint hidden"></div>
             </div>
 
-            <div class="ad-field">
+            <div class="qt-field">
               <label for="caTenDangNhap">Tên đăng nhập <span class="t-bad">(*)</span></label>
-              <input id="caTenDangNhap" type="text" class="ad-input" placeholder="gv.minh" autocomplete="off"
+              <input id="caTenDangNhap" type="text" class="qt-input" placeholder="gv.minh" autocomplete="off"
                 oninput="sanitizeUsernameInput()"
                 onblur="checkUniqueField('ten_dang_nhap', 'caTenDangNhap', 'caTenDangNhapHint')" />
-              <div id="caTenDangNhapHint" class="ad-hint">Viết thường, không có dấu, không dấu cách</div>
+              <div id="caTenDangNhapHint" class="qt-hint">Viết thường, không có dấu, không dấu cách</div>
             </div>
 
-            <div class="ad-field">
+            <div class="qt-field">
               <label for="caEmail">Email giáo viên / cán bộ <span class="t-bad">(*)</span></label>
-              <input id="caEmail" type="email" class="ad-input" placeholder="nguyenvanminh.thpthoangvanthu@gmail.com" autocomplete="off"
+              <input id="caEmail" type="email" class="qt-input" placeholder="nguyenvanminh.thpthoangvanthu@gmail.com" autocomplete="off"
                 oninput="window._userEditedEmail = true"
                 onblur="checkUniqueField('email', 'caEmail', 'caEmailHint')" />
-              <div id="caEmailHint" class="ad-hint">Định dạng bắt buộc: &lt;têngiáoviên&gt;.thpthoangvanthu@gmail.com</div>
+              <div id="caEmailHint" class="qt-hint">Định dạng bắt buộc: &lt;têngiáoviên&gt;.thpthoangvanthu@gmail.com</div>
             </div>
 
-            <div class="ad-field sm:col-span-2">
+            <div class="qt-field sm:col-span-2">
               <label for="caMatKhau" class="flex items-center justify-between">
                 <span>Mật khẩu khởi tạo <span class="t-bad">(*)</span></span>
                 <span class="flex gap-3 font-normal">
-                  <button type="button" class="ad-link" onclick="regenerateMatKhau()">Sinh lại</button>
-                  <button type="button" class="ad-link" onclick="copyText(document.getElementById('caMatKhau').value)">Sao chép</button>
+                  <button type="button" class="qt-link" onclick="regenerateMatKhau()">Sinh lại</button>
+                  <button type="button" class="qt-link" onclick="copyText(document.getElementById('caMatKhau').value)">Sao chép</button>
                 </span>
               </label>
-              <input id="caMatKhau" type="text" class="ad-input" placeholder="Nhập hoặc bấm Sinh lại mật khẩu khởi tạo" oninput="window._userEditedPassword = true" autocomplete="off" style="letter-spacing: 0.06em" />
-              <div class="ad-hint">Có thể chỉnh sửa trực tiếp hoặc bấm Sinh lại. Mật khẩu khởi tạo sẽ được gửi đến hộp thư email nội bộ của cán bộ ngay sau khi hoàn tất.</div>
+              <input id="caMatKhau" type="text" class="qt-input" placeholder="Nhập hoặc bấm Sinh lại mật khẩu khởi tạo" oninput="window._userEditedPassword = true" autocomplete="off" style="letter-spacing: 0.06em" />
+              <div class="qt-hint">Có thể chỉnh sửa trực tiếp hoặc bấm Sinh lại. Mật khẩu khởi tạo sẽ được gửi đến hộp thư email nội bộ của cán bộ ngay sau khi hoàn tất.</div>
             </div>
           </div>
 
@@ -1903,17 +1903,17 @@
               </div>
             </div>
 
-            <div class="ad-field mb-3">
+            <div class="qt-field mb-3">
               <label for="caMaMonHoc">Môn học phụ trách <span class="t-bad">(*)</span></label>
-              <select id="caMaMonHoc" class="ad-input"></select>
+              <select id="caMaMonHoc" class="qt-input"></select>
             </div>
 
-            <div class="ad-field mb-3">
+            <div class="qt-field mb-3">
               <label>Khối lớp giảng dạy <span class="t-bad">(*)</span></label>
               <div id="caKhoiList" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5"></div>
             </div>
 
-            <div class="ad-field">
+            <div class="qt-field">
               <label>Quyền ra đề thi</label>
               <label
                 for="caDuocPhepRaDe"
@@ -1943,17 +1943,17 @@
             <span>Giáo viên bắt buộc phải quét mã QR liên kết Google Authenticator, đổi mật khẩu mới và thiết lập mã PIN 6 số ở lần đăng nhập đầu tiên mới được cấp quyền làm việc.</span>
           </label>
         </div>
-        <div class="ad-dialog-foot">
-          <button type="button" class="ad-btn-ghost" onclick="closeCreateModal()">Hủy bỏ</button>
-          <button id="caSubmitBtn" type="submit" class="ad-btn">Cấp tài khoản và gửi email</button>
+        <div class="qt-dialog-foot">
+          <button type="button" class="qt-btn-ghost" onclick="closeCreateModal()">Hủy bỏ</button>
+          <button id="caSubmitBtn" type="submit" class="qt-btn">Cấp tài khoản và gửi email</button>
         </div>
       </form>
 
       <!-- Bước 2: Kết quả bàn giao -->
       <div id="createAccHandover" class="hidden">
-        <div class="ad-dialog-body">
+        <div class="qt-dialog-body">
           <div class="flex gap-3">
-            <div class="w-10 h-10 rounded-full grid place-items-center shrink-0 ad-success-icon">
+            <div class="w-10 h-10 rounded-full grid place-items-center shrink-0 qt-success-icon">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
             </div>
             <div class="min-w-0">
@@ -1969,15 +1969,15 @@
           </div>
           <div id="hoMatKhauWrap" class="mt-4 hidden">
             <div class="text-[0.86rem] t-label mb-1.5 font-semibold">Mật khẩu khởi tạo (chỉ hiện lần này)</div>
-            <div class="ad-secret">
+            <div class="qt-secret">
               <span id="hoMatKhau"></span>
-              <button type="button" class="ad-link" onclick="copyText(document.getElementById('hoMatKhau').textContent)">Sao chép</button>
+              <button type="button" class="qt-link" onclick="copyText(document.getElementById('hoMatKhau').textContent)">Sao chép</button>
             </div>
           </div>
         </div>
-        <div class="ad-dialog-foot">
-          <button type="button" class="ad-btn-ghost" onclick="resetCreateForm(true)">Cấp thêm tài khoản</button>
-          <button type="button" class="ad-btn" onclick="closeCreateModal()">Xong</button>
+        <div class="qt-dialog-foot">
+          <button type="button" class="qt-btn-ghost" onclick="resetCreateForm(true)">Cấp thêm tài khoản</button>
+          <button type="button" class="qt-btn" onclick="closeCreateModal()">Xong</button>
         </div>
       </div>
     </div>
@@ -1986,19 +1986,19 @@
   <!-- ===================================================================== -->
   <!-- HỘP THOẠI KIỂM TRA DỊCH VỤ GMAIL SMTP                                 -->
   <!-- ===================================================================== -->
-  <div id="gmailModal" class="ad-overlay hidden" onmousedown="if (event.target === this) closeGmailStatusModal()">
-    <div class="ad-dialog" style="max-width: 38rem">
-      <div class="ad-dialog-head">
+  <div id="gmailModal" class="qt-overlay hidden" onmousedown="if (event.target === this) closeGmailStatusModal()">
+    <div class="qt-dialog" style="max-width: 38rem">
+      <div class="qt-dialog-head">
         <div>
           <h3>Kiểm tra kết nối dịch vụ Gmail</h3>
           <div class="t-muted t-xs mt-0.5">Gửi mật khẩu khởi tạo, đặt lại 2FA và cảnh báo an ninh bẫy đề mồi</div>
         </div>
-        <button type="button" onclick="closeGmailStatusModal()" class="ad-close" aria-label="Đóng">
+        <button type="button" onclick="closeGmailStatusModal()" class="qt-close" aria-label="Đóng">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <form id="gmailTestForm" onsubmit="handleSendTestGmail(event)" novalidate>
-        <div class="ad-dialog-body space-y-4">
+        <div class="qt-dialog-body space-y-4">
           <div class="p-3.5 rounded-xl space-y-2 text-[0.9rem]" style="background: var(--surface-2); border: 1px solid var(--border);">
             <div class="flex items-center justify-between gap-2">
               <span class="t-muted">Hộp thư gửi hệ thống</span>
@@ -2010,7 +2010,7 @@
             </div>
             <div class="flex items-center justify-between gap-2">
               <span class="t-muted">Trạng thái xác thực</span>
-              <span id="gmConnBadge"><span class="ad-pill muted">Đang kiểm tra...</span></span>
+              <span id="gmConnBadge"><span class="qt-pill muted">Đang kiểm tra...</span></span>
             </div>
             <div id="gmStatusMsg" class="text-[0.84rem] pt-1.5 leading-relaxed" style="border-top: 1px dashed var(--border); color: var(--text-2);"></div>
           </div>
@@ -2018,32 +2018,32 @@
           <div class="p-3.5 rounded-xl space-y-3" style="background: var(--surface-2); border: 1px solid var(--border);">
             <div class="text-[0.86rem] font-bold t-strong">Cập nhật nhanh hộp thư gửi &amp; Mật khẩu ứng dụng (16 ký tự)</div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="ad-field">
+              <div class="qt-field">
                 <label for="gmCfgUser">GMAIL_USER</label>
-                <input id="gmCfgUser" type="email" class="ad-input" placeholder="tai_khoan@gmail.com" autocomplete="off" />
+                <input id="gmCfgUser" type="email" class="qt-input" placeholder="tai_khoan@gmail.com" autocomplete="off" />
               </div>
-              <div class="ad-field">
+              <div class="qt-field">
                 <label for="gmCfgPass">GMAIL_APP_PASSWORD</label>
-                <input id="gmCfgPass" type="text" class="ad-input" placeholder="xxxx xxxx xxxx xxxx" autocomplete="off" />
+                <input id="gmCfgPass" type="text" class="qt-input" placeholder="xxxx xxxx xxxx xxxx" autocomplete="off" />
               </div>
             </div>
             <div class="flex items-center justify-between gap-2">
-              <span class="ad-hint">Tạo tại <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" class="underline text-[#1d4ed8] font-semibold">myaccount.google.com/apppasswords</a> (chọn đúng avatar Gmail gửi).</span>
-              <button id="gmSaveCfgBtn" type="button" class="ad-btn-ghost shrink-0" onclick="handleUpdateGmailConfig()">Lưu cấu hình</button>
+              <span class="qt-hint">Tạo tại <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" class="underline text-[#1d4ed8] font-semibold">myaccount.google.com/apppasswords</a> (chọn đúng avatar Gmail gửi).</span>
+              <button id="gmSaveCfgBtn" type="button" class="qt-btn-ghost shrink-0" onclick="handleUpdateGmailConfig()">Lưu cấu hình</button>
             </div>
           </div>
 
-          <div class="ad-field">
+          <div class="qt-field">
             <label for="gmTestRecipient">Hộp thư nhận email kiểm tra <span class="t-bad">(*)</span></label>
-            <input id="gmTestRecipient" type="email" class="ad-input" placeholder="happyrice1111@gmail.com" required />
-            <div class="ad-hint">Nhập địa chỉ Gmail thực tế để nhận thư xác nhận kết nối (yêu cầu mã PIN Quản trị viên khi gửi).</div>
+            <input id="gmTestRecipient" type="email" class="qt-input" placeholder="happyrice1111@gmail.com" required />
+            <div class="qt-hint">Nhập địa chỉ Gmail thực tế để nhận thư xác nhận kết nối (yêu cầu mã PIN Quản trị viên khi gửi).</div>
           </div>
 
           <div id="gmailModalAlert" class="hidden"></div>
         </div>
-        <div class="ad-dialog-foot">
-          <button type="button" class="ad-btn-ghost" onclick="refreshGmailStatus(true)">Kiểm tra lại kết nối</button>
-          <button id="gmSendTestBtn" type="submit" class="ad-btn">Gửi email kiểm tra</button>
+        <div class="qt-dialog-foot">
+          <button type="button" class="qt-btn-ghost" onclick="refreshGmailStatus(true)">Kiểm tra lại kết nối</button>
+          <button id="gmSendTestBtn" type="submit" class="qt-btn">Gửi email kiểm tra</button>
         </div>
       </form>
     </div>
@@ -2052,34 +2052,34 @@
   <!-- ===================================================================== -->
   <!-- HỘP THOẠI PHÂN CÔNG CHUYÊN MÔN CHO GIÁO VIÊN                          -->
   <!-- ===================================================================== -->
-  <div id="permModal" class="ad-overlay hidden" onmousedown="if (event.target === this) closePermModal()">
-    <div class="ad-dialog" style="max-width: 42rem">
-      <div class="ad-dialog-head">
+  <div id="permModal" class="qt-overlay hidden" onmousedown="if (event.target === this) closePermModal()">
+    <div class="qt-dialog" style="max-width: 42rem">
+      <div class="qt-dialog-head">
         <div>
           <h3>Phân công chuyên môn</h3>
           <div id="pmTeacherSubtitle" class="t-muted t-xs mt-0.5"></div>
         </div>
-        <button type="button" onclick="closePermModal()" class="ad-close" aria-label="Đóng">
+        <button type="button" onclick="closePermModal()" class="qt-close" aria-label="Đóng">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
       <form id="permAccountForm" onsubmit="handleSaveAccountPermissions(event)" novalidate>
-        <div class="ad-dialog-body space-y-4">
+        <div class="qt-dialog-body space-y-4">
           <div id="permAccAlert" class="hidden"></div>
           <input id="pmMaTaiKhoan" type="hidden" />
 
-          <div class="ad-field">
+          <div class="qt-field">
             <label for="pmMaMonHoc">Môn học phụ trách <span class="t-bad">(*)</span></label>
-            <select id="pmMaMonHoc" class="ad-input"></select>
+            <select id="pmMaMonHoc" class="qt-input"></select>
           </div>
 
-          <div class="ad-field">
+          <div class="qt-field">
             <label>Khối lớp giảng dạy <span class="t-bad">(*)</span></label>
             <div id="pmKhoiList" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5"></div>
           </div>
 
-          <div class="ad-field">
+          <div class="qt-field">
             <label>Quyền ra đề thi</label>
             <label
               for="pmDuocPhepRaDe"
@@ -2092,13 +2092,13 @@
                 <div class="t-muted t-xs mt-0.5">Khi được tích chọn, giáo viên sẽ được quyền thêm đề thi và đáp án lên hệ thống.</div>
               </div>
             </label>
-            <div id="pmAuditMeta" class="ad-hint mt-2"></div>
+            <div id="pmAuditMeta" class="qt-hint mt-2"></div>
           </div>
         </div>
 
-        <div class="ad-dialog-foot">
-          <button type="button" class="ad-btn-ghost" onclick="closePermModal()">Hủy bỏ</button>
-          <button id="pmSubmitBtn" type="submit" class="ad-btn">Lưu phân công</button>
+        <div class="qt-dialog-foot">
+          <button type="button" class="qt-btn-ghost" onclick="closePermModal()">Hủy bỏ</button>
+          <button id="pmSubmitBtn" type="submit" class="qt-btn">Lưu phân công</button>
         </div>
       </form>
     </div>
@@ -2107,20 +2107,20 @@
   <!-- ===================================================================== -->
   <!-- HỘP THOẠI QUẢN TRỊ VIÊN ĐỔI / CẤP MÃ PIN CHO GIÁO VIÊN                -->
   <!-- ===================================================================== -->
-  <div id="adminPinModal" class="ad-overlay hidden" onmousedown="if (event.target === this) closeAdminPinModal()">
-    <div class="ad-dialog" style="max-width: 34rem">
-      <div class="ad-dialog-head">
+  <div id="adminPinModal" class="qt-overlay hidden" onmousedown="if (event.target === this) closeAdminPinModal()">
+    <div class="qt-dialog" style="max-width: 34rem">
+      <div class="qt-dialog-head">
         <div>
           <h3>Đổi / Cấp mã PIN bảo mật (6 số)</h3>
           <div id="apmTeacherSubtitle" class="t-muted t-xs mt-0.5"></div>
         </div>
-        <button type="button" onclick="closeAdminPinModal()" class="ad-close" aria-label="Đóng">
+        <button type="button" onclick="closeAdminPinModal()" class="qt-close" aria-label="Đóng">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
       <form id="adminPinForm" onsubmit="handleSaveAdminPin(event)" novalidate>
-        <div class="ad-dialog-body space-y-4">
+        <div class="qt-dialog-body space-y-4">
           <div id="adminPinAlert" class="hidden"></div>
           <input id="apmMaTaiKhoan" type="hidden" />
 
@@ -2139,13 +2139,13 @@
             </div>
           </div>
 
-          <div class="ad-field">
+          <div class="qt-field">
             <label for="apmPinNew" class="flex items-center justify-between gap-2">
               <span>Mã PIN mới (6 chữ số) <span class="t-bad">(*)</span></span>
               <span class="flex items-center gap-3 font-normal">
-                <button type="button" class="ad-link" onclick="generateRandomAdminPin()">Sinh ngẫu nhiên 6 số</button>
-                <button id="apmToggleVisBtn" type="button" class="ad-link" onclick="toggleAdminPinVisibility()">Hiện</button>
-                <button type="button" class="ad-link" onclick="copyText(document.getElementById('apmPinNew').value)">Sao chép</button>
+                <button type="button" class="qt-link" onclick="generateRandomAdminPin()">Sinh ngẫu nhiên 6 số</button>
+                <button id="apmToggleVisBtn" type="button" class="qt-link" onclick="toggleAdminPinVisibility()">Hiện</button>
+                <button type="button" class="qt-link" onclick="copyText(document.getElementById('apmPinNew').value)">Sao chép</button>
               </span>
             </label>
             <input
@@ -2156,12 +2156,12 @@
               autocomplete="off"
               placeholder="••••••"
               oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
-              class="ad-input text-center font-mono text-xl"
+              class="qt-input text-center font-mono text-xl"
               style="letter-spacing: 0.45em; padding-top: 0.65rem; padding-bottom: 0.65rem;"
             />
           </div>
 
-          <div class="ad-field">
+          <div class="qt-field">
             <label for="apmPinConfirm">Nhập lại mã PIN mới (6 chữ số) <span class="t-bad">(*)</span></label>
             <input
               id="apmPinConfirm"
@@ -2171,16 +2171,16 @@
               autocomplete="off"
               placeholder="••••••"
               oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)"
-              class="ad-input text-center font-mono text-xl"
+              class="qt-input text-center font-mono text-xl"
               style="letter-spacing: 0.45em; padding-top: 0.65rem; padding-bottom: 0.65rem;"
             />
-            <div class="ad-hint">Mã PIN gồm đúng 6 chữ số (0-9) và được băm bảo mật ngay trên máy chủ. Quản trị viên cần xác minh mã PIN 6 số của chính mình trước khi lưu thay đổi.</div>
+            <div class="qt-hint">Mã PIN gồm đúng 6 chữ số (0-9) và được băm bảo mật ngay trên máy chủ. Quản trị viên cần xác minh mã PIN 6 số của chính mình trước khi lưu thay đổi.</div>
           </div>
         </div>
 
-        <div class="ad-dialog-foot">
-          <button type="button" class="ad-btn-ghost" onclick="closeAdminPinModal()">Hủy bỏ</button>
-          <button id="apmSubmitBtn" type="submit" class="ad-btn">Lưu mã PIN mới</button>
+        <div class="qt-dialog-foot">
+          <button type="button" class="qt-btn-ghost" onclick="closeAdminPinModal()">Hủy bỏ</button>
+          <button id="apmSubmitBtn" type="submit" class="qt-btn">Lưu mã PIN mới</button>
         </div>
       </form>
     </div>
@@ -2189,9 +2189,9 @@
   <!-- ===================================================================== -->
   <!-- HỘP THOẠI CHI TIẾT ĐIỀU TRA NHẬT KÝ HOẠT ĐỘNG                          -->
   <!-- ===================================================================== -->
-  <div id="logDetailModal" class="ad-overlay hidden" onmousedown="if (event.target === this) closeLogDetailModal()">
-    <div class="ad-dialog" style="max-width: 49rem">
-      <div class="ad-dialog-head">
+  <div id="logDetailModal" class="qt-overlay hidden" onmousedown="if (event.target === this) closeLogDetailModal()">
+    <div class="qt-dialog" style="max-width: 49rem">
+      <div class="qt-dialog-head">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-9 h-9 rounded-lg grid place-items-center shrink-0" style="background: var(--info-bg); color: var(--info-fg); border: 1px solid var(--info-bd);">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -2201,17 +2201,17 @@
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <h3 class="truncate">Chi tiết điều tra nhật ký</h3>
-              <span id="ldMaLogBadge" class="ad-pill info t-num">#0</span>
+              <span id="ldMaLogBadge" class="qt-pill info t-num">#0</span>
             </div>
             <div class="t-muted t-xs mt-0.5">Hồ sơ đối chiếu định danh, địa chỉ mạng và bằng chứng liên kết chuỗi</div>
           </div>
         </div>
-        <button type="button" onclick="closeLogDetailModal()" class="ad-close" aria-label="Đóng">
+        <button type="button" onclick="closeLogDetailModal()" class="qt-close" aria-label="Đóng">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
-      <div class="ad-dialog-body space-y-3.5">
+      <div class="qt-dialog-body space-y-3.5">
         <!-- Bằng chứng liên kết chuỗi -->
         <div>
           <div class="ld-caption">
@@ -2312,16 +2312,16 @@
       </div>
 
       <!-- Các nút hành động -->
-      <div class="ad-dialog-foot flex-wrap justify-between">
+      <div class="qt-dialog-foot flex-wrap justify-between">
         <div class="flex flex-wrap items-center gap-2">
-          <button id="ldBtnLockAccount" type="button" class="ad-btn ad-btn-warn" onclick="handleModalLockAccount()">
+          <button id="ldBtnLockAccount" type="button" class="qt-btn qt-btn-warn" onclick="handleModalLockAccount()">
             Tạm khóa tài khoản giáo viên
           </button>
-          <button id="ldBtnBlockIp" type="button" class="ad-btn ad-btn-danger" onclick="handleModalBlockIp()">
+          <button id="ldBtnBlockIp" type="button" class="qt-btn qt-btn-danger" onclick="handleModalBlockIp()">
             Chặn địa chỉ IP
           </button>
         </div>
-        <button type="button" class="ad-btn-ghost" onclick="closeLogDetailModal()">Đóng</button>
+        <button type="button" class="qt-btn-ghost" onclick="closeLogDetailModal()">Đóng</button>
       </div>
     </div>
   </div>
@@ -3501,7 +3501,7 @@
   <!-- ===================================================================== -->
   <!-- MODAL 4: XÁC MINH MÃ PIN BẢO MẬT (6 CHỮ SỐ)                           -->
   <!-- ===================================================================== -->
-  <div id="pinModal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-[2px] z-[95] hidden flex items-center justify-center p-4" onmousedown="if (event.target === this) closePinModal(null)">
+  <div id="pinModal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-[2px] z-[115] hidden flex items-center justify-center p-4" onmousedown="if (event.target === this) closePinModal(null)">
     <div class="bg-white w-full max-w-[460px] rounded-2xl shadow-2xl border border-slate-100 overflow-hidden text-slate-800">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-[#fafbfd]">
@@ -3587,18 +3587,18 @@
   <div id="deThiRowMenu" class="fixed z-50 hidden bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 min-w-[14rem] text-slate-700 text-sm"></div>
 
   <!-- Hộp thoại xác nhận / hiển thị dùng chung & thông báo nổi -->
-  <div id="adDialog" class="ad-overlay hidden" onmousedown="if (event.target === this) closeAdDialog(false)">
-    <div class="ad-dialog" style="max-width: 30rem">
-      <div class="ad-dialog-head"><h3 id="adDialogTitle"></h3></div>
-      <div class="ad-dialog-body text-[0.95rem] t-text" id="adDialogBody"></div>
-      <div class="ad-dialog-foot">
-        <button type="button" id="adDialogCancel" class="ad-btn-ghost" onclick="closeAdDialog(false)">Hủy</button>
-        <button type="button" id="adDialogOk" class="ad-btn" onclick="closeAdDialog(true)">Đồng ý</button>
+  <div id="qtDialog" class="qt-overlay hidden" onmousedown="if (event.target === this) closeQtDialog(false)">
+    <div class="qt-dialog" style="max-width: 30rem">
+      <div class="qt-dialog-head"><h3 id="qtDialogTitle"></h3></div>
+      <div class="qt-dialog-body text-[0.95rem] t-text" id="qtDialogBody"></div>
+      <div class="qt-dialog-foot">
+        <button type="button" id="qtDialogCancel" class="qt-btn-ghost" onclick="closeQtDialog(false)">Hủy</button>
+        <button type="button" id="qtDialogOk" class="qt-btn" onclick="closeQtDialog(true)">Đồng ý</button>
       </div>
     </div>
   </div>
-  <div id="rowMenu" class="ad-menu hidden"></div>
-  <div id="adToasts"></div>
+  <div id="rowMenu" class="qt-menu hidden"></div>
+  <div id="qtToasts"></div>
 
   <!-- ===================================================================== -->
   <!-- JAVASCRIPT ĐIỀU KHIỂN LOGIC GIAO DIỆN & KẾT NỐI API CSDL              -->
@@ -4002,7 +4002,7 @@
       try { closeOnTapRowMenu(); } catch (_) {}
       try { closeDeThiRowMenu(); } catch (_) {}
       try { closePinModal(null); } catch (_) {}
-      try { closeAdDialog(false); } catch (_) {}
+      try { closeQtDialog(false); } catch (_) {}
       try { closeDeThiDetailModal(); } catch (_) {}
       try { closeDeThiFormModal(); } catch (_) {}
       try { closeOnTapDetailModal(); } catch (_) {}
@@ -4815,51 +4815,52 @@
 
     // ---------- Thông báo nổi & hộp thoại dùng chung ----------
     function toast(message, type = "ok", timeout = 4200) {
-      const box = document.getElementById("adToasts");
+      const box = document.getElementById("qtToasts");
       const el = document.createElement("div");
-      el.className = `ad-toast ${type}`;
-      el.innerHTML = `<span class="ad-toast-icon">${svg(type === "ok" ? "ok" : type === "bad" ? "bad" : "warn")}</span><span class="flex-1">${escapeHtml(message)}</span><button type="button" class="ad-toast-close" title="Đóng thông báo" aria-label="Đóng thông báo">${svg("bad", "w-3.5 h-3.5")}</button>`;
-      const closeBtn = el.querySelector(".ad-toast-close");
+      el.className = `qt-toast ${type}`;
+      el.innerHTML = `<span class="qt-toast-icon">${svg(type === "ok" ? "ok" : type === "bad" ? "bad" : "warn")}</span><span class="flex-1">${escapeHtml(message)}</span><button type="button" class="qt-toast-close" title="Đóng thông báo" aria-label="Đóng thông báo">${svg("bad", "w-3.5 h-3.5")}</button>`;
+      const closeBtn = el.querySelector(".qt-toast-close");
       if (closeBtn) closeBtn.addEventListener("click", () => el.remove());
       box.appendChild(el);
       setTimeout(() => { if (el.isConnected) el.remove(); }, timeout);
     }
 
     let _dialogResolve = null;
-    function openAdDialog({ title, html, okText = "Đồng ý", cancelText = "Hủy", danger = false, hideCancel = false }) {
-      document.getElementById("adDialogTitle").textContent = title;
-      document.getElementById("adDialogBody").innerHTML = html;
-      const ok = document.getElementById("adDialogOk");
+    function openQtDialog({ title, html, okText = "Đồng ý", cancelText = "Hủy", danger = false, hideCancel = false }) {
+      document.getElementById("qtDialogTitle").textContent = title;
+      document.getElementById("qtDialogBody").innerHTML = html;
+      const ok = document.getElementById("qtDialogOk");
       ok.textContent = okText;
-      ok.className = "ad-btn" + (danger ? " ad-btn-danger" : "");
-      const cancel = document.getElementById("adDialogCancel");
+      ok.className = "qt-btn" + (danger ? " qt-btn-danger" : "");
+      const cancel = document.getElementById("qtDialogCancel");
       cancel.textContent = cancelText;
       cancel.classList.toggle("hidden", hideCancel);
-      document.getElementById("adDialog").classList.remove("hidden");
+      document.getElementById("qtDialog").classList.remove("hidden");
       setTimeout(() => ok.focus(), 30);
       return new Promise(resolve => { _dialogResolve = resolve; });
     }
-    function closeAdDialog(result) {
-      document.getElementById("adDialog").classList.add("hidden");
+    function closeQtDialog(result) {
+      document.getElementById("qtDialog").classList.add("hidden");
       if (_dialogResolve) { _dialogResolve(result); _dialogResolve = null; }
     }
     function askConfirm(title, message, okText = "Đồng ý", danger = false) {
-      return openAdDialog({ title, html: `<p>${message}</p>`, okText, danger });
+      return openQtDialog({ title, html: `<p>${message}</p>`, okText, danger });
     }
     function showSecret(title, message, secret) {
-      return openAdDialog({
+      return openQtDialog({
         title,
         okText: "Đã lưu lại",
         hideCancel: true,
         html: `<p class="mb-3">${message}</p>
-               <div class="ad-secret"><span>${escapeHtml(secret)}</span>
-               <button type="button" class="ad-link" onclick="copyText('${escapeHtml(secret)}')">Sao chép</button></div>
+               <div class="qt-secret"><span>${escapeHtml(secret)}</span>
+               <button type="button" class="qt-link" onclick="copyText('${escapeHtml(secret)}')">Sao chép</button></div>
                <p class="mt-3 text-[0.82rem] t-muted">Mật khẩu này chỉ hiện một lần. Người dùng sẽ phải đổi mật khẩu ở lần đăng nhập tới.</p>`,
       });
     }
 
     async function apiJson(url, options = {}) {
-      const res = await fetch(url, { headers: { "Content-Type": "application/json", ...(options.headers || {}) }, ...options });
+      const { headers: optHeaders, ...restOptions } = options || {};
+      const res = await fetch(url, { ...restOptions, headers: { "Content-Type": "application/json", ...(optHeaders || {}) } });
       let data = {};
       try { data = await res.json(); } catch (_) {}
       const code = data?.detail?.code || "";
@@ -4989,7 +4990,7 @@
 
     function renderChips(containerId, items, current, onPick) {
       document.getElementById(containerId).innerHTML = items
-        .map(([key, label, n]) => `<button type="button" class="ad-chip ${key === current ? "is-active" : ""}" onclick="${onPick}('${key}')">${label}<b>${n}</b></button>`)
+        .map(([key, label, n]) => `<button type="button" class="qt-chip ${key === current ? "is-active" : ""}" onclick="${onPick}('${key}')">${label}<b>${n}</b></button>`)
         .join("");
     }
 
@@ -5176,7 +5177,7 @@
 
       const tbody = document.getElementById("logsTableBody");
       if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="ad-empty">${all.length ? "Không có bản ghi nào khớp bộ lọc." : "Chưa có hoạt động nào được ghi nhận."}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="qt-empty">${all.length ? "Không có bản ghi nào khớp bộ lọc." : "Chưa có hoạt động nào được ghi nhận."}</td></tr>`;
         return;
       }
 
@@ -5200,7 +5201,7 @@
             <td class="whitespace-nowrap t-num">
               <div class="flex items-center gap-1.5">
                 <span class="t-code font-bold">#${lg.ma_nhat_ky}</span>
-                ${biCanThiep ? '<span class="ad-pill bad">Bị can thiệp</span>' : ""}
+                ${biCanThiep ? '<span class="qt-pill bad">Bị can thiệp</span>' : ""}
               </div>
             </td>
             <td class="whitespace-nowrap t-num">
@@ -5210,8 +5211,8 @@
             <td>
               <div class="flex items-center gap-1.5 flex-wrap">
                 ${tenGiaoVien}
-                ${lg.bi_khoa ? '<span class="ad-pill warn">Tạm khóa</span>' : ""}
-                ${lg.ip_dang_bi_chan ? '<span class="ad-pill bad">IP bị chặn</span>' : ""}
+                ${lg.bi_khoa ? '<span class="qt-pill warn">Tạm khóa</span>' : ""}
+                ${lg.ip_dang_bi_chan ? '<span class="qt-pill bad">IP bị chặn</span>' : ""}
               </div>
               <div class="t-muted t-xs t-num mt-0.5 whitespace-nowrap">
                 IP: <span class="t-text font-medium">${escapeHtml(hienThiIpChuanIpv4(lg.ip_may, lg.dia_chi_ipv4))}</span>
@@ -5221,7 +5222,7 @@
             </td>
             <td class="whitespace-nowrap"><span class="t-strong">${escapeHtml(lg.hanh_dong)}</span></td>
             <td>
-              <span class="ad-pill ${loaiKetQua(lg.ket_qua)}">${escapeHtml(lg.ket_qua)}</span>
+              <span class="qt-pill ${loaiKetQua(lg.ket_qua)}">${escapeHtml(lg.ket_qua)}</span>
               ${ketQuaGocNote}
             </td>
             <td class="t-sm leading-relaxed" style="min-width: 16rem; max-width: 28rem">
@@ -5229,7 +5230,7 @@
               ${canhBaoCanThiepHtml}
             </td>
             <td class="whitespace-nowrap text-right">
-              <button type="button" class="ad-btn-sm" onclick="openLogDetailModal(${lg.ma_nhat_ky})">
+              <button type="button" class="qt-btn-sm" onclick="openLogDetailModal(${lg.ma_nhat_ky})">
                 ${svg("eye", "w-3.5 h-3.5")}
                 <span>Xem chi tiết</span>
               </button>
@@ -5259,7 +5260,7 @@
                <div class="t-xs opacity-90">Bản ghi khớp liên kết chuỗi niêm phong SHA-256, chưa có dấu hiệu chỉnh sửa.</div>
              </div>
            </div>
-           <span class="ad-pill ok">Toàn vẹn</span>`
+           <span class="qt-pill ok">Toàn vẹn</span>`
         : `<div class="flex items-center gap-2.5">
              ${svg("warn", "w-5 h-5")}
              <div>
@@ -5267,7 +5268,7 @@
                <div class="t-xs opacity-90">${moTaCanThiep}</div>
              </div>
            </div>
-           <span class="ad-pill bad">Nhật ký bị can thiệp</span>`;
+           <span class="qt-pill bad">Nhật ký bị can thiệp</span>`;
 
       // Thời gian ghi nhận
       document.getElementById("ldThoiGian").textContent = lg.thoi_gian_hien_thi || "—";
@@ -5275,11 +5276,11 @@
       // Giáo viên / Cán bộ thực hiện
       const gvEl = document.getElementById("ldGiaoVien");
       if (lg.ma_tai_khoan) {
-        let trangThaiTk = '<span class="ad-pill ok">Đang hoạt động</span>';
+        let trangThaiTk = '<span class="qt-pill ok">Đang hoạt động</span>';
         if (lg.dang_hoat_dong === false) {
-          trangThaiTk = '<span class="ad-pill muted">Ngừng hoạt động</span>';
+          trangThaiTk = '<span class="qt-pill muted">Ngừng hoạt động</span>';
         } else if (lg.bi_khoa) {
-          trangThaiTk = `<span class="ad-pill warn">${lg.khoa_den_hien_thi ? "Tạm khóa đến " + escapeHtml(lg.khoa_den_hien_thi) : "Đang khóa an ninh"}</span>`;
+          trangThaiTk = `<span class="qt-pill warn">${lg.khoa_den_hien_thi ? "Tạm khóa đến " + escapeHtml(lg.khoa_den_hien_thi) : "Đang khóa an ninh"}</span>`;
         }
         gvEl.innerHTML = `
           <div class="flex items-center gap-2 flex-wrap">
@@ -5308,7 +5309,7 @@
           <div class="t-muted t-xs">Địa chỉ IPv4</div>
           <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
             <span class="t-strong t-num">${escapeHtml(lg.dia_chi_ipv4 || "—")}</span>
-            ${lg.ip_dang_bi_chan ? '<span class="ad-pill bad">Đang bị chặn</span>' : ""}
+            ${lg.ip_dang_bi_chan ? '<span class="qt-pill bad">Đang bị chặn</span>' : ""}
           </div>
         </div>
         <div>
@@ -5323,7 +5324,7 @@
       const kqGocHtml = (biCanThiep && lg.ket_qua_goc && lg.ket_qua_goc !== lg.ket_qua)
         ? `<span class="t-muted t-xs ml-2">(Kết quả gốc: <b>${escapeHtml(lg.ket_qua_goc)}</b>)</span>`
         : "";
-      document.getElementById("ldKetQua").innerHTML = `<span class="ad-pill ${loaiKetQua(lg.ket_qua)}">${escapeHtml(lg.ket_qua || "—")}</span>${kqGocHtml}`;
+      document.getElementById("ldKetQua").innerHTML = `<span class="qt-pill ${loaiKetQua(lg.ket_qua)}">${escapeHtml(lg.ket_qua || "—")}</span>${kqGocHtml}`;
 
       const ldChiTietEl = document.getElementById("ldChiTiet");
       if (biCanThiep && lg.chi_tiet_can_thiep) {
@@ -5342,11 +5343,11 @@
       document.getElementById("ldKhoiLop").textContent = lg.khoi_lop_giang_day || "Chưa phân công";
       const otpEl = document.getElementById("ldTrangThai2FA");
       if (!lg.ma_tai_khoan) {
-        otpEl.innerHTML = '<span class="ad-pill muted">Không xác định</span>';
+        otpEl.innerHTML = '<span class="qt-pill muted">Không xác định</span>';
       } else if (lg.da_kich_hoat_otp) {
-        otpEl.innerHTML = '<span class="ad-pill ok">Đã xác thực 2FA</span>';
+        otpEl.innerHTML = '<span class="qt-pill ok">Đã xác thực 2FA</span>';
       } else {
-        otpEl.innerHTML = '<span class="ad-pill warn">Chưa xác thực 2FA</span>';
+        otpEl.innerHTML = '<span class="qt-pill warn">Chưa xác thực 2FA</span>';
       }
 
       // Nút hành động 1: Tạm khóa / Mở khóa tài khoản giáo viên
@@ -5354,19 +5355,19 @@
       const isSelf = window.currentUser && lg.ma_tai_khoan && String(window.currentUser.ma_tai_khoan) === String(lg.ma_tai_khoan);
       if (!lg.ma_tai_khoan || isSelf) {
         btnLock.disabled = true;
-        btnLock.className = "ad-btn ad-btn-warn";
+        btnLock.className = "qt-btn qt-btn-warn";
         btnLock.innerHTML = `${svg("lock", "w-4 h-4")}<span>Tạm khóa tài khoản giáo viên</span>`;
         btnLock.title = !lg.ma_tai_khoan
           ? "Bản ghi không gắn với tài khoản hệ thống"
           : "Không thể tự khóa tài khoản Quản trị viên đang đăng nhập";
       } else if (lg.bi_khoa) {
         btnLock.disabled = false;
-        btnLock.className = "ad-btn ad-btn-ok";
+        btnLock.className = "qt-btn qt-btn-ok";
         btnLock.innerHTML = `${svg("unlock", "w-4 h-4")}<span>Mở khóa tài khoản giáo viên</span>`;
         btnLock.title = "Mở khóa để tài khoản giáo viên hoạt động trở lại";
       } else {
         btnLock.disabled = false;
-        btnLock.className = "ad-btn ad-btn-warn";
+        btnLock.className = "qt-btn qt-btn-warn";
         btnLock.innerHTML = `${svg("lock", "w-4 h-4")}<span>Tạm khóa tài khoản giáo viên</span>`;
         btnLock.title = "Tạm khóa tài khoản và thu hồi toàn bộ phiên đăng nhập của giáo viên";
       }
@@ -5376,15 +5377,15 @@
       const targetIp = lg.dia_chi_ipv4 || lg.ip_may || "";
       if (!targetIp) {
         btnIp.disabled = true;
-        btnIp.className = "ad-btn ad-btn-danger";
+        btnIp.className = "qt-btn qt-btn-danger";
         btnIp.innerHTML = `${svg("ban", "w-4 h-4")}<span>Chặn địa chỉ IP</span>`;
       } else if (lg.ip_dang_bi_chan) {
         btnIp.disabled = false;
-        btnIp.className = "ad-btn ad-btn-ok";
+        btnIp.className = "qt-btn qt-btn-ok";
         btnIp.innerHTML = `${svg("check", "w-4 h-4")}<span>Gỡ chặn địa chỉ IP</span>`;
       } else {
         btnIp.disabled = false;
-        btnIp.className = "ad-btn ad-btn-danger";
+        btnIp.className = "qt-btn qt-btn-danger";
         btnIp.innerHTML = `${svg("ban", "w-4 h-4")}<span>Chặn địa chỉ IP</span>`;
       }
     }
@@ -5435,15 +5436,15 @@
         }
         toast(r.data.message || "Đã mở khóa tài khoản giáo viên.", "ok");
       } else {
-        const ok = await openAdDialog({
+        const ok = await openQtDialog({
           title: "Tạm khóa tài khoản giáo viên",
           okText: "Tiếp tục nhập PIN",
           danger: true,
           html: `
             <p class="mb-3">Tạm khóa tài khoản của <b>${escapeHtml(lg.ho_ten)}</b> (${escapeHtml(lg.ma_can_bo || lg.ten_dang_nhap)}) và thu hồi toàn bộ phiên đăng nhập hiện hành:</p>
-            <div class="ad-field">
+            <div class="qt-field">
               <label for="tempLockMinutes">Thời hạn tạm khóa</label>
-              <select id="tempLockMinutes" class="ad-input">
+              <select id="tempLockMinutes" class="qt-input">
                 <option value="15">Tạm khóa 15 phút</option>
                 <option value="60">Tạm khóa 60 phút</option>
                 <option value="0">Khóa an ninh cho đến khi mở khóa thủ công</option>
@@ -5547,11 +5548,11 @@
         return;
       }
       const box = document.getElementById("hashChainStatusBox");
-      box.className = "ad-note " + (data.valid ? "ok" : "bad");
+      box.className = "qt-note " + (data.valid ? "ok" : "bad");
       const contentHtml = data.valid
         ? `${svg("check", "w-5 h-5")}<div class="flex-1"><b>Nhật ký toàn vẹn.</b> Đã đối chiếu ${data.total_records} bản ghi trong chuỗi liên kết, không có bản ghi nào bị chỉnh sửa hoặc xóa.</div>`
         : `${svg("warn", "w-5 h-5")}<div class="flex-1"><b>Nhật ký bị can thiệp.</b> Phát hiện đứt gãy liên kết chuỗi tại bản ghi #${data.broken_at_id}.</div>`;
-      box.innerHTML = `${contentHtml}<button type="button" class="ad-note-close" onclick="closeHashChainStatusBox()" title="Đóng thông báo" aria-label="Đóng thông báo">${svg("bad", "w-4 h-4")}</button>`;
+      box.innerHTML = `${contentHtml}<button type="button" class="qt-note-close" onclick="closeHashChainStatusBox()" title="Đóng thông báo" aria-label="Đóng thông báo">${svg("bad", "w-4 h-4")}</button>`;
       box.classList.remove("hidden");
     }
 
@@ -5841,7 +5842,7 @@
 
     function showCreateMsg(message, type) {
       const el = document.getElementById("createAccAlert");
-      el.className = `ad-msg ${type}`;
+      el.className = `qt-msg ${type}`;
       el.textContent = message;
     }
 
@@ -5934,8 +5935,8 @@
       if (pqRes) {
         document.getElementById("hoMonKhoi").textContent = `${pqRes.ten_mon_hoc} (${pqRes.danh_sach_khoi_ten})`;
         const badgeHtml = pqRes.co_quyen_de_chinh_thuc
-          ? '<span class="ad-pill ok">Được phép ra đề</span>'
-          : '<span class="ad-pill muted">Không cấp quyền ra đề</span>';
+          ? '<span class="qt-pill ok">Được phép ra đề</span>'
+          : '<span class="qt-pill muted">Không cấp quyền ra đề</span>';
         document.getElementById("hoPhamViQuyen").innerHTML = `<div class="flex flex-wrap gap-1.5">${badgeHtml}</div>`;
       }
 
@@ -5965,18 +5966,18 @@
         box.innerHTML = "";
         return;
       }
-      box.className = `ad-banner ${tone} text-[0.88rem]`;
+      box.className = `qt-msg ${tone} text-[0.88rem]`;
       box.innerHTML = `<div class="flex-1 leading-relaxed">${linkifySafeText(text)}</div>`;
     }
 
     async function refreshGmailStatus(verifyConn = true) {
       const badgeEl = document.getElementById("gmConnBadge");
       const msgEl = document.getElementById("gmStatusMsg");
-      if (badgeEl) badgeEl.innerHTML = '<span class="ad-pill muted">Đang kiểm tra...</span>';
+      if (badgeEl) badgeEl.innerHTML = '<span class="qt-pill muted">Đang kiểm tra...</span>';
       if (msgEl) msgEl.textContent = "Đang kiểm tra xác thực với máy chủ smtp.gmail.com...";
       const r = await apiJson(`/api/admin/gmail-status?verify=${verifyConn ? "true" : "false"}`);
       if (!r.ok) {
-        if (badgeEl) badgeEl.innerHTML = '<span class="ad-pill bad">Không kiểm tra được</span>';
+        if (badgeEl) badgeEl.innerHTML = '<span class="qt-pill bad">Không kiểm tra được</span>';
         if (msgEl) msgEl.innerHTML = linkifySafeText(r.msg || "Không đọc được trạng thái Gmail.");
         return;
       }
@@ -5992,13 +5993,13 @@
         cfgUserInput.value = d.sender_email;
       }
       if (!d.configured) {
-        badgeEl.innerHTML = '<span class="ad-pill warn">Chưa cấu hình</span>';
+        badgeEl.innerHTML = '<span class="qt-pill warn">Chưa cấu hình</span>';
       } else if (d.connected === true) {
-        badgeEl.innerHTML = '<span class="ad-pill ok">Đã kết nối Gmail</span>';
+        badgeEl.innerHTML = '<span class="qt-pill ok">Đã kết nối Gmail</span>';
       } else if (d.connected === false) {
-        badgeEl.innerHTML = '<span class="ad-pill warn">Cần xác nhận Google</span>';
+        badgeEl.innerHTML = '<span class="qt-pill warn">Cần xác nhận Google</span>';
       } else {
-        badgeEl.innerHTML = '<span class="ad-pill ok">Đã nạp cấu hình</span>';
+        badgeEl.innerHTML = '<span class="qt-pill ok">Đã nạp cấu hình</span>';
       }
       if (msgEl) msgEl.innerHTML = linkifySafeText(d.message || "");
     }
@@ -6091,13 +6092,13 @@
 
     // ---------- Tài khoản ----------
     function trangThaiTaiKhoan(acc) {
-      if (!acc.dang_hoat_dong) return { key: "disabled", html: `<span class="ad-pill muted">Đã vô hiệu hóa</span>` };
+      if (!acc.dang_hoat_dong) return { key: "disabled", html: `<span class="qt-pill muted">Đã vô hiệu hóa</span>` };
       if (acc.dang_khoa_tam_15p) {
         const gio = String(acc.khoa_den_hien_thi || "").split(" ")[0];
-        return { key: "locked", html: `<span class="ad-pill warn" title="Tự mở khóa lúc ${escapeHtml(acc.khoa_den_hien_thi)}">Tạm khóa đến ${escapeHtml(gio)}</span>` };
+        return { key: "locked", html: `<span class="qt-pill warn" title="Tự mở khóa lúc ${escapeHtml(acc.khoa_den_hien_thi)}">Tạm khóa đến ${escapeHtml(gio)}</span>` };
       }
-      if (acc.khoa_vinh_vien) return { key: "locked", html: `<span class="ad-pill bad">Bị khóa</span>` };
-      return { key: "active", html: `<span class="ad-pill ok">Hoạt động</span>` };
+      if (acc.khoa_vinh_vien) return { key: "locked", html: `<span class="qt-pill bad">Bị khóa</span>` };
+      return { key: "active", html: `<span class="qt-pill ok">Hoạt động</span>` };
     }
 
     async function loadAccounts() {
@@ -6144,7 +6145,7 @@
 
       const tbody = document.getElementById("accountsTableBody");
       if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="ad-empty">${all.length ? "Không có tài khoản nào khớp bộ lọc." : "Chưa có tài khoản nào."}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="qt-empty">${all.length ? "Không có tài khoản nào khớp bộ lọc." : "Chưa có tài khoản nào."}</td></tr>`;
         return;
       }
 
@@ -6153,22 +6154,22 @@
         if (a.so_lan_dang_nhap_sai > 0) loi.push(`Sai mật khẩu ${a.so_lan_dang_nhap_sai} lần`);
         if (a.so_lan_sai_otp > 0) loi.push(`Sai OTP ${a.so_lan_sai_otp} lần`);
         const otp = a.da_kich_hoat_otp
-          ? `<span class="ad-pill ok">Đã kích hoạt</span>`
-          : `<span class="ad-pill muted" title="Lần đăng nhập đầu tiên sẽ được yêu cầu quét mã QR">Chưa kích hoạt</span>`;
+          ? `<span class="qt-pill ok">Đã kích hoạt</span>`
+          : `<span class="qt-pill muted" title="Lần đăng nhập đầu tiên sẽ được yêu cầu quét mã QR">Chưa kích hoạt</span>`;
         const ipv4 = a.ipv4_gan_nhat || a.ip_thiet_bi_gan_nhat;
         const ipMay = hienThiIpChuanIpv4(a.ip_thiet_bi_gan_nhat, ipv4);
         const truyCapGanNhat = (ipMay || ipv4)
           ? `<div><span class="t-dim">IP:</span> ${escapeHtml(ipMay)}</div>
-             <div class="t-muted t-xs flex items-center gap-1.5 flex-wrap"><span class="t-dim">IPv4:</span> <span>${escapeHtml(ipv4)}</span>${a.ip_dang_bi_chan ? '<span class="ad-pill bad">IP bị chặn</span>' : ""}</div>`
+             <div class="t-muted t-xs flex items-center gap-1.5 flex-wrap"><span class="t-dim">IPv4:</span> <span>${escapeHtml(ipv4)}</span>${a.ip_dang_bi_chan ? '<span class="qt-pill bad">IP bị chặn</span>' : ""}</div>`
           : '<span class="t-dim">Chưa đăng nhập</span>';
         const laToi = window.currentUser && a.ten_dang_nhap === window.currentUser.ten_dang_nhap;
 
         let phanQuyenHtml = "";
         if (a.vai_tro !== "GIAO_VIEN") {
-          phanQuyenHtml = `<span class="ad-pill info">Quản trị hệ thống</span>`;
+          phanQuyenHtml = `<span class="qt-pill info">Quản trị hệ thống</span>`;
         } else if (a.ten_mon_hoc) {
           const badgeRaDe = a.co_quyen_de_chinh_thuc
-            ? `<div class="flex flex-wrap gap-1 mt-1"><span class="ad-pill ok">Được phép ra đề</span></div>`
+            ? `<div class="flex flex-wrap gap-1 mt-1"><span class="qt-pill ok">Được phép ra đề</span></div>`
             : "";
           phanQuyenHtml = `
             <div class="cursor-pointer group" onclick="openPermModal('${a.ma_tai_khoan}')" title="Nhấn để điều chỉnh phân công chuyên môn">
@@ -6177,7 +6178,7 @@
               ${badgeRaDe}
             </div>`;
         } else {
-          phanQuyenHtml = `<button type="button" class="ad-link t-sm font-semibold" onclick="openPermModal('${a.ma_tai_khoan}')">Thiết lập phân công</button>`;
+          phanQuyenHtml = `<button type="button" class="qt-link t-sm font-semibold" onclick="openPermModal('${a.ma_tai_khoan}')">Thiết lập phân công</button>`;
         }
 
         return `
@@ -6200,7 +6201,7 @@
             <td class="whitespace-nowrap t-sm t-num">${truyCapGanNhat}</td>
             <td class="whitespace-nowrap t-sm t-muted t-num">${escapeHtml(String(a.thoi_diem_tao || "").split(" ")[0])}</td>
             <td class="text-right">
-              <button type="button" class="ad-iconbtn" title="Thao tác" onclick="openRowMenu(event, '${a.ma_tai_khoan}')">${svg("dots")}</button>
+              <button type="button" class="qt-iconbtn" title="Thao tác" onclick="openRowMenu(event, '${a.ma_tai_khoan}')">${svg("dots")}</button>
             </td>
           </tr>`;
       }).join("");
@@ -6212,7 +6213,7 @@
       if (!a) return;
       const targetIp = a.ipv4_gan_nhat || a.ip_thiet_bi_gan_nhat || "";
       const laToi = window.currentUser && String(a.ma_tai_khoan) === String(window.currentUser.ma_tai_khoan);
-      const items = [`<div class="ad-menu-title">${escapeHtml(a.ho_ten)}</div>`];
+      const items = [`<div class="qt-menu-title">${escapeHtml(a.ho_ten)}</div>`];
       if (a.vai_tro === "GIAO_VIEN") {
         items.push(`<button type="button" onclick="openPermModal('${id}')">${svg("shield")}Phân công chuyên môn</button>`);
       }
@@ -6298,12 +6299,12 @@
       const pq = collectPhanQuyenPayload("pm");
 
       if (!pq.ma_mon_hoc) {
-        alertEl.className = "ad-msg bad";
+        alertEl.className = "qt-msg bad";
         alertEl.textContent = "Vui lòng chọn môn học phụ trách.";
         return;
       }
       if (!pq.danh_sach_khoi.length) {
-        alertEl.className = "ad-msg bad";
+        alertEl.className = "qt-msg bad";
         alertEl.textContent = "Vui lòng chọn ít nhất một khối lớp giảng dạy.";
         return;
       }
@@ -6325,7 +6326,7 @@
       btn.textContent = "Lưu phân công";
 
       if (!r.ok) {
-        alertEl.className = "ad-msg bad";
+        alertEl.className = "qt-msg bad";
         alertEl.textContent = r.msg || "Không thể lưu phân công chuyên môn.";
         return;
       }
@@ -6378,7 +6379,7 @@
       });
 
       if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="ad-empty">${scoped.length ? "Không có tài khoản nào khớp bộ lọc mã PIN." : "Chưa có tài khoản giáo viên nào."}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="qt-empty">${scoped.length ? "Không có tài khoản nào khớp bộ lọc mã PIN." : "Chưa có tài khoản giáo viên nào."}</td></tr>`;
         return;
       }
 
@@ -6386,15 +6387,15 @@
         const laToi = window.currentUser && String(a.ma_tai_khoan) === String(window.currentUser.ma_tai_khoan);
         const s = trangThaiTaiKhoan(a);
         const otpBadge = a.da_kich_hoat_otp
-          ? `<span class="ad-pill ok">Đã kích hoạt</span>`
-          : `<span class="ad-pill muted">Chưa kích hoạt</span>`;
+          ? `<span class="qt-pill ok">Đã kích hoạt</span>`
+          : `<span class="qt-pill muted">Chưa kích hoạt</span>`;
         const pinBadge = a.da_co_ma_pin
-          ? `<span class="ad-pill ok">Đã thiết lập (6 số)</span>`
-          : `<span class="ad-pill warn">Chưa thiết lập (đặt ngoài hệ thống)</span>`;
+          ? `<span class="qt-pill ok">Đã thiết lập (6 số)</span>`
+          : `<span class="qt-pill warn">Chưa thiết lập (đặt ngoài hệ thống)</span>`;
 
         let chuyenMonHtml = "";
         if (a.vai_tro !== "GIAO_VIEN") {
-          chuyenMonHtml = `<span class="ad-pill info">${escapeHtml(nhanVaiTro(a.vai_tro))}</span>`;
+          chuyenMonHtml = `<span class="qt-pill info">${escapeHtml(nhanVaiTro(a.vai_tro))}</span>`;
         } else if (a.ten_mon_hoc) {
           chuyenMonHtml = `
             <div class="t-strong whitespace-nowrap">${escapeHtml(a.ten_mon_hoc)}</div>
@@ -6403,9 +6404,9 @@
           chuyenMonHtml = `<span class="t-dim t-xs">Chưa phân công môn</span>`;
         }
 
-        const btnDoiPin = `<button type="button" class="ad-btn" style="padding: 0.42rem 0.78rem; font-size: 0.82rem;" onclick="openAdminPinModal('${a.ma_tai_khoan}')">${a.da_co_ma_pin ? "Đổi mã PIN" : "Cấp mã PIN"}</button>`;
+        const btnDoiPin = `<button type="button" class="qt-btn" style="padding: 0.42rem 0.78rem; font-size: 0.82rem;" onclick="openAdminPinModal('${a.ma_tai_khoan}')">${a.da_co_ma_pin ? "Đổi mã PIN" : "Cấp mã PIN"}</button>`;
         const btnMoDatLai = (a.da_co_ma_pin && !laToi)
-          ? `<button type="button" class="ad-btn-ghost" style="padding: 0.42rem 0.75rem; font-size: 0.82rem;" onclick="handleAdminResetTeacherPin('${a.ma_tai_khoan}')" title="Xóa mã PIN cũ để giáo viên tự đặt mã PIN mới ở màn hình ngoài hệ thống khi đăng nhập lại">Mở đặt lại PIN</button>`
+          ? `<button type="button" class="qt-btn-ghost" style="padding: 0.42rem 0.75rem; font-size: 0.82rem;" onclick="handleAdminResetTeacherPin('${a.ma_tai_khoan}')" title="Xóa mã PIN cũ để giáo viên tự đặt mã PIN mới ở màn hình ngoài hệ thống khi đăng nhập lại">Mở đặt lại PIN</button>`
           : "";
 
         return `
@@ -6442,8 +6443,8 @@
       document.getElementById("apmInfoName").textContent = `${a.ho_ten} (${a.ma_can_bo})`;
       document.getElementById("apmInfoEmail").textContent = a.email || "—";
       document.getElementById("apmInfoStatus").innerHTML = a.da_co_ma_pin
-        ? `<span class="ad-pill ok">Đã thiết lập (6 số)</span>`
-        : `<span class="ad-pill warn">Chưa thiết lập</span>`;
+        ? `<span class="qt-pill ok">Đã thiết lập (6 số)</span>`
+        : `<span class="qt-pill warn">Chưa thiết lập</span>`;
 
       const alertEl = document.getElementById("adminPinAlert");
       if (alertEl) {
@@ -6502,12 +6503,12 @@
       const xac_nhan_ma_pin_moi = (document.getElementById("apmPinConfirm")?.value || "").trim();
 
       if (!/^\d{6}$/.test(ma_pin_moi)) {
-        alertEl.className = "ad-msg bad";
+        alertEl.className = "qt-msg bad";
         alertEl.textContent = "Mã PIN mới phải gồm đúng 6 chữ số (0-9).";
         return;
       }
       if (ma_pin_moi !== xac_nhan_ma_pin_moi) {
-        alertEl.className = "ad-msg bad";
+        alertEl.className = "qt-msg bad";
         alertEl.textContent = "Mã PIN mới nhập lại không khớp.";
         return;
       }
@@ -6537,7 +6538,7 @@
 
       if (!r.ok) {
         if (!r.lockedOut && !r.idleExpired) {
-          alertEl.className = "ad-msg bad";
+          alertEl.className = "qt-msg bad";
           alertEl.textContent = r.msg || "Không thể cập nhật mã PIN mới.";
         }
         return;
@@ -6684,15 +6685,15 @@
         toast("Không thể tự tạm khóa tài khoản Quản trị viên đang đăng nhập.", "warn");
         return;
       }
-      const ok = await openAdDialog({
+      const ok = await openQtDialog({
         title: "Tạm khóa tài khoản",
         okText: "Tiếp tục nhập PIN",
         danger: true,
         html: `
           <p class="mb-3">Tạm khóa tài khoản của <b>${escapeHtml(a.ho_ten)}</b> (${escapeHtml(a.ma_can_bo || a.ten_dang_nhap || "")}) và thu hồi toàn bộ phiên đăng nhập hiện hành:</p>
-          <div class="ad-field">
+          <div class="qt-field">
             <label for="rowTempLockMinutes">Thời hạn tạm khóa</label>
-            <select id="rowTempLockMinutes" class="ad-input">
+            <select id="rowTempLockMinutes" class="qt-input">
               <option value="15">Tạm khóa 15 phút</option>
               <option value="60">Tạm khóa 60 phút</option>
               <option value="0">Khóa an ninh cho đến khi mở khóa thủ công</option>
@@ -6780,10 +6781,10 @@
 
     // ---------- Phiên đăng nhập ----------
     function trangThaiPhien(s) {
-      if (s.da_thu_hoi) return { key: "revoked", html: `<span class="ad-pill muted">Đã kết thúc</span>` };
-      if (!s.con_han) return { key: "expired", html: `<span class="ad-pill muted">Hết hạn</span>` };
-      if (!s.da_xac_thuc_otp) return { key: "pending", html: `<span class="ad-pill warn">Đang chờ OTP</span>` };
-      return { key: "active", html: `<span class="ad-pill ok">Đang hoạt động</span>` };
+      if (s.da_thu_hoi) return { key: "revoked", html: `<span class="qt-pill muted">Đã kết thúc</span>` };
+      if (!s.con_han) return { key: "expired", html: `<span class="qt-pill muted">Hết hạn</span>` };
+      if (!s.da_xac_thuc_otp) return { key: "pending", html: `<span class="qt-pill warn">Đang chờ OTP</span>` };
+      return { key: "active", html: `<span class="qt-pill ok">Đang hoạt động</span>` };
     }
 
     async function loadSessions() {
@@ -6819,7 +6820,7 @@
 
       const tbody = document.getElementById("sessionsTableBody");
       if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="ad-empty">Không có phiên nào khớp bộ lọc.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="qt-empty">Không có phiên nào khớp bộ lọc.</td></tr>`;
         return;
       }
 
@@ -6829,7 +6830,7 @@
         return `
           <tr class="${s.la_phien_hien_tai ? "is-current" : ""}">
             <td>
-              <div class="t-strong whitespace-nowrap">${escapeHtml(s.ho_ten)}${s.la_phien_hien_tai ? ' <span class="ad-pill info ml-1">Phiên này</span>' : ""}</div>
+              <div class="t-strong whitespace-nowrap">${escapeHtml(s.ho_ten)}${s.la_phien_hien_tai ? ' <span class="qt-pill info ml-1">Phiên này</span>' : ""}</div>
               <div class="t-muted t-xs whitespace-nowrap" title="Mã phiên: ${escapeHtml(s.ma_phien)}&#10;Mã băm token: ${escapeHtml(s.ma_phien_bam)}">${escapeHtml(s.ten_dang_nhap)} · <span class="t-code">${escapeHtml(s.ma_can_bo)}</span></div>
             </td>
             <td class="t-sm" style="min-width: 11rem; max-width: 16rem">${chiaThietBi(s.thong_tin_thiet_bi)}</td>
@@ -6837,7 +6838,7 @@
               <div>${escapeHtml(s.ipv4)}</div>
               ${(() => { const ipTb = hienThiIpChuanIpv4(s.ip_thiet_bi, s.ipv4); return ipTb && ipTb !== s.ipv4 && ipTb !== "—" ? `<div class="t-muted t-xs truncate" title="IP thiết bị: ${escapeHtml(ipTb)}">Thiết bị: ${escapeHtml(ipTb)}</div>` : ""; })()}
             </td>
-            <td class="whitespace-nowrap">${s.da_xac_thuc_otp ? '<span class="ad-pill ok">Đã xác thực</span>' : '<span class="ad-pill warn">Chờ nhập OTP</span>'}</td>
+            <td class="whitespace-nowrap">${s.da_xac_thuc_otp ? '<span class="qt-pill ok">Đã xác thực</span>' : '<span class="qt-pill warn">Chờ nhập OTP</span>'}</td>
             <td class="whitespace-nowrap">${st.html}</td>
             <td class="whitespace-nowrap t-num"><div>${escapeHtml(gioTao || "")}</div><div class="t-muted t-xs">${escapeHtml(ngayTao || "")}</div></td>
             <td class="whitespace-nowrap t-num"><div>${escapeHtml(gioHet || "")}</div><div class="t-muted t-xs">${escapeHtml(ngayHet || "")}</div></td>
@@ -7270,7 +7271,7 @@
             handleSessionError(data);
             return false;
           }
-          await openAdDialog({
+          await openQtDialog({
             title: "Cảnh báo An ninh Tài liệu",
             html: `<p class="text-rose-600 font-semibold">${escapeHtml(msg)}</p>`,
             okText: "Đã hiểu",
@@ -8024,7 +8025,12 @@
     }
 
     async function handleSealDeThi(maDeThi) {
-      const item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi));
+      let item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi)) ||
+        (TP.currentDetailDeThi && String(TP.currentDetailDeThi.ma_de_thi) === String(maDeThi) ? TP.currentDetailDeThi : null);
+      if (!item) {
+        const detailRes = await apiJson(`/api/de-thi/${maDeThi}`);
+        if (detailRes.ok && detailRes.data?.item) item = detailRes.data.item;
+      }
       if (!item) return;
       const phanLoai = item.loai || "Đề thi";
       const mocMo = phanLoai === "Đáp án"
@@ -8060,7 +8066,8 @@
     }
 
     async function handleAccessDeThi(maDeThi, mode = "inline") {
-      const item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi));
+      const item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi)) ||
+        (TP.currentDetailDeThi && String(TP.currentDetailDeThi.ma_de_thi) === String(maDeThi) ? TP.currentDetailDeThi : null);
       const url = `/api/de-thi/${maDeThi}/file?mode=${mode}`;
 
       if (mode === "attachment" && !item?.dang_niem_phong && item?.loai_de !== "DE_MOI") {
@@ -8090,7 +8097,7 @@
           forceLockoutToLoginScreen(msg);
           return;
         }
-        await openAdDialog({
+        await openQtDialog({
           title: "Cảnh báo An ninh Kho đề thi",
           html: `<p class="text-rose-600 font-semibold">${escapeHtml(msg)}</p>`,
           okText: "Đã hiểu",
@@ -8327,6 +8334,7 @@
         return;
       }
       const d = r.data.item;
+      TP.currentDetailDeThi = d;
       const tenKyThi = d.ten_ky_thi || d.ten_lich_thi || "—";
       const phanLoai = d.loai || "Đề thi";
       const loaiKyThi = d.loai_ky_thi || "Giữa kỳ I";
@@ -8431,7 +8439,12 @@
     }
 
     async function handleDeleteDeThi(maDeThi) {
-      const item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi));
+      let item = TP.deThi.find(x => String(x.ma_de_thi) === String(maDeThi)) ||
+        (TP.currentDetailDeThi && String(TP.currentDetailDeThi.ma_de_thi) === String(maDeThi) ? TP.currentDetailDeThi : null);
+      if (!item) {
+        const detailRes = await apiJson(`/api/de-thi/${maDeThi}`);
+        if (detailRes.ok && detailRes.data?.item) item = detailRes.data.item;
+      }
       if (!item) return;
       if (item.dang_niem_phong) {
         toast("Tài liệu đang trong thời gian niêm phong bảo mật, không ai có quyền xóa hoặc can thiệp.", "bad");
@@ -8482,7 +8495,7 @@
       closeOnTapDetailModal();
       closeDeThiDetailModal();
       closeDeThiFormModal();
-      if (!document.getElementById("adDialog").classList.contains("hidden")) closeAdDialog(false);
+      if (!document.getElementById("qtDialog").classList.contains("hidden")) closeQtDialog(false);
       else if (!document.getElementById("logDetailModal").classList.contains("hidden")) closeLogDetailModal();
       else if (!document.getElementById("adminPinModal")?.classList.contains("hidden")) closeAdminPinModal();
       else if (!document.getElementById("permModal").classList.contains("hidden")) closePermModal();
